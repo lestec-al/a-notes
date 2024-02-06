@@ -262,13 +262,13 @@ fun NotesScreen(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     TextButton(onClick = {
-                        vm.driveSyncManual(false)
+                        vm.driveSyncManualThread(false)
                         vm.openSyncDialog(false)
                     }) {
                         Text(text = LocalContext.current.getString(R.string.sync_drive))
                     }
                     TextButton(onClick = {
-                        vm.driveSyncManual(true)
+                        vm.driveSyncManualThread(true)
                         vm.openSyncDialog(false)
                     }) {
                         Text(text = LocalContext.current.getString(R.string.sync_local))

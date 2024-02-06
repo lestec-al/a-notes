@@ -8,8 +8,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.yurhel.alex.anotes.data.DB
+import com.yurhel.alex.anotes.data.Drive
 import com.yurhel.alex.anotes.data.NoteObj
-import com.yurhel.alex.anotes.data.driveCheckIfEmpty
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -36,6 +36,7 @@ class MainViewModel(
 
     // Init variables
     private val db = DB(app.applicationContext)
+    private val drive = Drive(app.applicationContext)
     var editNote: NoteObj? = null
 
     // NOTES SCREEN
@@ -168,33 +169,6 @@ class MainViewModel(
         _isSyncDialogOpen.value = isOpen
     }
 
-    fun driveSyncManual(
-        isExport: Boolean,
-        before: () -> Unit = { _isSyncNow.value = true },
-        after: () -> Unit = {}
-    ) {
-        before()
-        var driveModifiedTime: Long? = null
-        com.yurhel.alex.anotes.data.driveSync(
-            isExport = isExport,
-            db = db,
-            context = app.applicationContext,
-            checkModifiedTime = {
-                driveModifiedTime = it
-                true
-            },
-            after = { isDriveSyncOK ->
-                if (isDriveSyncOK) {
-                    db.updateEdit(false)
-                    db.updateReceived(if (isExport) null else driveModifiedTime)
-                }
-                updateNotesFromDB("")
-                _isSyncNow.value = false
-                after()
-            }
-        )
-    }
-
     fun tryHiddenDriveSync(after: () -> Unit) {
         if (GoogleSignIn.getLastSignedInAccount(app.applicationContext) != null) driveSyncAuto(before = {}, after = after)
         else after()
@@ -202,62 +176,69 @@ class MainViewModel(
 
     fun driveSyncAuto(
         before: () -> Unit = { _isSyncNow.value = true },
-        after: () -> Unit = {}
+        after: () -> Unit = { _isSyncNow.value = false }
     ) {
-        callTrySighIn()
         before()
-        val appSettings = db.getSettings()
-        if (!appSettings.isNotesEdited) {
-            // Get data. Data not edited
-            var driveModifiedTime: Long? = null
-            com.yurhel.alex.anotes.data.driveSync(
-                isExport = false,
-                db = db,
-                context = app.applicationContext,
-                checkModifiedTime = {
-                    driveModifiedTime = it
-                    true
-                },
-                after = { isDriveSyncOK ->
-                    if (isDriveSyncOK) db.updateReceived(driveModifiedTime)
+        callTrySighIn()
+        Thread {
+            val appSettings = db.getSettings()
+            val data = drive.getData()
+            val driveData = data.first
+            val dataModifiedTime = data.second
+
+            if (!appSettings.isNotesEdited) {
+                // Data not edited
+                if (driveData.length() > 0) {
+                    // Update local
+                    db.importDB(driveData.toString())
+                    db.updateReceived(dataModifiedTime)
                     updateNotesFromDB("")
-                    _isSyncNow.value = false
-                    after()
-                }
-            )
-        } else if (appSettings.dataReceivedDate != null) {
-            // Send data. Data edited, received
-            var isDataSend = false
-            com.yurhel.alex.anotes.data.driveSync(
-                isExport = true,
-                db = db,
-                context = app.applicationContext,
-                checkModifiedTime = {
-                    isDataSend = it == null || it == appSettings.dataReceivedDate
-                    isDataSend
-                },
-                after = { isConnectionOK ->
-                    if (isConnectionOK && isDataSend) {
-                        db.updateEdit(false)
-                        db.updateReceived(null)
-                    } else if (isConnectionOK) {
-                        openSyncDialog(true)
-                    }
-                    updateNotesFromDB("")
-                    _isSyncNow.value = false
-                    after()
-                }
-            )
-        } else {
-            // Data edited, not received
-            driveCheckIfEmpty(app.applicationContext) { isEmpty, _ ->
-                if (isEmpty) {
-                    driveSyncManual(true, after)
                 } else {
+                    // If drive empty -> send data
+                    driveSyncManual(isExport = true)
+                }
+            } else {
+                // Data edited
+                val dataReceived = appSettings.dataReceivedDate != null
+                val serverDataNotChanged = dataModifiedTime == null || dataModifiedTime == appSettings.dataReceivedDate
+
+                if ((dataReceived && serverDataNotChanged) || (!dataReceived && driveData.length() < 1)) {
+                    // Send data
+                    driveSyncManual(isExport = true)
+                } else {
+                    // Get user to choose
                     openSyncDialog(true)
-                    after()
                 }
             }
+            after()
+        }.start()
+    }
+
+    fun driveSyncManualThread(
+        isExport: Boolean,
+        before: () -> Unit = { _isSyncNow.value = true },
+        after: () -> Unit = { _isSyncNow.value = false }
+    ) {
+        before()
+        Thread {
+            driveSyncManual(isExport = isExport)
+            after()
+        }.start()
+    }
+
+    private fun driveSyncManual(isExport: Boolean) {
+        if (isExport) {
+            // Send data
+            drive.sendData(db.exportDB().toString())
+            db.updateEdit(false)
         }
+        // Get data
+        val data = drive.getData()
+        if (!isExport && data.first.length() > 0) {
+            // Update local
+            db.importDB(data.first.toString())
+            updateNotesFromDB("")
+        }
+        db.updateReceived(data.second)
     }
 }
