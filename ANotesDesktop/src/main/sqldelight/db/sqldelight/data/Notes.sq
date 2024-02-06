@@ -1,0 +1,24 @@
+CREATE TABLE notesTable (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    text TEXT,
+    dateUpdate TEXT,
+    dateCreate TEXT
+);
+
+selectAll:
+SELECT * FROM notesTable;
+
+selectOne:
+SELECT * FROM notesTable WHERE id = ?;
+
+insert:
+INSERT INTO notesTable(text, dateUpdate, dateCreate) VALUES (?, ?, ?);
+
+deleteAll:
+DELETE FROM notesTable;
+
+delete:
+DELETE FROM notesTable WHERE id = ?;
+
+update:
+UPDATE notesTable SET text = ?, dateUpdate = ? WHERE id = ?;
