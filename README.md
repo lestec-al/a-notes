@@ -11,14 +11,14 @@
 - Light and Dark theme
 - Dynamic colors (for Android 12+)
 
-## Tech Stack Android version
+## Tech Stack Android
 - Android Studio
 - Kotlin
 - Jetpack Compose (with Navigation)
 - SQLite (through SQLiteOpenHelper)
 - Google Cloud with Google Drive API (you need to create and configure your own Google Cloud Project)
 
-## Tech Stack PC version
+## Tech Stack PC
 - IntelliJ IDEA
 - Kotlin
 - Compose for Desktop
