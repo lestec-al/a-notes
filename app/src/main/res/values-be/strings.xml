@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="app_name">Нататкі</string>
     <string name="widget_description">Віджэт для адной нататкі</string>
     <string name="search_text_hint">Пошук</string>
-    <string name="sync_collision">Знойдзены дзве розныя копіі даных. Выберыце, які з іх выкарыстоўваць</string>
+    <string name="sync_collision">Выяўлены канфлікт у дадзеных. Калі ласка, абярыце, што выкарыстоўваць.</string>
     <string name="sync_drive">Воблачныя даныя</string>
-    <string name="sync_local">Лакальныя даныя</string>
+    <string name="sync_local">Лякальныя даныя</string>
     <string name="updated">Абноўлена</string>
     <string name="empty_text">Тут яшчэ пуста</string>
 </resources>

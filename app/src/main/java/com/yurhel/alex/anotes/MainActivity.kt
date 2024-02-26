@@ -74,15 +74,7 @@ class MainActivity : ComponentActivity() {
                 )
             }
 
-            val nav = rememberNavController()
-
-            // Sync data with drive
-            vm.tryHiddenDriveSync {
-                // If the app opens from a widget - prepare a note in case this note has changed on drive
-                if (vm.noteCreatedDateFromWidget != "") lifecycleScope.launch { vm.prepareNote { nav.navigate(Screens.Notes.name) } }
-            }
-
-            ANotesTheme { Screens(vm = vm, callExit = { finishAffinity() }, nav = nav) }
+            ANotesTheme { Screens(vm = vm, callExit = { finishAffinity() }, nav = rememberNavController()) }
         }
     }
 

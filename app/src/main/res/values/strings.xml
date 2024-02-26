@@ -1,8 +1,8 @@
 <resources>
-    <string name="app_name" translatable="false">ANotes</string>
+    <string name="app_name">Notes</string>
     <string name="widget_description">One note widget</string>
     <string name="search_text_hint">Search</string>
-    <string name="sync_collision">Two different copies of the data were found. Please choose which one to use</string>
+    <string name="sync_collision">Data collisions were found. Please choose which one to use.</string>
     <string name="sync_drive">Drive data</string>
     <string name="sync_local">Local data</string>
     <string name="updated">Updated</string>

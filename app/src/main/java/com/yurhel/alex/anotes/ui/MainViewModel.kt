@@ -3,18 +3,23 @@ package com.yurhel.alex.anotes.ui
 import android.app.Application
 import android.text.format.DateFormat
 import android.text.format.DateUtils
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.text2.input.TextFieldState
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import com.google.android.gms.auth.api.signin.GoogleSignIn
+import androidx.lifecycle.viewModelScope
 import com.yurhel.alex.anotes.data.DB
 import com.yurhel.alex.anotes.data.Drive
 import com.yurhel.alex.anotes.data.NoteObj
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import java.util.Date
 
+@OptIn(ExperimentalFoundationApi::class)
 class MainViewModel(
     private val app: Application,
     val callTrySighIn: () -> Unit,
@@ -38,6 +43,7 @@ class MainViewModel(
     private val db = DB(app.applicationContext)
     private val drive = Drive(app.applicationContext)
     var editNote: NoteObj? = null
+
 
     // NOTES SCREEN
     private val _searchText = MutableStateFlow("")
@@ -79,8 +85,7 @@ class MainViewModel(
     // NOTE SCREEN
     private var origNoteText = ""
 
-    private val _editText = MutableStateFlow("")
-    val editText = _editText.asStateFlow()
+    val editText = TextFieldState("")
 
     /**
      * Creates new note or opens existed. Also if screen open from widget but note deleted (from DB) - redirect to notes screen.
@@ -115,12 +120,11 @@ class MainViewModel(
             // Existed note open
             editNote!!.text
         }
-        _editText.value = noteText ?: ""
+        editText.edit {
+            this.append(noteText ?: "")
+            this.placeCursorAfterCharAt(0)
+        }
         origNoteText = noteText ?: ""
-    }
-
-    fun changeEditTexValue(text: String) {
-        _editText.value = text
     }
 
     fun getNoteDate(): String {
@@ -138,23 +142,19 @@ class MainViewModel(
         editNote = null
         // ???
         db.updateEdit(true)
-        // Sync note
-        tryHiddenDriveSync {}
     }
 
     fun saveNote() {
         // Check if the note exists and if its value has changed
         val edit = editNote
-        if (edit != null && origNoteText != _editText.value) {
+        if (edit != null && origNoteText != editText.text.toString()) {
             // Update note
-            db.updateNote(edit.id, _editText.value, Date().time.toString())
+            db.updateNote(edit.id, editText.text.toString(), Date().time.toString())
             // ???
             db.updateEdit(true)
             // Update widget if it exist
             val widgetId = db.getWidgetIds(noteCreated = edit.dateCreate)
-            if (widgetId != null) callInitUpdateWidget(false, widgetId.toInt(), edit.dateCreate, _editText.value)
-            // Sync note
-            tryHiddenDriveSync {}
+            if (widgetId != null) callInitUpdateWidget(false, widgetId.toInt(), edit.dateCreate, editText.text.toString())
         }
     }
 
@@ -169,49 +169,46 @@ class MainViewModel(
         _isSyncDialogOpen.value = isOpen
     }
 
-    fun tryHiddenDriveSync(after: () -> Unit) {
-        if (GoogleSignIn.getLastSignedInAccount(app.applicationContext) != null) driveSyncAuto(before = {}, after = after)
-        else after()
-    }
-
     fun driveSyncAuto(
         before: () -> Unit = { _isSyncNow.value = true },
         after: () -> Unit = { _isSyncNow.value = false }
     ) {
-        before()
-        callTrySighIn()
-        Thread {
-            val appSettings = db.getSettings()
-            val data = drive.getData()
-            val driveData = data.first
-            val dataModifiedTime = data.second
+        viewModelScope.launch(Dispatchers.Default) {
+            try {
+                before()
+                callTrySighIn()
 
-            if (!appSettings.isNotesEdited) {
-                // Data not edited
-                if (driveData.length() > 0) {
-                    // Update local
-                    db.importDB(driveData.toString())
-                    db.updateReceived(dataModifiedTime)
-                    updateNotesFromDB("")
-                } else {
-                    // If drive empty -> send data
-                    driveSyncManual(isExport = true)
-                }
-            } else {
-                // Data edited
-                val dataReceived = appSettings.dataReceivedDate != null
-                val serverDataNotChanged = dataModifiedTime == null || dataModifiedTime == appSettings.dataReceivedDate
+                val appSettings = db.getSettings()
+                val data = drive.getData()
+                val driveData = data.first
+                val dataModifiedTime = data.second
 
-                if ((dataReceived && serverDataNotChanged) || (!dataReceived && driveData.length() < 1)) {
-                    // Send data
-                    driveSyncManual(isExport = true)
+                if (!appSettings.isNotesEdited) {
+                    // Data not edited
+                    if (dataModifiedTime != null) {
+                        // Update local
+                        db.importDB(driveData.toString())
+                        db.updateReceived(dataModifiedTime)
+                        updateNotesFromDB("")
+                    } else {
+                        // If drive empty -> send data
+                        driveSyncManual(true)
+                    }
                 } else {
-                    // Get user to choose
-                    openSyncDialog(true)
+                    // Data edited
+                    if (dataModifiedTime == appSettings.dataReceivedDate || dataModifiedTime == null) {
+                        // Send data
+                        driveSyncManual(true)
+                    } else {
+                        // Get user to choose
+                        openSyncDialog(true)
+                    }
                 }
+            } catch (_: Exception) {
+            } finally {
+                after()
             }
-            after()
-        }.start()
+        }
     }
 
     fun driveSyncManualThread(
@@ -219,11 +216,11 @@ class MainViewModel(
         before: () -> Unit = { _isSyncNow.value = true },
         after: () -> Unit = { _isSyncNow.value = false }
     ) {
-        before()
-        Thread {
-            driveSyncManual(isExport = isExport)
+        viewModelScope.launch(Dispatchers.Default) {
+            before()
+            driveSyncManual(isExport)
             after()
-        }.start()
+        }
     }
 
     private fun driveSyncManual(isExport: Boolean) {
@@ -234,7 +231,7 @@ class MainViewModel(
         }
         // Get data
         val data = drive.getData()
-        if (!isExport && data.first.length() > 0) {
+        if (!isExport && data.second != null) {
             // Update local
             db.importDB(data.first.toString())
             updateNotesFromDB("")

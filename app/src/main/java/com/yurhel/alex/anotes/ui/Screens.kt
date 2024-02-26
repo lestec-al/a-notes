@@ -3,7 +3,9 @@ package com.yurhel.alex.anotes.ui
 import android.appwidget.AppWidgetManager
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.text2.input.clearText
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
@@ -12,6 +14,7 @@ import androidx.navigation.compose.composable
 
 enum class Screens { Notes, Note }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun Screens(
     vm: MainViewModel,
@@ -32,7 +35,7 @@ fun Screens(
         composable(route = Screens.Notes.name) {
             NotesScreen(
                 vm = vm,
-                onBackButtonClicked = { callExit() },
+                onBackButtonClicked = callExit,
                 newNoteClicked = {
                     // Open new note
                     vm.editNote = null
@@ -59,7 +62,7 @@ fun Screens(
                         nav.navigate(Screens.Notes.name)
                     } else {
                         if (isActionDel) vm.deleteNote() else vm.saveNote()
-                        vm.changeEditTexValue("") // clear editText for the next note appear correctly
+                        vm.editText.clearText() // clear editText for the next note appear correctly
                         if (vm.noteCreatedDateFromWidget != "") callExit() else nav.navigate(Screens.Notes.name)
                     }
                 }

@@ -150,14 +150,18 @@ class DB(context: Context) : SQLiteOpenHelper(context, "notes.db", null, 1) {
     }
 
     fun updateReceived(dataReceivedDate: Long?) {
+        val cv = ContentValues()
+        cv.put("dataReceivedDate", "${dataReceivedDate ?: ""}")
         val db = this.writableDatabase
-        db.execSQL("UPDATE settingsTable SET dataReceivedDate = '${dataReceivedDate ?: ""}' WHERE id = 1")
+        db.update("settingsTable", cv, "id = 1", null)
         db.close()
     }
 
     fun updateEdit(isNotesEdited: Boolean) {
+        val cv = ContentValues()
+        cv.put("isNotesEdited", if (isNotesEdited) 1 else 0)
         val db = this.writableDatabase
-        db.execSQL("UPDATE settingsTable SET isNotesEdited = ${if (isNotesEdited) 1 else 0} WHERE id = 1")
+        db.update("settingsTable", cv, "id = 1", null)
         db.close()
     }
 
