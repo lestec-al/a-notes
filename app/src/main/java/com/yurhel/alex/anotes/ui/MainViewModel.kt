@@ -122,7 +122,7 @@ class MainViewModel(
         }
         editText.edit {
             this.append(noteText ?: "")
-            this.placeCursorAfterCharAt(0)
+            this.placeCursorBeforeCharAt(0)
         }
         origNoteText = noteText ?: ""
     }
