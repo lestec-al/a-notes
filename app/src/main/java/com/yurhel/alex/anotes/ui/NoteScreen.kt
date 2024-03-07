@@ -45,7 +45,9 @@ fun NoteScreen(
     vm: MainViewModel,
     onBack: (isActionDel: Boolean, isForceRedirect: Boolean) -> Unit
 ) {
-    LaunchedEffect(Unit) { vm.prepareNote { onBack(false, true) } }
+    LaunchedEffect(Unit) {
+        if (vm.editText.text.isEmpty()) vm.prepareNote { onBack(false, true) }
+    }
     BackHandler { onBack(false, false) }
 
     val editText = remember { vm.editText }
