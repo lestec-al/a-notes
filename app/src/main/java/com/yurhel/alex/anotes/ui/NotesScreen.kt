@@ -55,12 +55,16 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.yurhel.alex.anotes.R
+import com.yurhel.alex.anotes.data.Drive
 import com.yurhel.alex.anotes.data.NoteObj
 import kotlin.math.roundToInt
 
@@ -68,17 +72,21 @@ import kotlin.math.roundToInt
 @Composable
 fun NotesScreen(
     vm: MainViewModel,
-    onBackButtonClicked: () -> Unit,
+    onBack: () -> Unit,
     newNoteClicked: () -> Unit,
     openNoteClicked: (NoteObj) -> Unit
 ) {
-    BackHandler { onBackButtonClicked() }
-    vm.updateNotesFromDB("")
+    BackHandler(onBack = onBack)
+    vm.getDbNotes("")
+
     val searchText by vm.searchText.collectAsState()
     val appSettingsView by vm.appSettingsView.collectAsState()
     val allNotes: List<NoteObj> by vm.allNotes.collectAsState()
     val isSyncNow by vm.isSyncNow.collectAsState()
+
     val isLandscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
+    val keyboard = LocalSoftwareKeyboardController.current
+    val context = LocalContext.current
 
     Surface(
         modifier = Modifier.fillMaxSize()
@@ -121,7 +129,7 @@ fun NotesScreen(
                                 // Edit text
                                 BasicTextField(
                                     value = searchText,
-                                    onValueChange = { vm.updateNotesFromDB(it) },
+                                    onValueChange = { vm.getDbNotes(it) },
                                     modifier = Modifier
                                         .padding(10.dp, 0.dp)
                                         .fillMaxWidth(),
@@ -130,8 +138,11 @@ fun NotesScreen(
                                         fontSize = MaterialTheme.typography.bodyLarge.fontSize
                                     ),
                                     cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
-                                    keyboardOptions = KeyboardOptions.Default,
-                                    keyboardActions = KeyboardActions.Default,
+                                    keyboardOptions = KeyboardOptions(
+                                        keyboardType = KeyboardType.Text,
+                                        imeAction = ImeAction.Search
+                                    ),
+                                    keyboardActions = KeyboardActions { keyboard?.hide() },
                                     interactionSource = interactionSource,
                                     singleLine = true
                                 ) { innerTextField ->
@@ -140,7 +151,7 @@ fun NotesScreen(
                                         value = searchText,
                                         visualTransformation = VisualTransformation.None,
                                         innerTextField = innerTextField,
-                                        placeholder = { Text(text = LocalContext.current.getString(R.string.search_text_hint)) },
+                                        placeholder = { Text(text = context.getString(R.string.search_text_hint)) },
                                         singleLine = true,
                                         enabled = true,
                                         isError = false,
@@ -164,7 +175,7 @@ fun NotesScreen(
             // Pull to refresh
             val pullRefreshState = rememberPullRefreshState(
                 refreshing = isSyncNow,
-                onRefresh = { vm.driveSyncAuto() },
+                onRefresh = { DriveViewModel(vm, Drive(context)).driveSyncAuto() },
                 refreshThreshold = 150.dp
             )
 
@@ -244,6 +255,8 @@ fun NotesScreen(
     // Sync choose dialog
     val isSyncDialogOpen by vm.isSyncDialogOpen.collectAsState()
     if (isSyncDialogOpen) {
+        val driveVM = DriveViewModel(vm, Drive(context))
+
         Dialog(onDismissRequest = { vm.openSyncDialog(false) }) {
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -262,13 +275,13 @@ fun NotesScreen(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     TextButton(onClick = {
-                        vm.driveSyncManualThread(false)
+                        driveVM.driveSyncManualThread(false)
                         vm.openSyncDialog(false)
                     }) {
                         Text(text = LocalContext.current.getString(R.string.sync_drive))
                     }
                     TextButton(onClick = {
-                        vm.driveSyncManualThread(true)
+                        driveVM.driveSyncManualThread(true)
                         vm.openSyncDialog(false)
                     }) {
                         Text(text = LocalContext.current.getString(R.string.sync_local))

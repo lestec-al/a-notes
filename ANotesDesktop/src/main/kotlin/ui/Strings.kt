@@ -7,22 +7,21 @@ val search_text_hint = when(Locale.getDefault().language) {
     else -> "Search"
 }
 val sync_collision = when(Locale.getDefault().language) {
-    "be" -> "Знойдзены дзве розныя копіі даных. Выберыце, які з іх выкарыстоўваць"
-    else -> "Two different copies of the data were found. Please choose which one to use"
+    "be" -> "Выяўлены канфлікт у дадзеных. Калі ласка, абярыце, што выкарыстоўваць."
+    else -> "Data collisions were found. Please choose which one to use."
 }
 val sync_drive = when(Locale.getDefault().language) {
     "be" -> "Воблачныя даныя"
     else -> "Drive data"
 }
 val sync_local = when(Locale.getDefault().language) {
-    "be" -> "Лакальныя даныя"
+    "be" -> "Лякальныя даныя"
     else -> "Local data"
 }
 val updated = when(Locale.getDefault().language) {
     "be" -> "Абноўлена"
     else -> "Updated"
 }
-
 val empty_text = when(Locale.getDefault().language) {
     "be" -> "Тут яшчэ пуста"
     else -> "It's empty here yet"

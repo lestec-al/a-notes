@@ -1,4 +1,4 @@
-package com.yurhel.alex.anotes.widget
+package com.yurhel.alex.anotes.ui.widget
 
 import android.annotation.SuppressLint
 import android.content.Context
@@ -24,8 +24,11 @@ import androidx.glance.state.PreferencesGlanceStateDefinition
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
+import androidx.room.Room
 import com.yurhel.alex.anotes.MainActivity
 import com.yurhel.alex.anotes.data.DB
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 class NoteWidget : GlanceAppWidget() {
 
@@ -33,7 +36,16 @@ class NoteWidget : GlanceAppWidget() {
 
     override suspend fun onDelete(context: Context, glanceId: GlanceId) {
         super.onDelete(context, glanceId)
-        DB(context).deleteWidgetEntry(widgetId = GlanceAppWidgetManager(context).getAppWidgetId(glanceId))
+        // Delete widget entry from db
+        withContext(Dispatchers.Default) {
+            val db = Room.databaseBuilder(
+                context,
+                DB::class.java,
+                "notes.db"
+            ).build()
+            db.widgets.deleteById(widgetId = GlanceAppWidgetManager(context).getAppWidgetId(glanceId))
+            db.close()
+        }
     }
 
     @SuppressLint("RestrictedApi", "PrivateResource")
@@ -43,7 +55,7 @@ class NoteWidget : GlanceAppWidget() {
 
         provideContent {
             val noteCreated = currentState<Preferences>()[stringPreferencesKey("noteCreated")] ?: ""
-            val noteText = currentState<Preferences>()[stringPreferencesKey("noteText")] ?: (DB(context).getNote(created = noteCreated)?.text ?: "")
+            val noteText = currentState<Preferences>()[stringPreferencesKey("noteText")] ?: "" // ???
 
             LazyColumn(
                 modifier = GlanceModifier

@@ -35,7 +35,7 @@ fun Screens(
         composable(route = Screens.Notes.name) {
             NotesScreen(
                 vm = vm,
-                onBackButtonClicked = callExit,
+                onBack = callExit,
                 newNoteClicked = {
                     // Open new note
                     vm.editNote = null
@@ -48,7 +48,7 @@ fun Screens(
                         nav.navigate(Screens.Note.name)
                     } else {
                         // Init widget
-                        vm.callInitUpdateWidget(true, vm.widgetIdWhenCreated, note.dateCreate, note.text)
+                        vm.callUpdateWidget(true, vm.widgetIdWhenCreated, note.dateCreate, note.text)
                     }
                 },
             )

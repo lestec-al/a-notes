@@ -1,17 +1,16 @@
 package com.yurhel.alex.anotes.ui
 
-import android.app.Application
+import android.content.Context
 import android.text.format.DateFormat
 import android.text.format.DateUtils
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.text2.input.TextFieldState
-import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.yurhel.alex.anotes.data.DB
-import com.yurhel.alex.anotes.data.Drive
 import com.yurhel.alex.anotes.data.NoteObj
+import com.yurhel.alex.anotes.data.SettingsObj
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,62 +20,75 @@ import java.util.Date
 
 @OptIn(ExperimentalFoundationApi::class)
 class MainViewModel(
-    private val app: Application,
+    val db: DB,
     val callTrySighIn: () -> Unit,
     var widgetIdWhenCreated: Int,
     var noteCreatedDateFromWidget: String,
-    val callInitUpdateWidget: (isInitAction: Boolean, widgetId: Int, noteCreated: String, noteText: String) -> Unit
-) : AndroidViewModel(app) {
+    val callUpdateWidget: (isInitAction: Boolean, widgetId: Int, noteCreated: String, noteText: String) -> Unit
+) : ViewModel() {
 
     class Factory(
-        private val application: Application,
+        private val db: DB,
         private val callTrySighIn: () -> Unit,
         private var widgetIdWhenCreated: Int,
         private var noteCreatedDateFromWidget: String,
         private val callInitUpdateWidget: (isInitAction: Boolean, widgetId: Int, noteCreated: String, noteText: String) -> Unit
     ) : ViewModelProvider.Factory {
         override fun <T : ViewModel> create(modelClass: Class<T>): T =
-            MainViewModel(application, callTrySighIn, widgetIdWhenCreated, noteCreatedDateFromWidget, callInitUpdateWidget) as T
+            MainViewModel(db, callTrySighIn, widgetIdWhenCreated, noteCreatedDateFromWidget, callInitUpdateWidget) as T
     }
 
-    // Init variables
-    private val db = DB(app.applicationContext)
-    private val drive = Drive(app.applicationContext)
     var editNote: NoteObj? = null
 
+    init {
+        // Init settings
+        viewModelScope.launch(Dispatchers.Default) {
+            if (db.settings.getS() == null) db.settings.upsert(SettingsObj())
+        }
+    }
 
     // NOTES SCREEN
     private val _searchText = MutableStateFlow("")
     val searchText = _searchText.asStateFlow()
 
-    private val _appSettingsView = MutableStateFlow(db.getSettings().viewMode)
+    private val _appSettingsView: MutableStateFlow<String> = MutableStateFlow("col").also {
+        viewModelScope.launch(Dispatchers.Default) {
+            it.value = db.settings.getS()?.viewMode ?: ""
+        }
+    }
     val appSettingsView = _appSettingsView.asStateFlow()
 
     fun changeNotesView() {
-        val value = if (db.getSettings().viewMode == "grid") "col" else "grid"
-        _appSettingsView.value = value
-        db.updateViewMode(value)
+        viewModelScope.launch(Dispatchers.Default) {
+            val settings = db.settings.getS()
+            _appSettingsView.value = if (settings != null) {
+                val value = if (settings.viewMode == "grid") "col" else "grid"
+                db.settings.upsert(settings.copy(viewMode = value))
+                value
+            } else {
+                val value = if (_appSettingsView.value == "grid") "col" else "grid"
+                db.settings.upsert(SettingsObj(viewMode = value))
+                value
+            }
+        }
     }
 
-    private val _allNotes = MutableStateFlow(db.getNotes())
+    private val _allNotes: MutableStateFlow<List<NoteObj>> = MutableStateFlow<List<NoteObj>>(emptyList()).also { getDbNotes("") }
     val allNotes = _allNotes.asStateFlow()
 
-    fun updateNotesFromDB(
+    fun getDbNotes(
         query: String,
         sort: String = "dateUpdate", // dateCreate, dateUpdate
         sortArrow: String = "ascending" // descending, ascending
     ) {
-        _searchText.value = query.replace("\n", "")
+        viewModelScope.launch(Dispatchers.Default) {
+            _searchText.value = query.replace("\n", "")
 
-        if (sortArrow == "ascending") {
-            _allNotes.value = db.getNotes(query).sortedBy {
+            _allNotes.value = db.note.getByQuery(query).sortedBy {
                 if (sort == "dateUpdate") it.dateUpdate.toLong()
                 else it.dateCreate.toLong()
-            }.reversed()
-        } else {
-            _allNotes.value = db.getNotes(query).sortedBy {
-                if (sort == "dateUpdate") it.dateUpdate.toLong()
-                else it.dateCreate.toLong()
+            }.let {
+                if (sortArrow == "ascending") it.reversed() else it
             }
         }
     }
@@ -91,70 +103,81 @@ class MainViewModel(
      * Creates new note or opens existed. Also if screen open from widget but note deleted (from DB) - redirect to notes screen.
      **/
     suspend fun prepareNote(redirectToNotesScreen: () -> Unit) {
-        val noteText: String? = if (noteCreatedDateFromWidget != "") {
-            // Note open from widget
-            val noteFromWidget = db.getNote(created = noteCreatedDateFromWidget)
-            if (noteFromWidget == null) {
-                // Note doesn't exist. Open widget settings
-                val widgetId = db.getWidgetIds(noteCreated = noteCreatedDateFromWidget)
-                if (widgetId != null) {
-                    widgetIdWhenCreated = widgetId.toInt()
-                    delay(500L)
-                    redirectToNotesScreen()
+        viewModelScope.launch(Dispatchers.Default) {
+            val noteText: String? = if (noteCreatedDateFromWidget != "") {
+                // Note open from widget
+                val noteFromWidget = db.note.getByCreated(created = noteCreatedDateFromWidget)
+                if (noteFromWidget == null) {
+                    // Note doesn't exist. Open widget settings
+                    val widgetId = db.widgets.getByCreated(noteCreated = noteCreatedDateFromWidget)?.widgetId
+                    if (widgetId != null) {
+                        widgetIdWhenCreated = widgetId.toInt()
+                        delay(500L)
+                        launch(Dispatchers.Main) { redirectToNotesScreen() }
+                    }
+                    null
+                } else {
+                    // Note exist
+                    editNote = noteFromWidget
+                    noteFromWidget.text
                 }
-                null
+            } else if (editNote == null) {
+                // New note is opened. Create new note
+                val date = Date().time.toString()
+                db.note.upsert(NoteObj(text = "", dateCreate = date, dateUpdate = date))
+                // ???
+                db.settings.upsert(db.settings.getS()?.copy(isNotesEdited = true) ?: SettingsObj(isNotesEdited = true))
+                // Get new note
+                editNote = db.note.getLast()
+                ""
             } else {
-                // Note exist
-                editNote = noteFromWidget
-                noteFromWidget.text
+                // Existed note open
+                editNote!!.text
             }
-        } else if (editNote == null) {
-            // New note is opened. Create new note
-            db.createNote("", Date().time.toString())
-            // ???
-            db.updateEdit(true)
-            // Get new note
-            editNote = db.getLastNote()
-            ""
-        } else {
-            // Existed note open
-            editNote!!.text
+            editText.edit {
+                this.append(noteText ?: "")
+                this.placeCursorBeforeCharAt(0)
+            }
+            origNoteText = noteText ?: ""
         }
-        editText.edit {
-            this.append(noteText ?: "")
-            this.placeCursorBeforeCharAt(0)
-        }
-        origNoteText = noteText ?: ""
     }
 
-    fun getNoteDate(): String {
+    fun getNoteDate(context: Context): String {
         return if (editNote != null) {
             val dateLong = editNote!!.dateUpdate.toLong()
-            if (DateUtils.isToday(dateLong)) DateFormat.getTimeFormat(app.baseContext).format(Date(dateLong))
-            else DateFormat.getMediumDateFormat(app.baseContext).format(Date(dateLong))
+            if (DateUtils.isToday(dateLong)) DateFormat.getTimeFormat(context).format(Date(dateLong))
+            else DateFormat.getMediumDateFormat(context).format(Date(dateLong))
         } else {
-            DateFormat.getTimeFormat(app.baseContext).format(Date())
+            DateFormat.getTimeFormat(context).format(Date())
         }
     }
 
     fun deleteNote() {
-        db.deleteNote(editNote?.id ?: -1)
-        editNote = null
-        // ???
-        db.updateEdit(true)
+        viewModelScope.launch(Dispatchers.Default) {
+            if (editNote != null) {
+                db.note.delete(editNote!!)
+                editNote = null
+                // ???
+                db.settings.upsert(db.settings.getS()?.copy(isNotesEdited = true) ?: SettingsObj(isNotesEdited = true))
+            }
+        }
     }
 
     fun saveNote() {
-        // Check if the note exists and if its value has changed
         val edit = editNote
-        if (edit != null && origNoteText != editText.text.toString()) {
-            // Update note
-            db.updateNote(edit.id, editText.text.toString(), Date().time.toString())
-            // ???
-            db.updateEdit(true)
-            // Update widget if it exist
-            val widgetId = db.getWidgetIds(noteCreated = edit.dateCreate)
-            if (widgetId != null) callInitUpdateWidget(false, widgetId.toInt(), edit.dateCreate, editText.text.toString())
+        val editTextStr = editText.text.toString()
+
+        viewModelScope.launch(Dispatchers.Default) {
+            // Check if the note exists and if its value has changed
+            if (edit != null && origNoteText != editTextStr) {
+                // Update note
+                db.note.upsert(edit.copy(text = editTextStr, dateUpdate = Date().time.toString()))
+                // ???
+                db.settings.upsert(db.settings.getS()?.copy(isNotesEdited = true) ?: SettingsObj(isNotesEdited = true))
+                // Update widget if it exist
+                val widgetId = db.widgets.getByCreated(noteCreated = edit.dateCreate)?.widgetId
+                if (widgetId != null) callUpdateWidget(false, widgetId.toInt(), edit.dateCreate, editTextStr)
+            }
         }
     }
 
@@ -162,80 +185,13 @@ class MainViewModel(
     // DRIVE SYNC
     private val _isSyncNow = MutableStateFlow(false)
     val isSyncNow = _isSyncNow.asStateFlow()
+    fun changeSyncNow(isSyncNow: Boolean) {
+        _isSyncNow.value = isSyncNow
+    }
 
     private val _isSyncDialogOpen = MutableStateFlow(false)
     val isSyncDialogOpen = _isSyncDialogOpen.asStateFlow()
     fun openSyncDialog(isOpen: Boolean) {
         _isSyncDialogOpen.value = isOpen
-    }
-
-    fun driveSyncAuto(
-        before: () -> Unit = { _isSyncNow.value = true },
-        after: () -> Unit = { _isSyncNow.value = false }
-    ) {
-        viewModelScope.launch(Dispatchers.Default) {
-            try {
-                before()
-                callTrySighIn()
-
-                val appSettings = db.getSettings()
-                val data = drive.getData()
-                val driveData = data.first
-                val dataModifiedTime = data.second
-
-                if (!appSettings.isNotesEdited) {
-                    // Data not edited
-                    if (dataModifiedTime != null) {
-                        // Update local
-                        db.importDB(driveData.toString())
-                        db.updateReceived(dataModifiedTime)
-                        updateNotesFromDB("")
-                    } else {
-                        // If drive empty -> send data
-                        driveSyncManual(true)
-                    }
-                } else {
-                    // Data edited
-                    if (dataModifiedTime == appSettings.dataReceivedDate || dataModifiedTime == null) {
-                        // Send data
-                        driveSyncManual(true)
-                    } else {
-                        // Get user to choose
-                        openSyncDialog(true)
-                    }
-                }
-            } catch (_: Exception) {
-            } finally {
-                after()
-            }
-        }
-    }
-
-    fun driveSyncManualThread(
-        isExport: Boolean,
-        before: () -> Unit = { _isSyncNow.value = true },
-        after: () -> Unit = { _isSyncNow.value = false }
-    ) {
-        viewModelScope.launch(Dispatchers.Default) {
-            before()
-            driveSyncManual(isExport)
-            after()
-        }
-    }
-
-    private fun driveSyncManual(isExport: Boolean) {
-        if (isExport) {
-            // Send data
-            drive.sendData(db.exportDB().toString())
-            db.updateEdit(false)
-        }
-        // Get data
-        val data = drive.getData()
-        if (!isExport && data.second != null) {
-            // Update local
-            db.importDB(data.first.toString())
-            updateNotesFromDB("")
-        }
-        db.updateReceived(data.second)
     }
 }

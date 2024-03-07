@@ -1,4 +1,4 @@
-package com.yurhel.alex.anotes.widget
+package com.yurhel.alex.anotes.ui.widget
 
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.GlanceAppWidgetReceiver

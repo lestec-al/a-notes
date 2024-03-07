@@ -23,7 +23,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -45,13 +44,15 @@ fun NoteScreen(
     vm: MainViewModel,
     onBack: (isActionDel: Boolean, isForceRedirect: Boolean) -> Unit
 ) {
-    LaunchedEffect(Unit) { vm.prepareNote { onBack(false, true) } }
+    LaunchedEffect(Unit) {
+        if (vm.editText.text.isEmpty()) vm.prepareNote { onBack(false, true) }
+    }
     BackHandler { onBack(false, false) }
 
-    val editText = remember { vm.editText }
     val scroll = rememberScrollState()
     val coroutineScope = rememberCoroutineScope()
 
+    val context = LocalContext.current
     var globalViewHeight = 0f
 
     Surface(modifier = Modifier.fillMaxSize()) {
@@ -74,7 +75,7 @@ fun NoteScreen(
                             .padding(0.dp, 0.dp, 15.dp, 10.dp)
                     ) {
                         Text(
-                            text = "${LocalContext.current.getString(R.string.updated)}: ${vm.getNoteDate()}",
+                            text = "${context.getString(R.string.updated)}: ${vm.getNoteDate(context)}",
                             style = MaterialTheme.typography.labelSmall
                         )
                     }
@@ -83,7 +84,7 @@ fun NoteScreen(
         ) { padding ->
             // Edit text field
             BasicTextField2(
-                state = editText,
+                state = vm.editText,
                 keyboardOptions = KeyboardOptions(
                     capitalization = KeyboardCapitalization.Sentences,
                     keyboardType = KeyboardType.Text,
@@ -96,7 +97,7 @@ fun NoteScreen(
                 onTextLayout = {
                     coroutineScope.launch {
                         try {
-                            val cursor = it()?.getCursorRect(editText.text.selectionInChars.end)
+                            val cursor = it()?.getCursorRect(vm.editText.text.selectionInChars.end)
                             if (cursor != null) {
                                 val bottomOffset = scroll.value + globalViewHeight
                                 if (cursor.top < scroll.value) scroll.scrollTo(cursor.top.toInt())

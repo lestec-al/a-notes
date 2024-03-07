@@ -22,23 +22,18 @@ class MainViewModel {
     private val _allNotes = MutableStateFlow(db.getNotes())
     val allNotes = _allNotes.asStateFlow()
 
-    fun updateNotesFromDB(
+    fun getDbNotes(
         query: String,
         sort: String = "dateUpdate", // dateCreate, dateUpdate
         sortArrow: String = "ascending" // descending, ascending
     ) {
         _searchText.value = query.replace("\n", "")
 
-        if (sortArrow == "ascending") {
-            _allNotes.value = db.getNotes(query).sortedBy {
-                if (sort == "dateUpdate") it.dateUpdate.toLong()
-                else it.dateCreate.toLong()
-            }.reversed()
-        } else {
-            _allNotes.value = db.getNotes(query).sortedBy {
-                if (sort == "dateUpdate") it.dateUpdate.toLong()
-                else it.dateCreate.toLong()
-            }
+        _allNotes.value = db.getNotes(query).sortedBy {
+            if (sort == "dateUpdate") it.dateUpdate.toLong()
+            else it.dateCreate.toLong()
+        }.let {
+            if (sortArrow == "ascending") it.reversed() else it
         }
     }
 
@@ -145,7 +140,7 @@ class MainViewModel {
                     // Update local
                     db.importDB(driveData.toString())
                     db.updateReceived(dataModifiedTime)
-                    updateNotesFromDB("")
+                    getDbNotes("")
                 } else {
                     // If drive empty -> send data
                     driveSyncManual(isExport = true)
@@ -190,7 +185,7 @@ class MainViewModel {
         if (!isExport && data.first.length() > 0) {
             // Update local
             db.importDB(data.first.toString())
-            updateNotesFromDB("")
+            getDbNotes("")
         }
         db.updateReceived(data.second)
     }

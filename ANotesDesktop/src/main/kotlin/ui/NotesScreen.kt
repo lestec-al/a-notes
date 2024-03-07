@@ -36,7 +36,7 @@ fun NotesScreen(
     newNoteClicked: () -> Unit,
     openNoteClicked: (NoteObj) -> Unit
 ) {
-    vm.updateNotesFromDB("")
+    vm.getDbNotes("")
     val searchText by vm.searchText.collectAsState()
     val allNotes: List<NoteObj> by vm.allNotes.collectAsState()
     val isSyncNow by vm.isSyncNow.collectAsState()
@@ -78,7 +78,7 @@ fun NotesScreen(
                             // Edit text
                             BasicTextField(
                                 value = searchText,
-                                onValueChange = { vm.updateNotesFromDB(it) },
+                                onValueChange = { vm.getDbNotes(it) },
                                 modifier = Modifier
                                     .padding(10.dp, 0.dp)
                                     .fillMaxWidth(),

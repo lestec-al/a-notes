@@ -18,36 +18,32 @@ class DB {
     }
     private val driver = tryInitDB()
 
-    // NOTES
+    // NOTES DAO
     fun createNote(text: String, date: String) {
-        val db = Database(driver)
-        db.notesQueries.insert(text = text, dateUpdate = date, dateCreate = date)
+        Database(driver).notesQueries.insert(text = text, dateUpdate = date, dateCreate = date)
     }
 
     fun updateNote(id: Int, text: String, date: String) {
-        val db = Database(driver)
-        db.notesQueries.update(text, date, id.toLong())
+        Database(driver).notesQueries.update(text, date, id.toLong())
     }
 
     fun deleteNote(id: Int) {
-        val db = Database(driver)
-        db.notesQueries.delete(id.toLong())
+        Database(driver).notesQueries.delete(id.toLong())
     }
 
-    fun getNote(id: Int): NoteObj? {
-        val db = Database(driver)
-        val result = db.notesQueries.selectOne(id.toLong()).executeAsOneOrNull()
-        return if (result != null) {
-            NoteObj(
-                result.id.toInt(),
-                result.text ?: "",
-                result.dateUpdate ?: "",
-                result.dateCreate ?: ""
-            )
-        } else {
-            null
-        }
-    }
+//    fun getNote(id: Int): NoteObj? {
+//        val result = Database(driver).notesQueries.selectOne(id.toLong()).executeAsOneOrNull()
+//        return if (result != null) {
+//            NoteObj(
+//                result.id.toInt(),
+//                result.text ?: "",
+//                result.dateUpdate ?: "",
+//                result.dateCreate ?: ""
+//            )
+//        } else {
+//            null
+//        }
+//    }
 
     fun getLastNote(): NoteObj? {
         val notes = getNotes()
@@ -56,8 +52,7 @@ class DB {
 
     fun getNotes(query: String = ""): List<NoteObj> {
         val list = mutableListOf<NoteObj>()
-        val db = Database(driver)
-        val result = db.notesQueries.selectAll().executeAsList()
+        val result = Database(driver).notesQueries.selectAll().executeAsList()
         for (i in result) {
             if (query == "" || i.text?.lowercase()?.contains(query.lowercase()) == true ) {
                 list.add(
@@ -73,20 +68,17 @@ class DB {
         return list
     }
 
-    // SETTINGS
+    // SETTINGS DAO
     fun updateReceived(dataReceivedDate: Long?) {
-        val db = Database(driver)
-        db.settingsQueries.updateReceived("${dataReceivedDate ?: ""}")
+        Database(driver).settingsQueries.updateReceived("${dataReceivedDate ?: ""}")
     }
 
     fun updateEdit(isNotesEdited: Boolean) {
-        val db = Database(driver)
-        db.settingsQueries.updateEdit(if (isNotesEdited) 1 else 0)
+        Database(driver).settingsQueries.updateEdit(if (isNotesEdited) 1 else 0)
     }
 
     fun getSettings(): SettingsObj {
-        val db = Database(driver)
-        val result = db.settingsQueries.selectAll().executeAsList()[0]
+        val result = Database(driver).settingsQueries.selectAll().executeAsList()[0]
 
         var dataReceivedDate: Long? = null
         val x = result.dataReceivedDate
@@ -94,8 +86,7 @@ class DB {
 
         return SettingsObj(
             dataReceivedDate,
-            result.isNotesEdited?.toInt() == 1,
-            result.viewMode ?: ""
+            result.isNotesEdited?.toInt() == 1
         )
     }
 
@@ -121,9 +112,9 @@ class DB {
     fun importDB(data: String): Boolean {
         //val oldData = exportDB()
         try {
-            cleanDatabase()
-            // Loop data
             val db = Database(driver)
+            db.notesQueries.deleteAll()
+            // Loop data
             val jsonData = JSONArray(data)
             for (i in 0..<jsonData.length()) {
                 val obj = jsonData.getJSONObject(i)
@@ -136,14 +127,8 @@ class DB {
             return true
         } catch (e: Exception) {
             e.printStackTrace()
-            //cleanDatabase()
             //importDB(oldData.toString())
             return false
         }
-    }
-
-    private fun cleanDatabase() {
-        val db = Database(driver)
-        db.notesQueries.deleteAll()
     }
 }

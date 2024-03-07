@@ -12,15 +12,17 @@ import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.glance.appwidget.state.updateAppWidgetState
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.rememberNavController
+import androidx.room.Room
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.Scopes
 import com.google.android.gms.common.api.Scope
 import com.yurhel.alex.anotes.data.DB
+import com.yurhel.alex.anotes.data.WidgetObj
 import com.yurhel.alex.anotes.ui.MainViewModel
 import com.yurhel.alex.anotes.ui.Screens
 import com.yurhel.alex.anotes.ui.theme.ANotesTheme
-import com.yurhel.alex.anotes.widget.NoteWidget
+import com.yurhel.alex.anotes.ui.widget.NoteWidget
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
@@ -28,13 +30,19 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        val db = Room.databaseBuilder(
+            applicationContext,
+            DB::class.java,
+            "notes.db"
+        ).build()
+
         // Compose View
         setContent {
             // Init viewModel
             val intent = intent
             val vm: MainViewModel by viewModels {
                 MainViewModel.Factory(
-                    application = application,
+                    db = db,
                     callTrySighIn = {
                         // Google auth
                         if (GoogleSignIn.getLastSignedInAccount(this) == null) {
@@ -62,9 +70,8 @@ class MainActivity : ComponentActivity() {
                             NoteWidget().update(this@MainActivity, glanceId)
                             // Initialize widget
                             if (isInitAction) {
-                                // Log widget to DB, get note
-                                val db = DB(this@MainActivity)
-                                db.createWidgetEntry(widgetId, noteCreated)
+                                // Log widget to DB
+                                db.widgets.insert(WidgetObj(widgetId = widgetId, noteCreated = noteCreated))
                                 // Create the return intent, set it with the activity result, finish the activity
                                 setResult(RESULT_OK, Intent())
                                 finish()
