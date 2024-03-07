@@ -15,7 +15,7 @@
 - Android Studio
 - Kotlin
 - Jetpack Compose (with Navigation)
-- SQLite (through SQLiteOpenHelper)
+- SQLite (through Room)
 - Google Cloud with Google Drive API (you need to create and configure your own Google Cloud Project)
 
 ## Tech Stack PC
