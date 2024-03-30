@@ -26,7 +26,7 @@ import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
 import androidx.room.Room
 import com.yurhel.alex.anotes.MainActivity
-import com.yurhel.alex.anotes.data.DB
+import com.yurhel.alex.anotes.data.local.DB
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -43,7 +43,7 @@ class NoteWidget : GlanceAppWidget() {
                 DB::class.java,
                 "notes.db"
             ).build()
-            db.widgets.deleteById(widgetId = GlanceAppWidgetManager(context).getAppWidgetId(glanceId))
+            db.widget.deleteById(widgetId = GlanceAppWidgetManager(context).getAppWidgetId(glanceId))
             db.close()
         }
     }

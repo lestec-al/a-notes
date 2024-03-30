@@ -41,7 +41,7 @@ dependencies {
 
 compose.desktop {
     application {
-        mainClass = "MainKt"
+        mainClass = "com.yurhel.alex.anotes.MainKt"
 
         nativeDistributions {
             includeAllModules = true

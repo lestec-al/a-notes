@@ -1,0 +1,38 @@
+CREATE TABLE statusesTable (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT,
+    color INTEGER,
+    note INTEGER
+);
+
+insert:
+INSERT INTO statusesTable(title, color, note)
+VALUES (?, ?, ?);
+
+insertWithId:
+INSERT INTO statusesTable(id, title, color, note)
+VALUES (?, ?, ?, ?);
+
+update:
+UPDATE statusesTable SET title = ?, color = ?, note = ?
+WHERE id = ?;
+
+
+delete:
+DELETE FROM statusesTable
+WHERE id = ?;
+
+deleteAll:
+DELETE FROM statusesTable;
+
+deleteManyByNote:
+DELETE FROM statusesTable
+WHERE note = ?;
+
+
+getAll:
+SELECT * FROM statusesTable;
+
+getManyByNote:
+SELECT * FROM statusesTable
+WHERE note = ?;

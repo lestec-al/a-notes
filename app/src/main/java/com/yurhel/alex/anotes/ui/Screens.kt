@@ -1,30 +1,27 @@
 package com.yurhel.alex.anotes.ui
 
-import android.appwidget.AppWidgetManager
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.text2.input.clearText
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 
-enum class Screens { Notes, Note }
-
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun Screens(
     vm: MainViewModel,
-    callExit: () -> Unit,
     nav: NavHostController
 ) {
 
     NavHost(
         navController = nav,
-        startDestination = if (vm.noteCreatedDateFromWidget != "") Screens.Note.name else Screens.Notes.name,
+        startDestination = if (vm.noteCreatedDateFromWidget != "") {
+            ScreenObj.Note.name
+        } else {
+            ScreenObj.Main.name
+        },
         enterTransition = { EnterTransition.None },
         exitTransition = { ExitTransition.None },
         popEnterTransition = { EnterTransition.None },
@@ -32,39 +29,49 @@ fun Screens(
         modifier = Modifier.fillMaxSize()
     ) {
 
-        composable(route = Screens.Notes.name) {
-            NotesScreen(
+        composable(route = ScreenObj.Main.name) {
+            MainScreen(
                 vm = vm,
-                onBack = callExit,
-                newNoteClicked = {
-                    // Open new note
-                    vm.editNote = null
-                    nav.navigate(Screens.Note.name)
-                },
-                openNoteClicked = { note ->
-                    if (vm.widgetIdWhenCreated == AppWidgetManager.INVALID_APPWIDGET_ID) {
-                        // Open existing note
-                        vm.editNote = note
-                        nav.navigate(Screens.Note.name)
+                openNoteClicked = {
+                    if (vm.selectedNote.value != null && vm.selectedNote.value!!.withTasks) {
+                        vm.updateTasksData(withStatuses = true, withNoteSave = false)
+                        nav.navigate(ScreenObj.Tasks.name)
                     } else {
-                        // Init widget
-                        vm.callUpdateWidget(true, vm.widgetIdWhenCreated, note.dateCreate, note.text)
+                        nav.navigate(ScreenObj.Note.name)
                     }
-                },
+                }
             )
         }
 
-        composable(route = Screens.Note.name) {
+        composable(route = ScreenObj.Note.name) {
             NoteScreen(
                 vm = vm,
-                onBack = { isActionDel, isForceRedirect ->
+                onBack = { isForceRedirect ->
                     if (isForceRedirect) {
-                        nav.navigate(Screens.Notes.name)
+                        nav.navigate(ScreenObj.Main.name)
                     } else {
-                        if (isActionDel) vm.deleteNote() else vm.saveNote()
-                        vm.editText.clearText() // clear editText for the next note appear correctly
-                        if (vm.noteCreatedDateFromWidget != "") callExit() else nav.navigate(Screens.Notes.name)
+                        if (vm.noteCreatedDateFromWidget != "") {
+                            vm.callExit()
+                        } else {
+                            nav.navigate(ScreenObj.Main.name)
+                        }
                     }
+                },
+                toTasks = {
+                    vm.updateTasksData(withStatuses = true, withNoteSave = false)
+                    nav.navigate(ScreenObj.Tasks.name)
+                }
+            )
+        }
+
+        composable(route = ScreenObj.Tasks.name) {
+            TasksScreen(
+                vm = vm,
+                onBack = {
+                    nav.navigate(ScreenObj.Main.name)
+                },
+                toNote = {
+                    nav.navigate(ScreenObj.Note.name)
                 }
             )
         }

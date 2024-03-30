@@ -2,52 +2,63 @@ package com.yurhel.alex.anotes.ui
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.gestures.scrollBy
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text2.BasicTextField2
+import androidx.compose.foundation.text2.input.clearText
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material3.BottomAppBar
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.layout.boundsInWindow
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.yurhel.alex.anotes.R
+import com.yurhel.alex.anotes.ui.components.Tooltip
+import com.yurhel.alex.anotes.ui.components.TooltipText
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun NoteScreen(
     vm: MainViewModel,
-    onBack: (isActionDel: Boolean, isForceRedirect: Boolean) -> Unit
+    onBack: (isForceRedirect: Boolean) -> Unit,
+    toTasks: () -> Unit
 ) {
     LaunchedEffect(Unit) {
-        if (vm.editText.text.isEmpty()) vm.prepareNote { onBack(false, true) }
+        if (vm.editText.text.isEmpty()) {
+            vm.prepareNote(redirectToNotesScreen = { onBack(true) })
+        }
     }
-    BackHandler { onBack(false, false) }
+
+    BackHandler {
+        vm.saveNote()
+        vm.editText.clearText()
+        onBack(false)
+    }
 
     val scroll = rememberScrollState()
     val coroutineScope = rememberCoroutineScope()
@@ -60,25 +71,49 @@ fun NoteScreen(
             bottomBar = {
                 BottomAppBar(modifier = Modifier.height(50.dp)) {
                     // Delete note
-                    IconButton(
-                        modifier = Modifier.padding(5.dp, 5.dp, 5.dp, 10.dp),
-                        onClick = { onBack(true, false) }
+                    val deleteNoteText = context.getString(R.string.delete) + " " + context.getString(R.string.note)
+                    Tooltip(
+                        tooltipText = deleteNoteText
                     ) {
-                        Icon(Icons.Outlined.Delete, "")
+                        IconButton(
+                            modifier = Modifier.padding(5.dp, 5.dp, 5.dp, 10.dp),
+                            onClick = {
+                                vm.deleteNote()
+                                vm.editText.clearText()
+                                onBack(false)
+                            }
+                        ) {
+                            Icon(Icons.Outlined.Delete, deleteNoteText)
+                        }
+                    }
+
+                    // Open tasks
+                    val editTasksText = context.getString(R.string.edit_tasks)
+                    Tooltip(
+                        tooltipText = editTasksText
+                    ) {
+                        IconButton(
+                            modifier = Modifier.padding(5.dp, 5.dp, 5.dp, 10.dp),
+                            onClick = {
+                                vm.saveNote(true)
+                                vm.editText.clearText()
+                                toTasks()
+                            }
+                        ) {
+                            Image(
+                                painter = painterResource(R.drawable.ic_tasks),
+                                contentDescription = editTasksText,
+                                colorFilter = ColorFilter.tint(LocalContentColor.current)
+                            )
+                        }
                     }
 
                     // Note updated text
-                    Box(
-                        contentAlignment = Alignment.CenterEnd,
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(0.dp, 0.dp, 15.dp, 10.dp)
-                    ) {
-                        Text(
-                            text = "${context.getString(R.string.updated)}: ${vm.getNoteDate(context)}",
-                            style = MaterialTheme.typography.labelSmall
-                        )
-                    }
+                    TooltipText(
+                        text = "${context.getString(R.string.updated)}: ${vm.getNoteDate(context)}",
+                        tooltipText = "${context.getString(R.string.created)}: ${vm.getNoteDate(context, true)}",
+                        coroutineScope = coroutineScope
+                    )
                 }
             }
         ) { padding ->

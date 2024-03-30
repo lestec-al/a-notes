@@ -1,0 +1,52 @@
+CREATE TABLE tasksTable (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    position INTEGER,
+    description TEXT,
+    status INTEGER,
+    note INTEGER,
+    dateCreate TEXT,
+    dateUpdate TEXT,
+    dateUpdateStatus TEXT
+);
+
+insert:
+INSERT INTO tasksTable(position, description, status, note, dateCreate, dateUpdate, dateUpdateStatus)
+VALUES (?, ?, ?, ?, ?, ?, ?);
+
+insertWithId:
+INSERT INTO tasksTable(id, position, description, status, note, dateCreate, dateUpdate, dateUpdateStatus)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+
+update:
+UPDATE tasksTable SET position = ?, description = ?, status = ?, dateUpdate = ?, dateUpdateStatus = ?
+WHERE id = ?;
+
+
+delete:
+DELETE FROM tasksTable WHERE id = ?;
+
+deleteAll:
+DELETE FROM tasksTable;
+
+deleteManyByStatus:
+DELETE FROM tasksTable WHERE status = ?;
+
+deleteManyByNote:
+DELETE FROM tasksTable WHERE note = ?;
+
+
+getManyByNoteAndStatus:
+SELECT * FROM tasksTable WHERE note = ? AND status = ? ORDER BY position ASC;
+
+getManyByNote:
+SELECT * FROM tasksTable WHERE note = ? ORDER BY position ASC;
+
+getAll:
+SELECT * FROM tasksTable;
+
+
+getLast:
+SELECT * FROM tasksTable ORDER BY id DESC LIMIT 1;
+
+getByPosition:
+SELECT * FROM tasksTable WHERE position = ?;

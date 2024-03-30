@@ -17,8 +17,8 @@ import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.Scopes
 import com.google.android.gms.common.api.Scope
-import com.yurhel.alex.anotes.data.DB
-import com.yurhel.alex.anotes.data.WidgetObj
+import com.yurhel.alex.anotes.data.local.DB
+import com.yurhel.alex.anotes.data.local.obj.WidgetObj
 import com.yurhel.alex.anotes.ui.MainViewModel
 import com.yurhel.alex.anotes.ui.Screens
 import com.yurhel.alex.anotes.ui.theme.ANotesTheme
@@ -36,13 +36,15 @@ class MainActivity : ComponentActivity() {
             "notes.db"
         ).build()
 
-        // Compose View
         setContent {
             // Init viewModel
             val intent = intent
             val vm: MainViewModel by viewModels {
                 MainViewModel.Factory(
                     db = db,
+                    callExit = {
+                        finishAffinity()
+                    },
                     callTrySighIn = {
                         // Google auth
                         if (GoogleSignIn.getLastSignedInAccount(this) == null) {
@@ -71,7 +73,7 @@ class MainActivity : ComponentActivity() {
                             // Initialize widget
                             if (isInitAction) {
                                 // Log widget to DB
-                                db.widgets.insert(WidgetObj(widgetId = widgetId, noteCreated = noteCreated))
+                                db.widget.insert(WidgetObj(widgetId = widgetId, noteCreated = noteCreated))
                                 // Create the return intent, set it with the activity result, finish the activity
                                 setResult(RESULT_OK, Intent())
                                 finish()
@@ -81,7 +83,9 @@ class MainActivity : ComponentActivity() {
                 )
             }
 
-            ANotesTheme { Screens(vm = vm, callExit = { finishAffinity() }, nav = rememberNavController()) }
+            ANotesTheme {
+                Screens(vm = vm, nav = rememberNavController())
+            }
         }
     }
 

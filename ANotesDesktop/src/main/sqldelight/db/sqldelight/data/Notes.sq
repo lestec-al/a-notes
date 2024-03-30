@@ -1,18 +1,29 @@
 CREATE TABLE notesTable (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
+    withTasks INTEGER,
     text TEXT,
     dateUpdate TEXT,
     dateCreate TEXT
 );
 
-selectAll:
+getLast:
+SELECT * FROM notesTable ORDER BY id DESC LIMIT 1;
+
+getAll:
 SELECT * FROM notesTable;
 
-selectOne:
+getOne:
 SELECT * FROM notesTable WHERE id = ?;
 
+
 insert:
-INSERT INTO notesTable(text, dateUpdate, dateCreate) VALUES (?, ?, ?);
+INSERT INTO notesTable(withTasks, text, dateUpdate, dateCreate)
+VALUES (?, ?, ?, ?);
+
+insertWithId:
+INSERT INTO notesTable(id, withTasks, text, dateUpdate, dateCreate)
+VALUES (?, ?, ?, ?, ?);
+
 
 deleteAll:
 DELETE FROM notesTable;
@@ -20,5 +31,7 @@ DELETE FROM notesTable;
 delete:
 DELETE FROM notesTable WHERE id = ?;
 
+
 update:
-UPDATE notesTable SET text = ?, dateUpdate = ? WHERE id = ?;
+UPDATE notesTable SET withTasks = ?, text = ?, dateUpdate = ?
+WHERE id = ?;

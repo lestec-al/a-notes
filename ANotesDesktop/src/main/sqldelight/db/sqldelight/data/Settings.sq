@@ -5,7 +5,7 @@ CREATE TABLE settingsTable (
     viewMode TEXT
 );
 
-INSERT INTO settingsTable (dataReceivedDate, isNotesEdited, viewMode) VALUES ('', 0, 'linear');
+INSERT INTO settingsTable (dataReceivedDate, isNotesEdited) VALUES ('', 0);
 
 selectAll:
 SELECT * FROM settingsTable;
