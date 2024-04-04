@@ -374,13 +374,9 @@ class MainViewModel(
                     }
                     val targetTask = db.task.getByPosition(targetPos)
                     if (targetTask != null) {
-                        db.withTransaction {
-                            db.task.upsert(targetTask.copy(position = event.task.position))
-                            db.task.upsert(event.task.copy(position = targetPos))
-                        }
-                    } else {
-                        db.task.upsert(event.task.copy(position = targetPos))
+                        db.task.upsert(targetTask.copy(position = event.task.position))
                     }
+                    db.task.upsert(event.task.copy(position = targetPos))
                     updateTasksData(false)
                 }
             }

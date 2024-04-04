@@ -6,6 +6,7 @@
 
 ## Features
 - Manage notes
+- Manage tasks (test stage, may have a bugs)
 - Cloud sync of notes
 - One note widget (for Android)
 - Light and Dark theme
