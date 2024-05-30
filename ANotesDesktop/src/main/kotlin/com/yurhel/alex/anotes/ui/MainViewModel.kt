@@ -14,7 +14,7 @@ import java.util.Date
 class MainViewModel {
 
     // Init variables
-    private val db = DB()
+    val db = DB()
     private val drive = Drive()
     private val res = Res()
 
@@ -249,10 +249,9 @@ class MainViewModel {
             }
             is Event.ChangePos -> {
                 // Is this good enough ???
-                val targetPos = if (event.pos == Pos.Prev) {
-                    event.task.position - 1
-                } else {
-                    event.task.position + 1
+                val targetPos = when(event.pos) {
+                    Pos.Prev -> event.task.position - 1
+                    Pos.Next -> event.task.position + 1
                 }
                 val targetTask = db.getByPositionTask(targetPos)
                 if (targetTask != null) {

@@ -4,6 +4,7 @@
     <string name="widget_description">Віджэт для адной нататкі</string>
     <string name="search_text_hint">Пошук</string>
     <string name="sync_collision">Выяўлены канфлікт у дадзеных. Калі ласка, абярыце, што выкарыстоўваць.</string>
+    <string name="sync_drive_action">Сынхранізацыя з воблакам</string>
     <string name="sync_drive">Воблачныя даныя</string>
     <string name="sync_local">Лякальныя даныя</string>
     <string name="empty_text">Тут яшчэ пуста</string>

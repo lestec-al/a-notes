@@ -46,16 +46,8 @@ fun Screens(
         composable(route = ScreenObj.Note.name) {
             NoteScreen(
                 vm = vm,
-                onBack = { isForceRedirect ->
-                    if (isForceRedirect) {
-                        nav.navigate(ScreenObj.Main.name)
-                    } else {
-                        if (vm.noteCreatedDateFromWidget != "") {
-                            vm.callExit()
-                        } else {
-                            nav.navigate(ScreenObj.Main.name)
-                        }
-                    }
+                onBack = {
+                    nav.navigate(ScreenObj.Main.name)
                 },
                 toTasks = {
                     vm.updateTasksData(withStatuses = true, withNoteSave = false)

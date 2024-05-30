@@ -59,7 +59,7 @@ class Drive(private val context: Context) {
     fun getData(): DriveObj {
         var modifiedTime: Long? = null
         var data = JSONArray()
-        try {
+        val isServiceOK = try {
             tryConnectToDrive()
             if (service != null) {
                 // Get files
@@ -73,10 +73,11 @@ class Drive(private val context: Context) {
                     data = JSONArray(outputStream.toString())
                 }
             }
+            true
         } catch (e: Exception) {
-            e.printStackTrace()
+            false
         }
-        return DriveObj(data, modifiedTime)
+        return DriveObj(data, modifiedTime, isServiceOK)
     }
 
     fun sendData(localData: String) {

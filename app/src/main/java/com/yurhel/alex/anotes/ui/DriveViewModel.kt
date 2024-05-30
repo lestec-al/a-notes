@@ -36,27 +36,29 @@ class DriveViewModel(
                 }
                 val data = drive.getData()
 
-                if (!appSettings.isNotesEdited) {
-                    // Data not edited
-                    if (data.modifiedTime != null) {
-                        // Update local
-                        importDB(data.data.toString())
-                        vm.db.setting.upsert(
-                            vm.db.setting.getS()?.copy(dataReceivedDate = data.modifiedTime) ?: SettingsObj(dataReceivedDate = data.modifiedTime)
-                        )
-                        vm.getDbNotes("")
+                if (data.isServiceOK) {
+                    if (!appSettings.isNotesEdited) {
+                        // Data not edited
+                        if (data.modifiedTime != null) {
+                            // Update local
+                            importDB(data.data.toString())
+                            vm.db.setting.upsert(
+                                vm.db.setting.getS()?.copy(dataReceivedDate = data.modifiedTime) ?: SettingsObj(dataReceivedDate = data.modifiedTime)
+                            )
+                            vm.getDbNotes("")
+                        } else {
+                            // If drive empty -> send data
+                            driveSyncManual(true)
+                        }
                     } else {
-                        // If drive empty -> send data
-                        driveSyncManual(true)
-                    }
-                } else {
-                    // Data edited
-                    if (data.modifiedTime == appSettings.dataReceivedDate || data.modifiedTime == null) {
-                        // Send data
-                        driveSyncManual(true)
-                    } else {
-                        // Get user to choose
-                        vm.openSyncDialog(true)
+                        // Data edited
+                        if (data.modifiedTime == appSettings.dataReceivedDate || data.modifiedTime == null) {
+                            // Send data
+                            driveSyncManual(true)
+                        } else {
+                            // Get user to choose
+                            vm.openSyncDialog(true)
+                        }
                     }
                 }
             } catch (_: Exception) {

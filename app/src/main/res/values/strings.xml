@@ -4,6 +4,7 @@
     <string name="widget_description">One note widget</string>
     <string name="search_text_hint">Search</string>
     <string name="sync_collision">Data collisions were found. Please choose which one to use.</string>
+    <string name="sync_drive_action">Sync with cloud</string>
     <string name="sync_drive">Drive data</string>
     <string name="sync_local">Local data</string>
     <string name="empty_text">It\'s empty here yet</string>

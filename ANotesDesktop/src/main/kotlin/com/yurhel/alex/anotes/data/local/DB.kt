@@ -1,5 +1,6 @@
 package com.yurhel.alex.anotes.data.local
 
+import androidx.compose.ui.unit.dp
 import app.cash.sqldelight.db.SqlDriver
 import app.cash.sqldelight.driver.jdbc.sqlite.JdbcSqliteDriver
 import db.Database
@@ -75,6 +76,32 @@ class DB {
             }
         }
         return list
+    }
+
+
+    // SCREENS DAO
+    fun getScreen(): WinScreen {
+        val result = Database(driver).settingsQueries.getScreen().executeAsOne()
+        return WinScreen(
+            width = result.screenWidth?.toInt()?.dp ?: 600.dp,
+            height = result.screenHeight?.toInt()?.dp ?: 600.dp,
+            posX = result.screenPosX?.toInt()?.dp ?: 20.dp,
+            posY = result.screenPosY?.toInt()?.dp ?: 20.dp
+        )
+    }
+
+    fun setScreen(
+        width: Long,
+        height: Long,
+        posX: Long,
+        posY: Long
+    ) {
+        Database(driver).settingsQueries.setScreen(
+            screenWidth = width,
+            screenHeight = height,
+            screenPosX = posX,
+            screenPosY = posY
+        )
     }
 
 

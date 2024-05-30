@@ -45,19 +45,19 @@ import kotlinx.coroutines.launch
 @Composable
 fun NoteScreen(
     vm: MainViewModel,
-    onBack: (isForceRedirect: Boolean) -> Unit,
+    onBack: () -> Unit,
     toTasks: () -> Unit
 ) {
     LaunchedEffect(Unit) {
         if (vm.editText.text.isEmpty()) {
-            vm.prepareNote(redirectToNotesScreen = { onBack(true) })
+            vm.prepareNote(redirectToNotesScreen = onBack)
         }
     }
 
     BackHandler {
         vm.saveNote()
         vm.editText.clearText()
-        onBack(false)
+        onBack()
     }
 
     val scroll = rememberScrollState()
@@ -80,7 +80,7 @@ fun NoteScreen(
                             onClick = {
                                 vm.deleteNote()
                                 vm.editText.clearText()
-                                onBack(false)
+                                onBack()
                             }
                         ) {
                             Icon(Icons.Outlined.Delete, deleteNoteText)

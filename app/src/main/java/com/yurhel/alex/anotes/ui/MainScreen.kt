@@ -3,12 +3,10 @@ package com.yurhel.alex.anotes.ui
 import android.appwidget.AppWidgetManager
 import android.content.res.Configuration
 import androidx.activity.compose.BackHandler
-import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -23,11 +21,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.pullrefresh.pullRefresh
-import androidx.compose.material.pullrefresh.rememberPullRefreshState
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -68,9 +64,8 @@ import com.yurhel.alex.anotes.R
 import com.yurhel.alex.anotes.data.drive.Drive
 import com.yurhel.alex.anotes.data.local.obj.NoteObj
 import com.yurhel.alex.anotes.ui.components.Tooltip
-import kotlin.math.roundToInt
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(
     vm: MainViewModel,
@@ -111,6 +106,31 @@ fun MainScreen(
                                 }
                             ) {
                                 Icon(Icons.Default.Add, newNoteText)
+                            }
+                        }
+
+                        // Sync indicator / button
+                        val syncText = context.getString(R.string.sync_drive_action)
+                        if (isSyncNow) {
+                            CircularProgressIndicator(
+                                modifier = Modifier
+                                    .padding(17.dp, 5.dp, 17.dp, 10.dp)
+                                    .size(24.dp),
+                                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                strokeWidth = 2.dp
+                            )
+                        } else {
+                            Tooltip(
+                                tooltipText = syncText
+                            ) {
+                                IconButton(
+                                    modifier = Modifier.padding(5.dp, 5.dp, 5.dp, 10.dp),
+                                    onClick = {
+                                        DriveViewModel(vm, Drive(context)).driveSyncAuto()
+                                    }
+                                ) {
+                                    Icon(Icons.Default.Refresh, syncText)
+                                }
                             }
                         }
 
@@ -192,13 +212,6 @@ fun MainScreen(
                 }
             }
         ) { paddingValues ->
-            // Pull to refresh
-            val pullRefreshState = rememberPullRefreshState(
-                refreshing = isSyncNow,
-                onRefresh = { DriveViewModel(vm, Drive(context)).driveSyncAuto() },
-                refreshThreshold = 150.dp
-            )
-
             // Empty text
             if (allNotes.isEmpty()) {
                 Box(
@@ -209,83 +222,48 @@ fun MainScreen(
                 }
             }
 
-            Column(
+            // Notes - projects
+            LazyVerticalStaggeredGrid(
+                columns = StaggeredGridCells.Fixed(if (appSettingsView == "grid") if (isLandscape) 3 else 2 else 1),
                 modifier = Modifier
-                    .padding(PaddingValues(5.dp, paddingValues.calculateTopPadding(), 5.dp, 0.dp))
                     .fillMaxSize()
-                    .pullRefresh(pullRefreshState)
+                    .padding(5.dp, paddingValues.calculateTopPadding(), 5.dp, 50.dp)
             ) {
-                // Sync indicator
-                Box(
-                    contentAlignment = Alignment.TopCenter,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .animateContentSize()
-                        .height(if (isSyncNow) 50.dp else (pullRefreshState.progress * 100).roundToInt().dp)
-                ) {
-                    if (isSyncNow) {
-                        CircularProgressIndicator(
-                            modifier = Modifier
-                                .padding(10.dp)
-                                .size(30.dp),
-                            color = MaterialTheme.colorScheme.onPrimaryContainer,
-                            strokeWidth = 2.dp
-                        )
-                    } else {
-                        CircularProgressIndicator(
-                            progress = { pullRefreshState.progress },
-                            modifier = Modifier
-                                .padding(10.dp)
-                                .size(30.dp),
-                            color = MaterialTheme.colorScheme.onPrimaryContainer,
-                            strokeWidth = 2.dp
-                        )
-                    }
-                }
-
-                // Notes - projects
-                LazyVerticalStaggeredGrid(
-                    columns = StaggeredGridCells.Fixed(if (appSettingsView == "grid") if (isLandscape) 3 else 2 else 1),
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(0.dp, 0.dp, 0.dp, 50.dp)
-                ) {
-                    // Notes
-                    items(items = allNotes) { note: NoteObj ->
-                        Card(
-                            onClick = {
-                                vm.selectNote(note)
-                                if (vm.widgetIdWhenCreated == AppWidgetManager.INVALID_APPWIDGET_ID) {
-                                    // Open existing note
-                                    openNoteClicked()
-                                } else {
-                                    // Init widget
-                                    vm.callUpdateWidget(true, vm.widgetIdWhenCreated, note.dateCreate.toString(), note.text)
-                                }
-                            },
-                            colors = CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.surfaceVariant
-                            ),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(5.dp)
-                        ) {
-                            // Project indicator
-                            if (note.withTasks) {
-                                Image(
-                                    painter = painterResource(R.drawable.ic_tasks),
-                                    contentDescription = "",
-                                    colorFilter = ColorFilter.tint(LocalContentColor.current),
-                                    modifier = Modifier.padding(10.dp, 10.dp, 10.dp, 2.dp)
-                                )
+                // Notes
+                items(items = allNotes) { note: NoteObj ->
+                    Card(
+                        onClick = {
+                            vm.selectNote(note)
+                            if (vm.widgetIdWhenCreated == AppWidgetManager.INVALID_APPWIDGET_ID) {
+                                // Open existing note
+                                openNoteClicked()
+                            } else {
+                                // Init widget
+                                vm.callUpdateWidget(true, vm.widgetIdWhenCreated, note.dateCreate.toString(), note.text)
                             }
-                            Text(
-                                text = note.text,
-                                overflow = TextOverflow.Ellipsis,
-                                maxLines = 10,
-                                modifier = Modifier.padding(10.dp, 2.dp, 10.dp, 10.dp)
+                        },
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant
+                        ),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(5.dp)
+                    ) {
+                        // Project indicator
+                        if (note.withTasks) {
+                            Image(
+                                painter = painterResource(R.drawable.ic_tasks),
+                                contentDescription = "",
+                                colorFilter = ColorFilter.tint(LocalContentColor.current),
+                                modifier = Modifier.padding(10.dp, 10.dp, 10.dp, 2.dp)
                             )
                         }
+                        Text(
+                            text = note.text,
+                            overflow = TextOverflow.Ellipsis,
+                            maxLines = 10,
+                            modifier = Modifier.padding(10.dp, 2.dp, 10.dp, 10.dp)
+                        )
                     }
                 }
             }

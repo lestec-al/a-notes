@@ -343,10 +343,8 @@ class MainViewModel(
             is Event.UpsertTask -> {
                 viewModelScope.launch(Dispatchers.Default) {
                     db.task.upsert(event.task)
-
                     // Set position from generated id ???
                     if (event.task.id == 0) {
-                        println("NEW TASK")
                         try {
                             db.withTransaction {
                                 val id = db.task.getLast().id
@@ -354,7 +352,6 @@ class MainViewModel(
                             }
                         } catch (_: Exception) {}
                     }
-
                     updateTasksData(false)
                 }
             }
@@ -367,15 +364,15 @@ class MainViewModel(
             is Event.ChangePos -> {
                 // Is this good enough ???
                 viewModelScope.launch(Dispatchers.Default) {
-                    val targetPos = if (event.pos == Pos.Prev) {
-                        event.task.position - 1
-                    } else {
-                        event.task.position + 1
+                    val targetPos = when(event.pos) {
+                        Pos.Prev -> event.task.position - 1
+                        Pos.Next -> event.task.position + 1
                     }
                     val targetTask = db.task.getByPosition(targetPos)
                     if (targetTask != null) {
                         db.task.upsert(targetTask.copy(position = event.task.position))
                     }
+                    delay(100) // ???
                     db.task.upsert(event.task.copy(position = targetPos))
                     updateTasksData(false)
                 }
