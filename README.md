@@ -17,14 +17,14 @@
 - Kotlin
 - Jetpack Compose (with Navigation)
 - SQLite (through Room)
-- Google Cloud with Google Drive API (you need to create and configure your own Google Cloud Project)
+- Google Cloud with Google Drive API
 
 ## Tech Stack PC
 - IntelliJ IDEA
 - Kotlin
 - Compose for Desktop
 - SQLite (through SQLDelight)
-- Google Cloud with Google Drive API (you need to create and configure your own Google Cloud Project & copy your credentials (rename to auth.json) to "src/main/resources" folder)
+- Google Cloud with Google Drive API
 
 ## Other
 - Both apps have some common code (e.g., most of the UI and cloud services), but also have some differences (e.g., database implementations)
