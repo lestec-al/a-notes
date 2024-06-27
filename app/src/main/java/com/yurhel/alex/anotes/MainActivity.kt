@@ -7,7 +7,6 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
-import androidx.core.view.WindowCompat
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.glance.appwidget.state.updateAppWidgetState
@@ -36,10 +35,6 @@ class MainActivity : ComponentActivity() {
             DB::class.java,
             "notes.db"
         ).build()
-
-        // For get status of keyboard
-        // Fixing a bug with BasicTextField2, when keyboard not showed second time
-        WindowCompat.setDecorFitsSystemWindows(window, false)
 
         setContent {
             // Init viewModel
