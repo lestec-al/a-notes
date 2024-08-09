@@ -4,8 +4,7 @@
 src="https://github.com/lestec-al/a-notes/raw/main/readme_logo.png"/>
 
 <img title="PC version screenshots"
-src="https://github.com/lestec-al/a-notes/raw/main/readme_logo_pc.png"
-width="540" height="412"/>
+src="https://github.com/lestec-al/a-notes/raw/main/readme_logo_pc.png"/>
 
 ## Features
 - Manage notes
