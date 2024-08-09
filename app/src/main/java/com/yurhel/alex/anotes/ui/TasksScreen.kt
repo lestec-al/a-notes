@@ -70,7 +70,11 @@ fun TasksScreen(
     onBack: () -> Unit,
     toNote: () -> Unit
 ) {
-    BackHandler(onBack = onBack)
+    BackHandler {
+        vm.selectStatus(0)
+        vm.clearTasks()
+        onBack()
+    }
 
     val selectedStatus by vm.selectedStatus.collectAsState()
     val selectedNote by vm.selectedNote.collectAsState()
@@ -115,9 +119,11 @@ fun TasksScreen(
                         IconButton(
                             modifier = Modifier.padding(5.dp, 5.dp, 5.dp, 10.dp),
                             onClick = {
-                                onBack()
-                                vm.editText.clearText()
+                                vm.selectStatus(0)
+                                vm.clearTasks()
                                 vm.deleteNote()
+                                vm.editText.clearText()
+                                onBack()
                             }
                         ) {
                             Icon(Icons.Outlined.Delete, deleteNoteText)
@@ -133,6 +139,8 @@ fun TasksScreen(
                             modifier = Modifier.padding(5.dp, 5.dp, 5.dp, 10.dp),
                             onClick = {
                                 vm.saveNote(showTasksState = false, withoutNoteTextUpdate = true)
+                                vm.selectStatus(0)
+                                vm.clearTasks()
                                 toNote()
                             }
                         ) {

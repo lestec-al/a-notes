@@ -284,6 +284,10 @@ class MainViewModel(
     private val _tasks: MutableStateFlow<List<TasksObj>> = MutableStateFlow(emptyList())
     val tasks = _tasks.asStateFlow()
 
+    fun clearTasks() {
+        _tasks.value = emptyList()
+    }
+
     private fun getTasks(noteId: Int, statusId: Int) {
         viewModelScope.launch(Dispatchers.Default) {
             val data = if (statusId == 0) {
