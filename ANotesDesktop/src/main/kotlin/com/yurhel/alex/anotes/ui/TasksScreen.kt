@@ -14,7 +14,6 @@ import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
@@ -85,6 +84,8 @@ fun TasksScreen(
                         tooltipText = "Go back"
                     ) {
                         IconButton(onClick = {
+                            vm.selectStatus(0)
+                            vm.clearTasks()
                             onBack()
                         }) {
                             Icon(Icons.Outlined.ArrowBack, "Go back")
@@ -99,9 +100,11 @@ fun TasksScreen(
                         IconButton(
                             modifier = Modifier.padding(5.dp, 5.dp, 5.dp, 10.dp),
                             onClick = {
-                                onBack()
-                                vm.changeEditTexValue("")
+                                vm.selectStatus(0)
+                                vm.clearTasks()
                                 vm.deleteNote()
+                                vm.changeEditTexValue("")
+                                onBack()
                             }
                         ) {
                             Icon(Icons.Outlined.Delete, deleteNoteText)
@@ -117,6 +120,8 @@ fun TasksScreen(
                             modifier = Modifier.padding(5.dp, 5.dp, 5.dp, 10.dp),
                             onClick = {
                                 vm.saveNote(showTasksState = false, withoutNoteTextUpdate = true)
+                                vm.selectStatus(0)
+                                vm.clearTasks()
                                 toNote()
                             }
                         ) {
@@ -226,13 +231,12 @@ fun TasksScreen(
                                     }
                                 }
                         ) {
-                            Row(
-                                horizontalArrangement = Arrangement.Center,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
+                            Row(horizontalArrangement = Arrangement.Center) {
                                 // Color indicator
                                 Canvas(
-                                    modifier = Modifier.size(10.dp)
+                                    modifier = Modifier
+                                        .padding(top = 18.dp) // 10.dp + 8.dp (text native padding?)
+                                        .size(10.dp)
                                 ) {
                                     drawCircle(
                                         color = try {
@@ -246,7 +250,10 @@ fun TasksScreen(
                                 // Description
                                 Text(
                                     text = task.description,
-                                    modifier = Modifier.padding(10.dp)
+                                    modifier = Modifier.padding(
+                                        horizontal = 5.dp,
+                                        vertical = 10.dp
+                                    )
                                 )
                             }
                         }

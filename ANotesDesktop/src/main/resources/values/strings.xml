@@ -6,7 +6,7 @@
     <string name="sync_collision">Data collisions were found. Please choose which one to use.</string>
     <string name="sync_drive">Drive data</string>
     <string name="sync_local">Local data</string>
-    <string name="empty_text">It\'s empty here yet</string>
+    <string name="empty_text">It's empty here yet</string>
     <string name="updated">Updated</string>
     <string name="created">Created</string>
     <string name="task">Task</string>

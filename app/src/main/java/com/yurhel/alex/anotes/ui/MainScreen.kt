@@ -3,6 +3,7 @@ package com.yurhel.alex.anotes.ui
 import android.appwidget.AppWidgetManager
 import android.content.res.Configuration
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -12,6 +13,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
@@ -58,6 +60,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.yurhel.alex.anotes.R
@@ -75,15 +78,22 @@ fun MainScreen(
 
     vm.getDbNotes("")
     vm.getNotesView()
+    vm.getAllTasks()
+    vm.getAllStatuses()
 
     val searchText by vm.searchText.collectAsState()
     val appSettingsView by vm.appSettingsView.collectAsState()
     val allNotes: List<NoteObj> by vm.allNotes.collectAsState()
     val isSyncNow by vm.isSyncNow.collectAsState()
+    val allTasks by vm.allTasks.collectAsState()
+    val allStatuses by vm.allStatuses.collectAsState()
 
     val isLandscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
     val keyboard = LocalSoftwareKeyboardController.current
     val context = LocalContext.current
+
+    val onBackgroundColor = MaterialTheme.colorScheme.onBackground
+
 
     Surface(
         modifier = Modifier.fillMaxSize()
@@ -247,23 +257,60 @@ fun MainScreen(
                         ),
                         modifier = Modifier
                             .fillMaxWidth()
+                            .heightIn(
+                                min = 60.dp,
+                                max = if (note.withTasks) 500.dp else Dp.Unspecified
+                            )
                             .padding(5.dp)
                     ) {
-                        // Project indicator
-                        if (note.withTasks) {
-                            Image(
-                                painter = painterResource(R.drawable.ic_tasks),
-                                contentDescription = "",
-                                colorFilter = ColorFilter.tint(LocalContentColor.current),
-                                modifier = Modifier.padding(10.dp, 10.dp, 10.dp, 2.dp)
-                            )
-                        }
                         Text(
                             text = note.text,
                             overflow = TextOverflow.Ellipsis,
                             maxLines = 10,
-                            modifier = Modifier.padding(10.dp, 2.dp, 10.dp, 10.dp)
+                            modifier = Modifier.padding(10.dp, 2.dp, 10.dp, if (note.withTasks) 2.dp else 10.dp)
                         )
+
+                        // Tasks for this note
+                        if (note.withTasks) {
+                            for (task in allTasks) {
+                                if (task.note == note.id) {
+                                    Card(
+                                        colors = CardDefaults.cardColors(
+                                            containerColor = Color.Transparent
+                                        ),
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(horizontal = 5.dp)
+                                    ) {
+                                        Row(horizontalArrangement = Arrangement.Center) {
+                                            // Color indicator
+                                            Canvas(
+                                                modifier = Modifier
+                                                    .padding(top = 10.dp) // 2.dp + 8.dp (text native padding?)
+                                                    .size(10.dp)
+                                            ) {
+                                                drawCircle(
+                                                    color = try {
+                                                        Color(allStatuses.find { it.id == task.status }!!.color)
+                                                    } catch (e: Exception) {
+                                                        onBackgroundColor
+                                                    }
+                                                )
+                                            }
+
+                                            // Description
+                                            Text(
+                                                text = task.description,
+                                                modifier = Modifier.padding(
+                                                    horizontal = 5.dp,
+                                                    vertical = 2.dp
+                                                )
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }

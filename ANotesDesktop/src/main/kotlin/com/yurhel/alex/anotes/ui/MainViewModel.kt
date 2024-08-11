@@ -41,6 +41,20 @@ class MainViewModel {
         }
     }
 
+    private val _allStatuses: MutableStateFlow<List<StatusObj>> = MutableStateFlow(emptyList())
+    val allStatuses = _allStatuses.asStateFlow()
+
+    fun getAllStatuses() {
+        _allStatuses.value = db.getAllStatuses()
+    }
+
+    private val _allTasks: MutableStateFlow<List<TasksObj>> = MutableStateFlow(emptyList())
+    val allTasks = _allTasks.asStateFlow()
+
+    fun getAllTasks() {
+        _allTasks.value = db.getAllTasks().reversed()
+    }
+
 
     // NOTE SCREEN
     private var origNoteText = ""
@@ -182,6 +196,10 @@ class MainViewModel {
     private val _tasks: MutableStateFlow<List<TasksObj>> = MutableStateFlow(emptyList())
     val tasks = _tasks.asStateFlow()
 
+    fun clearTasks() {
+        _tasks.value = emptyList()
+    }
+
     private fun getTasks(noteId: Int, statusId: Int) {
         val data = if (statusId == 0) {
             val data = db.getManyByNoteTasks(noteId)
@@ -313,6 +331,8 @@ class MainViewModel {
                         db.importDB(data.data.toString())
                         db.updateReceived(data.modifiedTime)
                         getDbNotes("")
+                        getAllTasks()
+                        getAllStatuses()
                     } else {
                         // If drive empty -> send data
                         driveSyncManual(true)
@@ -358,6 +378,8 @@ class MainViewModel {
             // Update local
             db.importDB(data.data.toString())
             getDbNotes("")
+            getAllTasks()
+            getAllStatuses()
         }
         db.updateReceived(data.modifiedTime)
     }

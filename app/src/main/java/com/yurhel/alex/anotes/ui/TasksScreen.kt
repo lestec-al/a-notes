@@ -44,7 +44,6 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
@@ -273,13 +272,12 @@ fun TasksScreen(
                                     }
                                 }
                         ) {
-                            Row(
-                                horizontalArrangement = Arrangement.Center,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
+                            Row(horizontalArrangement = Arrangement.Center) {
                                 // Color indicator
                                 Canvas(
-                                    modifier = Modifier.size(10.dp)
+                                    modifier = Modifier
+                                        .padding(top = 18.dp) // 10.dp + 8.dp (text native padding?)
+                                        .size(10.dp)
                                 ) {
                                     drawCircle(
                                         color = try {
@@ -293,7 +291,10 @@ fun TasksScreen(
                                 // Description
                                 Text(
                                     text = task.description,
-                                    modifier = Modifier.padding(10.dp)
+                                    modifier = Modifier.padding(
+                                        horizontal = 5.dp,
+                                        vertical = 10.dp
+                                    )
                                 )
                             }
                         }

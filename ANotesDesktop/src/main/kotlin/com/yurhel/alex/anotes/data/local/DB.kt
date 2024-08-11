@@ -168,6 +168,21 @@ class DB {
         }
         return list
     }
+    fun getAllStatuses(): List<StatusObj> {
+        val list = mutableListOf<StatusObj>()
+        val result = Database(driver).statusesQueries.getAll().executeAsList()
+        for (i in result) {
+            list.add(
+                StatusObj(
+                    id = i.id.toInt(),
+                    title = i.title ?: "",
+                    color = i.color?.toInt() ?: 0,
+                    note = i.note?.toInt() ?: 0
+                )
+            )
+        }
+        return list
+    }
 
 
     // TASKS DAO
@@ -233,6 +248,27 @@ class DB {
     fun getManyByNoteTasks(note: Int): List<TasksObj> {
         val list = mutableListOf<TasksObj>()
         val result = Database(driver).tasksQueries.getManyByNote(note.toLong()).executeAsList()
+
+        for (i in result) {
+            list.add(
+                TasksObj(
+                    id = i.id.toInt(),
+                    position = i.position?.toInt() ?: 0,
+                    description = i.description ?: "",
+                    status = i.status?.toInt() ?: 0,
+                    note = i.note?.toInt() ?: 0,
+                    dateCreate = i.dateCreate?.toLong() ?: 0,
+                    dateUpdate = i.dateUpdate?.toLong() ?: 0,
+                    dateUpdateStatus = i.dateUpdateStatus?.toLong() ?: 0
+                )
+            )
+        }
+        return list
+    }
+
+    fun getAllTasks(): List<TasksObj> {
+        val list = mutableListOf<TasksObj>()
+        val result = Database(driver).tasksQueries.getAll().executeAsList()
 
         for (i in result) {
             list.add(

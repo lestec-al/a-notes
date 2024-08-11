@@ -132,6 +132,24 @@ class MainViewModel(
         }
     }
 
+    private val _allStatuses: MutableStateFlow<List<StatusObj>> = MutableStateFlow(emptyList())
+    val allStatuses = _allStatuses.asStateFlow()
+
+    fun getAllStatuses() {
+        viewModelScope.launch(Dispatchers.Default) {
+            _allStatuses.value = db.status.getAll()
+        }
+    }
+
+    private val _allTasks: MutableStateFlow<List<TasksObj>> = MutableStateFlow(emptyList())
+    val allTasks = _allTasks.asStateFlow()
+
+    fun getAllTasks() {
+        viewModelScope.launch(Dispatchers.Default) {
+            _allTasks.value = db.task.getAll().reversed()
+        }
+    }
+
 
     // NOTE SCREEN
     private var origNoteText = ""

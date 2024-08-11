@@ -1,5 +1,6 @@
 package com.yurhel.alex.anotes.ui
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
@@ -11,7 +12,6 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -27,6 +27,7 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.yurhel.alex.anotes.data.local.NoteObj
@@ -39,10 +40,17 @@ fun MainScreen(
     openNoteClicked: () -> Unit
 ) {
     vm.getDbNotes("")
+    vm.getAllTasks()
+    vm.getAllStatuses()
 
     val searchText by vm.searchText.collectAsState()
     val allNotes: List<NoteObj> by vm.allNotes.collectAsState()
     val isSyncNow by vm.isSyncNow.collectAsState()
+    val allTasks by vm.allTasks.collectAsState()
+    val allStatuses by vm.allStatuses.collectAsState()
+
+    val onBackgroundColor = MaterialTheme.colorScheme.onBackground
+
 
     Surface(
         modifier = Modifier.fillMaxSize()
@@ -168,22 +176,60 @@ fun MainScreen(
                         ),
                         modifier = Modifier
                             .fillMaxWidth()
+                            .heightIn(
+                                min = 60.dp,
+                                max = if (note.withTasks) 500.dp else Dp.Unspecified
+                            )
                             .padding(5.dp)
                     ) {
-                        // Project indicator
-                        if (note.withTasks) {
-                            Icon(
-                                imageVector = Icons.Default.List,
-                                contentDescription = "",
-                                modifier = Modifier.padding(10.dp, 10.dp, 10.dp, 2.dp)
-                            )
-                        }
                         Text(
                             text = note.text,
                             overflow = TextOverflow.Ellipsis,
                             maxLines = 15,
-                            modifier = Modifier.padding(10.dp, 2.dp, 10.dp, 10.dp)
+                            modifier = Modifier.padding(10.dp, 2.dp, 10.dp, if (note.withTasks) 2.dp else 10.dp)
                         )
+
+                        // Tasks for this note
+                        if (note.withTasks) {
+                            for (task in allTasks) {
+                                if (task.note == note.id) {
+                                    Card(
+                                        colors = CardDefaults.cardColors(
+                                            containerColor = Color.Transparent
+                                        ),
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(horizontal = 5.dp)
+                                    ) {
+                                        Row(horizontalArrangement = Arrangement.Center) {
+                                            // Color indicator
+                                            Canvas(
+                                                modifier = Modifier
+                                                    .padding(top = 10.dp) // 2.dp + 8.dp (text native padding?)
+                                                    .size(10.dp)
+                                            ) {
+                                                drawCircle(
+                                                    color = try {
+                                                        Color(allStatuses.find { it.id == task.status }!!.color)
+                                                    } catch (e: Exception) {
+                                                        onBackgroundColor
+                                                    }
+                                                )
+                                            }
+
+                                            // Description
+                                            Text(
+                                                text = task.description,
+                                                modifier = Modifier.padding(
+                                                    horizontal = 5.dp,
+                                                    vertical = 2.dp
+                                                )
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }

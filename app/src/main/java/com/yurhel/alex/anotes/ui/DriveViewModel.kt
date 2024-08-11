@@ -46,6 +46,8 @@ class DriveViewModel(
                                 vm.db.setting.getS()?.copy(dataReceivedDate = data.modifiedTime) ?: SettingsObj(dataReceivedDate = data.modifiedTime)
                             )
                             vm.getDbNotes("")
+                            vm.getAllTasks()
+                            vm.getAllStatuses()
                         } else {
                             // If drive empty -> send data
                             driveSyncManual(true)
@@ -92,6 +94,8 @@ class DriveViewModel(
             // Update local
             importDB(data.data.toString())
             vm.getDbNotes("")
+            vm.getAllTasks()
+            vm.getAllStatuses()
         }
         vm.db.setting.upsert(
             vm.db.setting.getS()?.copy(dataReceivedDate = data.modifiedTime) ?: SettingsObj(dataReceivedDate = data.modifiedTime)
