@@ -8,24 +8,17 @@ src="https://github.com/lestec-al/a-notes/raw/main/readme_logo_pc.png"/>
 
 ## Features
 - Manage notes
-- Manage tasks (test stage, may have bugs)
-- Cloud sync of notes
+- Manage ordered (with statuses) notes (test stage, may have bugs)
+- Cloud sync of data
 - One note widget (for Android)
-- Light and Dark theme
-- Dynamic colors (for Android 12+)
+- Light & Dark theme of interface
+- Dynamic, automatically adjusting interface colors to match the device theme (for Android 12+)
 
-## Tech Stack Android
+## Tech Stack
 - Android Studio
 - Kotlin
-- Jetpack Compose (with Navigation)
-- SQLite (through Room)
-- Google Cloud with Google Drive API
-
-## Tech Stack PC
-- IntelliJ IDEA
-- Kotlin
-- Compose for Desktop
-- SQLite (through SQLDelight)
+- Jetpack Compose (with Navigation) on Android, Compose for Desktop on PC
+- SQLite (through Room on Android & through SQLDelight on PC)
 - Google Cloud with Google Drive API
 
 ## Other
