@@ -22,4 +22,6 @@
     <string name="save">Захаваць</string>
     <string name="up">Угору</string>
     <string name="down">Уніз</string>
+    <string name="back">Назад</string>
+    <string name="delete_press_info">Трымайце кнопку, каб выдаліць нататку</string>
 </resources>

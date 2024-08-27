@@ -1,11 +1,13 @@
 package com.yurhel.alex.anotes.ui
 
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListItemInfo
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.TopAppBar
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -15,8 +17,9 @@ import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -26,6 +29,7 @@ import com.yurhel.alex.anotes.ui.components.EditDialog
 import com.yurhel.alex.anotes.ui.components.StatusCard
 import com.yurhel.alex.anotes.ui.components.Tooltip
 import com.yurhel.alex.anotes.ui.components.TooltipText
+import com.yurhel.alex.anotes.ui.components.Task
 import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -43,6 +47,8 @@ fun TasksScreen(
     val lastTaskPos = tasks.size
 
     val onBackgroundColor = MaterialTheme.colorScheme.onBackground
+
+    val lazyListState = rememberLazyListState()
 
     Surface(
         modifier = Modifier.fillMaxSize()
@@ -140,6 +146,7 @@ fun TasksScreen(
             // Need update tasks (ids) after drag drop change position
             key(tasks) {
                 LazyColumn(
+                    state = lazyListState,
                     modifier = Modifier
                         .padding(paddingValues)
                         .fillMaxSize()
@@ -187,21 +194,26 @@ fun TasksScreen(
                     }
 
                     // Tasks
-                    items(items = tasks) {task: TasksObj ->
+                    itemsIndexed(items = tasks) {  idx: Int, task: TasksObj ->
                         // For drag & drop
                         var offsetY by remember { mutableFloatStateOf(0f) }
+                        var posTop = 0f
+                        var posBottom = 0f
+                        val itemIdx = idx + 1
 
-                        Card(
+                        Task(
+                            task = task,
                             onClick = {
                                 vm.onEvent(Event.ShowEditDialog(Types.Task, ActionTypes.Update, task))
                             },
-                            colors = CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.background
-                            ),
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(5.dp)
                                 // For drag & drop
+                                .onGloballyPositioned {
+                                    posTop = it.positionInParent().y
+                                    posBottom = it.positionInParent().y + it.size.height
+                                }
                                 .absoluteOffset(
                                     y = offsetY
                                         .roundToInt()
@@ -214,49 +226,59 @@ fun TasksScreen(
                                         detectDragGesturesAfterLongPress(
                                             onDragStart = {},
                                             onDragEnd = {
-                                                savePos(offsetY, vm, task, lastTaskPos) {
-                                                    offsetY = 0f
-                                                }
+                                                offsetY = 0f
                                             },
                                             onDragCancel = {
-                                                savePos(offsetY, vm, task, lastTaskPos) {
-                                                    offsetY = 0f
-                                                }
+                                                offsetY = 0f
                                             },
                                             onDrag = { _, dragAmount ->
                                                 //change.consume()
                                                 offsetY += dragAmount.y
+
+                                                val posTopDynamic = (posTop + offsetY).toInt()
+                                                val posBottomDynamic = (posBottom + offsetY).toInt()
+
+                                                // Check offsets of all items
+                                                // Try to find that touching item
+                                                var foundedIdx: Int? = null
+                                                for (it in lazyListState.layoutInfo.visibleItemsInfo) {
+                                                    if (itemIdx != it.index) {
+                                                        for (offset in (it.offset + 20)..(it.offsetEnd - 20)) {
+                                                            if (offset in (posTopDynamic + 20)..(posBottomDynamic - 20)) {
+                                                                foundedIdx = it.index
+                                                                break
+                                                            }
+                                                        }
+                                                    }
+                                                    if (foundedIdx != null) break
+                                                }
+                                                if (foundedIdx != null) {
+                                                    if (foundedIdx > itemIdx && task.position != 1) {
+                                                        // Move item to down
+                                                        vm.onEvent(
+                                                            Event.ChangePos(
+                                                                pos = Pos.Prev,
+                                                                task = task
+                                                            )
+                                                        )
+                                                    } else if (foundedIdx < itemIdx && task.position != lastTaskPos) {
+                                                        // Move item to up
+                                                        vm.onEvent(
+                                                            Event.ChangePos(
+                                                                pos = Pos.Next,
+                                                                task = task
+                                                            )
+                                                        )
+                                                    }
+                                                }
                                             }
                                         )
                                     }
-                                }
-                        ) {
-                            Row(horizontalArrangement = Arrangement.Center) {
-                                // Color indicator
-                                Canvas(
-                                    modifier = Modifier
-                                        .padding(top = 18.dp) // 10.dp + 8.dp (text native padding?)
-                                        .size(10.dp)
-                                ) {
-                                    drawCircle(
-                                        color = try {
-                                            Color(statuses.find { it.id == task.status }!!.color)
-                                        } catch (e: Exception) {
-                                            onBackgroundColor
-                                        }
-                                    )
-                                }
-
-                                // Description
-                                Text(
-                                    text = task.description,
-                                    modifier = Modifier.padding(
-                                        horizontal = 5.dp,
-                                        vertical = 10.dp
-                                    )
-                                )
-                            }
-                        }
+                                },
+                            tasksTextPadding = 10,
+                            statuses = statuses,
+                            onBackgroundColor = onBackgroundColor
+                        )
                     }
                 }
             }
@@ -272,39 +294,5 @@ fun TasksScreen(
 @Composable
 fun Int.pxToDp() = with(LocalDensity.current) { this@pxToDp.toDp() }
 
-
-private fun savePos(
-    offsetY: Float,
-    vm: MainViewModel,
-    task: TasksObj,
-    lastTaskPos: Int,
-    updateUI: () -> Unit
-) {
-    if (offsetY > 100) {
-        if (task.position == 1) {
-            updateUI()
-        } else {
-            // Scroll down
-            vm.onEvent(
-                Event.ChangePos(
-                    pos = Pos.Prev,
-                    task = task
-                )
-            )
-        }
-    } else if (offsetY < -100) {
-        if (task.position == lastTaskPos) {
-            updateUI()
-        } else {
-            // Scroll up
-            vm.onEvent(
-                Event.ChangePos(
-                    pos = Pos.Next,
-                    task = task
-                )
-            )
-        }
-    } else {
-        updateUI()
-    }
-}
+private val LazyListItemInfo.offsetEnd: Int
+    get() = this.offset + this.size

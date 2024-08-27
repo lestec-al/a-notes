@@ -41,8 +41,11 @@ SELECT * FROM tasksTable WHERE note = ? AND status = ? ORDER BY position ASC;
 getManyByNote:
 SELECT * FROM tasksTable WHERE note = ? ORDER BY position ASC;
 
+getManyByNoteCount:
+SELECT COUNT(*) FROM tasksTable WHERE note = ?;
+
 getAll:
-SELECT * FROM tasksTable;
+SELECT * FROM tasksTable ORDER BY position ASC;
 
 
 getLast:

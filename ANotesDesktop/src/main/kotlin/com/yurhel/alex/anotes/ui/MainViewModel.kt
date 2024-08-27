@@ -201,19 +201,11 @@ class MainViewModel {
     }
 
     private fun getTasks(noteId: Int, statusId: Int) {
-        val data = if (statusId == 0) {
-            val data = db.getManyByNoteTasks(noteId)
-            var idx = 1
-            for (i in data) {
-                i.position = idx
-                db.updateTask(i)
-                idx++
-            }
-            data
+        _tasks.value = if (statusId == 0) {
+            db.getManyByNoteTasks(noteId)
         } else {
             db.getManyByNoteAndStatusTasks(noteId, statusId)
-        }
-        _tasks.value = data.reversed()
+        }.reversed()
     }
 
     // Edit dialog
@@ -252,17 +244,23 @@ class MainViewModel {
             // Task
             is Event.UpsertTask -> {
                 if (event.task.id == 0) db.insertTask(event.task) else db.updateTask(event.task)
-                // Set position from generated id ???
                 if (event.task.id == 0) {
-                    try {
-                        val id = db.getLastTask()?.id
-                        if (id != null) db.updateTask(event.task.copy(id = id, position = id))
-                    } catch (_: Exception) {}
+                    val lastTask = db.getLastTask()
+                    if (lastTask != null) {
+                        db.updateTask(
+                            event.task.copy(
+                                id = lastTask.id,
+                                position = db.getManyByNoteCountTasks(event.task.note)
+                            )
+                        )
+                    }
+                    updateNotesPositions(event.task.note) // ??????
                 }
                 updateTasksData(false)
             }
             is Event.DeleteTask -> {
                 db.deleteTask(event.task.id)
+                updateNotesPositions(event.task.note) // ??????
                 updateTasksData(false)
             }
             is Event.ChangePos -> {
@@ -276,6 +274,7 @@ class MainViewModel {
                     db.updateTask(targetTask.copy(position = event.task.position))
                 }
                 db.updateTask(event.task.copy(position = targetPos))
+                updateNotesPositions(event.task.note) // ??????
                 updateTasksData(false)
             }
             // Others
@@ -289,6 +288,16 @@ class MainViewModel {
             Event.HideEditDialog -> {
                 _editDialogVisibility.value = false
             }
+        }
+    }
+
+    private fun updateNotesPositions(noteId: Int) {
+        // Set positions for all tasks in specific note
+        var idx = 1
+        for (i in db.getManyByNoteTasks(noteId)) {
+            i.position = idx
+            db.updateTask(i)
+            idx++
         }
     }
 

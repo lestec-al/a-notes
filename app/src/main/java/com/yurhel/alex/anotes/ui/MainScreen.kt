@@ -3,13 +3,13 @@ package com.yurhel.alex.anotes.ui
 import android.appwidget.AppWidgetManager
 import android.content.res.Configuration
 import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -25,6 +25,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Card
@@ -43,16 +44,20 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
@@ -66,6 +71,7 @@ import androidx.compose.ui.window.Dialog
 import com.yurhel.alex.anotes.R
 import com.yurhel.alex.anotes.data.drive.Drive
 import com.yurhel.alex.anotes.data.local.obj.NoteObj
+import com.yurhel.alex.anotes.ui.components.Task
 import com.yurhel.alex.anotes.ui.components.Tooltip
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -92,8 +98,10 @@ fun MainScreen(
     val keyboard = LocalSoftwareKeyboardController.current
     val context = LocalContext.current
 
-    val onBackgroundColor = MaterialTheme.colorScheme.onBackground
+    var isSearchOn by remember { mutableStateOf(false) }
+    val focusManager = LocalFocusManager.current
 
+    val onBackgroundColor = MaterialTheme.colorScheme.onBackground
 
     Surface(
         modifier = Modifier.fillMaxSize()
@@ -102,66 +110,87 @@ fun MainScreen(
             bottomBar = {
                 if (vm.widgetIdWhenCreated == AppWidgetManager.INVALID_APPWIDGET_ID) {
                     // Bottom bar
-                    BottomAppBar(modifier = Modifier.height(50.dp)) {
-                        // Add new note button
-                        val newNoteText = context.getString(R.string.create) + " " + context.getString(R.string.note)
-                        Tooltip(
-                            tooltipText = newNoteText
-                        ) {
-                            IconButton(
-                                modifier = Modifier.padding(5.dp, 5.dp, 5.dp, 10.dp),
-                                onClick = {
-                                    vm.selectNote(null)
-                                    openNoteClicked()
-                                }
-                            ) {
-                                Icon(Icons.Default.Add, newNoteText)
-                            }
-                        }
-
-                        // Sync indicator / button
-                        val syncText = context.getString(R.string.sync_drive_action)
-                        if (isSyncNow) {
-                            CircularProgressIndicator(
-                                modifier = Modifier
-                                    .padding(17.dp, 5.dp, 17.dp, 10.dp)
-                                    .size(24.dp),
-                                color = MaterialTheme.colorScheme.onPrimaryContainer,
-                                strokeWidth = 2.dp
-                            )
-                        } else {
+                    BottomAppBar(
+                        modifier = Modifier.height(50.dp)
+                    ) {
+                        if (isSearchOn) {
+                            // Search OFF button
+                            val backText = context.getString(R.string.back)
                             Tooltip(
-                                tooltipText = syncText
+                                tooltipText = backText
                             ) {
                                 IconButton(
                                     modifier = Modifier.padding(5.dp, 5.dp, 5.dp, 10.dp),
                                     onClick = {
-                                        DriveViewModel(vm, Drive(context)).driveSyncAuto()
+                                        isSearchOn = false
+                                        focusManager.clearFocus()
                                     }
                                 ) {
-                                    Icon(Icons.Default.Refresh, syncText)
+                                    Icon(Icons.Default.Close, backText)
                                 }
                             }
-                        }
 
-                        // Change notes view button
-                        val changeViewText = context.getString(R.string.change_view)
-                        Tooltip(
-                            tooltipText = changeViewText
-                        ) {
-                            IconButton(
-                                modifier = Modifier.padding(5.dp, 5.dp, 5.dp, 10.dp),
-                                onClick = {
-                                    vm.changeNotesView()
-                                }
+                        } else {
+                            // Add new note button
+                            val newNoteText = context.getString(R.string.create) + " " + context.getString(R.string.note)
+                            Tooltip(
+                                tooltipText = newNoteText
                             ) {
-                                Image(
-                                    painter = painterResource(
-                                        if (appSettingsView == "grid") R.drawable.ic_list else R.drawable.ic_grid
-                                    ),
-                                    contentDescription = changeViewText,
-                                    colorFilter = ColorFilter.tint(LocalContentColor.current)
+                                IconButton(
+                                    modifier = Modifier.padding(5.dp, 5.dp, 5.dp, 10.dp),
+                                    onClick = {
+                                        vm.selectNote(null)
+                                        openNoteClicked()
+                                    }
+                                ) {
+                                    Icon(Icons.Default.Add, newNoteText)
+                                }
+                            }
+
+                            // Sync indicator / button
+                            val syncText = context.getString(R.string.sync_drive_action)
+                            if (isSyncNow) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier
+                                        .padding(17.dp, 5.dp, 17.dp, 10.dp)
+                                        .size(24.dp),
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                    strokeWidth = 2.dp
                                 )
+                            } else {
+                                Tooltip(
+                                    tooltipText = syncText
+                                ) {
+                                    IconButton(
+                                        modifier = Modifier.padding(5.dp, 5.dp, 5.dp, 10.dp),
+                                        onClick = {
+                                            DriveUtils.getInstance(vm, Drive.getInstance()).driveSyncAuto(context)
+                                        }
+                                    ) {
+                                        Icon(Icons.Default.Refresh, syncText)
+                                    }
+                                }
+                            }
+
+                            // Change notes view button
+                            val changeViewText = context.getString(R.string.change_view)
+                            Tooltip(
+                                tooltipText = changeViewText
+                            ) {
+                                IconButton(
+                                    modifier = Modifier.padding(5.dp, 5.dp, 5.dp, 10.dp),
+                                    onClick = {
+                                        vm.changeNotesView()
+                                    }
+                                ) {
+                                    Image(
+                                        painter = painterResource(
+                                            if (appSettingsView == "grid") R.drawable.ic_list else R.drawable.ic_grid
+                                        ),
+                                        contentDescription = changeViewText,
+                                        colorFilter = ColorFilter.tint(LocalContentColor.current)
+                                    )
+                                }
                             }
                         }
 
@@ -181,7 +210,10 @@ fun MainScreen(
                                     onValueChange = { vm.getDbNotes(it) },
                                     modifier = Modifier
                                         .padding(10.dp, 0.dp)
-                                        .fillMaxWidth(),
+                                        .fillMaxWidth()
+                                        .onFocusChanged {
+                                            if (it.isFocused) isSearchOn = true
+                                        },
                                     textStyle = TextStyle(
                                         color = MaterialTheme.colorScheme.onSurface,
                                         fontSize = MaterialTheme.typography.bodyLarge.fontSize
@@ -249,7 +281,7 @@ fun MainScreen(
                                 openNoteClicked()
                             } else {
                                 // Init widget
-                                vm.callUpdateWidget(true, vm.widgetIdWhenCreated, note.dateCreate.toString(), note.text)
+                                vm.callUpdateWidget(true, vm.widgetIdWhenCreated, note.dateCreate.toString(), note)
                             }
                         },
                         colors = CardDefaults.cardColors(
@@ -259,7 +291,7 @@ fun MainScreen(
                             .fillMaxWidth()
                             .heightIn(
                                 min = 60.dp,
-                                max = if (note.withTasks) 500.dp else Dp.Unspecified
+                                max = if (note.withTasks) 350.dp else Dp.Unspecified
                             )
                             .padding(5.dp)
                     ) {
@@ -267,50 +299,26 @@ fun MainScreen(
                             text = note.text,
                             overflow = TextOverflow.Ellipsis,
                             maxLines = 10,
-                            modifier = Modifier.padding(10.dp, 2.dp, 10.dp, if (note.withTasks) 2.dp else 10.dp)
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 2.dp)
                         )
 
                         // Tasks for this note
-                        if (note.withTasks) {
-                            for (task in allTasks) {
-                                if (task.note == note.id) {
-                                    Card(
-                                        colors = CardDefaults.cardColors(
-                                            containerColor = Color.Transparent
-                                        ),
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(horizontal = 5.dp)
-                                    ) {
-                                        Row(horizontalArrangement = Arrangement.Center) {
-                                            // Color indicator
-                                            Canvas(
-                                                modifier = Modifier
-                                                    .padding(top = 10.dp) // 2.dp + 8.dp (text native padding?)
-                                                    .size(10.dp)
-                                            ) {
-                                                drawCircle(
-                                                    color = try {
-                                                        Color(allStatuses.find { it.id == task.status }!!.color)
-                                                    } catch (e: Exception) {
-                                                        onBackgroundColor
-                                                    }
-                                                )
-                                            }
-
-                                            // Description
-                                            Text(
-                                                text = task.description,
-                                                modifier = Modifier.padding(
-                                                    horizontal = 5.dp,
-                                                    vertical = 2.dp
-                                                )
-                                            )
-                                        }
-                                    }
-                                }
+                        for (task in allTasks) {
+                            if (task.note == note.id) {
+                                Task(
+                                    task = task,
+                                    onClick = null,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 5.dp),
+                                    tasksTextPadding = 2,
+                                    statuses = allStatuses,
+                                    onBackgroundColor = onBackgroundColor
+                                )
                             }
                         }
+
+                        Spacer(modifier = Modifier.height(8.dp))
                     }
                 }
             }
@@ -320,7 +328,7 @@ fun MainScreen(
     // Sync choose dialog
     val isSyncDialogOpen by vm.isSyncDialogOpen.collectAsState()
     if (isSyncDialogOpen) {
-        val driveVM = DriveViewModel(vm, Drive(context))
+        val driveVM = DriveUtils.getInstance(vm, Drive.getInstance())
 
         Dialog(onDismissRequest = { vm.openSyncDialog(false) }) {
             Card(
@@ -340,13 +348,13 @@ fun MainScreen(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     TextButton(onClick = {
-                        driveVM.driveSyncManualThread(false)
+                        driveVM.driveSyncManualThread(false, context)
                         vm.openSyncDialog(false)
                     }) {
                         Text(text = LocalContext.current.getString(R.string.sync_drive))
                     }
                     TextButton(onClick = {
-                        driveVM.driveSyncManualThread(true)
+                        driveVM.driveSyncManualThread(true, context)
                         vm.openSyncDialog(false)
                     }) {
                         Text(text = LocalContext.current.getString(R.string.sync_local))

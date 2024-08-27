@@ -8,7 +8,6 @@ import androidx.compose.foundation.text2.input.TextFieldState
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import androidx.room.withTransaction
 import com.yurhel.alex.anotes.data.local.DB
 import com.yurhel.alex.anotes.data.local.obj.NoteObj
 import com.yurhel.alex.anotes.data.local.obj.SettingsObj
@@ -25,31 +24,23 @@ import java.util.Date
 class MainViewModel(
     val db: DB,
     val callExit: () -> Unit,
-    val callTrySighIn: () -> Unit,
     var widgetIdWhenCreated: Int,
     var noteCreatedDateFromWidget: String,
-    val callUpdateWidget: (isInitAction: Boolean, widgetId: Int, noteCreated: String, noteText: String) -> Unit
+    val callUpdateWidget: (isInitAction: Boolean, widgetId: Int, noteCreated: String, note: NoteObj) -> Unit
 ) : ViewModel() {
 
     class Factory(
         private val db: DB,
         private val callExit: () -> Unit,
-        private val callTrySighIn: () -> Unit,
         private var widgetIdWhenCreated: Int,
         private var noteCreatedDateFromWidget: String,
-        private val callInitUpdateWidget: (
-            isInitAction: Boolean,
-            widgetId: Int,
-            noteCreated: String,
-            noteText: String
-        ) -> Unit
+        private val callInitUpdateWidget: (isInitAction: Boolean, widgetId: Int, noteCreated: String, note: NoteObj) -> Unit
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T =
             MainViewModel(
                 db,
                 callExit,
-                callTrySighIn,
                 widgetIdWhenCreated,
                 noteCreatedDateFromWidget,
                 callInitUpdateWidget
@@ -160,7 +151,8 @@ class MainViewModel(
      * Creates new note or opens existed. Also if screen open from widget but note deleted (from DB) - redirect to notes screen.
      **/
     fun prepareNote(
-        redirectToNotesScreen: () -> Unit
+        redirectToNotesScreen: () -> Unit,
+        redirectToTasksScreen: () -> Unit
     ) {
         viewModelScope.launch(Dispatchers.Default) {
             val noteText: String? = if (noteCreatedDateFromWidget != "") {
@@ -178,7 +170,16 @@ class MainViewModel(
                 } else {
                     // Note exist
                     selectNote(noteFromWidget)
-                    noteFromWidget.text
+
+                    if (noteFromWidget.withTasks) {
+                        delay(500L)
+                        // When the app is open from widget - noteScreen opens
+                        // For tasks, need redirection to taskScreen
+                        launch(Dispatchers.Main) { redirectToTasksScreen() }
+                        null
+                    } else {
+                        noteFromWidget.text
+                    }
                 }
             } else if (_selectedNote.value == null) {
                 // New note is opened. Create new note
@@ -244,7 +245,7 @@ class MainViewModel(
                 db.setting.upsert(db.setting.getS()?.copy(isNotesEdited = true) ?: SettingsObj(isNotesEdited = true))
                 // Update widget if it exist
                 val widgetId = db.widget.getByCreated(noteCreated = edit.dateCreate.toString())?.widgetId
-                if (widgetId != null) callUpdateWidget(false, widgetId.toInt(), edit.dateCreate.toString(), editTextStr)
+                if (widgetId != null) callUpdateWidget(false, widgetId.toInt(), edit.dateCreate.toString(), newEdit)
             }
         }
     }
@@ -308,19 +309,11 @@ class MainViewModel(
 
     private fun getTasks(noteId: Int, statusId: Int) {
         viewModelScope.launch(Dispatchers.Default) {
-            val data = if (statusId == 0) {
-                val data = db.task.getManyByNote(noteId)
-                var idx = 1
-                for (i in data) {
-                    i.position = idx
-                    db.task.upsert(i)
-                    idx++
-                }
-                data
+            _tasks.value = if (statusId == 0) {
+                db.task.getManyByNote(noteId)
             } else {
                 db.task.getManyByNoteAndStatus(noteId, statusId)
-            }
-            _tasks.value = data.reversed()
+            }.reversed()
         }
     }
 
@@ -365,21 +358,24 @@ class MainViewModel(
             is Event.UpsertTask -> {
                 viewModelScope.launch(Dispatchers.Default) {
                     db.task.upsert(event.task)
-                    // Set position from generated id ???
                     if (event.task.id == 0) {
-                        try {
-                            db.withTransaction {
-                                val id = db.task.getLast().id
-                                db.task.upsert(event.task.copy(id = id, position = id))
-                            }
-                        } catch (_: Exception) {}
+                        db.task.upsert(
+                            event.task.copy(
+                                id = db.task.getLast().id,
+                                position = db.task.getManyByNoteCount(event.task.note)
+                            )
+                        )
+                        updateNotesPositions(event.task.note) // ??????
                     }
+                    delay(200)
                     updateTasksData(false)
                 }
             }
             is Event.DeleteTask -> {
                 viewModelScope.launch(Dispatchers.Default) {
                     db.task.delete(event.task)
+                    updateNotesPositions(event.task.note) // ??????
+                    delay(200)
                     updateTasksData(false)
                 }
             }
@@ -394,8 +390,9 @@ class MainViewModel(
                     if (targetTask != null) {
                         db.task.upsert(targetTask.copy(position = event.task.position))
                     }
-                    delay(100) // ???
                     db.task.upsert(event.task.copy(position = targetPos))
+                    updateNotesPositions(event.task.note) // ??????
+                    delay(200)
                     updateTasksData(false)
                 }
             }
@@ -410,6 +407,17 @@ class MainViewModel(
             Event.HideEditDialog -> {
                 _editDialogVisibility.value = false
             }
+        }
+    }
+
+    private suspend fun updateNotesPositions(noteId: Int) {
+        // Set positions for all tasks in specific note
+        delay(200)
+        var idx = 1
+        for (i in db.task.getManyByNote(noteId)) {
+            i.position = idx
+            db.task.upsert(i)
+            idx++
         }
     }
 }

@@ -1,30 +1,43 @@
 package com.yurhel.alex.anotes.ui
 
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
+import android.content.Context
 import com.yurhel.alex.anotes.data.drive.Drive
 import com.yurhel.alex.anotes.data.local.obj.NoteObj
 import com.yurhel.alex.anotes.data.local.obj.SettingsObj
 import com.yurhel.alex.anotes.data.local.obj.StatusObj
 import com.yurhel.alex.anotes.data.local.obj.TasksObj
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import org.json.JSONArray
 import org.json.JSONObject
 
-class DriveViewModel(
+class DriveUtils private constructor(
     private val vm: MainViewModel,
     private val drive: Drive
-) : ViewModel() {
+) {
+    companion object {
+        @Volatile
+        private var instance: DriveUtils? = null
+
+        fun getInstance(vm: MainViewModel, drive: Drive): DriveUtils {
+            return instance ?: synchronized(this) {
+                instance ?: DriveUtils(vm, drive).also { instance = it }
+            }
+        }
+    }
+
+    private val scope = CoroutineScope(Job())
 
     fun driveSyncAuto(
+        context: Context,
         before: () -> Unit = { vm.changeSyncNow(true) },
         after: () -> Unit = { vm.changeSyncNow(false) }
     ) {
-        viewModelScope.launch(Dispatchers.Default) {
+        scope.launch(Dispatchers.Default) {
             try {
                 before()
-                vm.callTrySighIn()
 
                 var appSettings = vm.db.setting.getS()
                 appSettings = if (appSettings != null) {
@@ -34,7 +47,7 @@ class DriveViewModel(
                     vm.db.setting.upsert(newSettings)
                     newSettings
                 }
-                val data = drive.getData()
+                val data = drive.getData(context)
 
                 if (data.isServiceOK) {
                     if (!appSettings.isNotesEdited) {
@@ -50,13 +63,13 @@ class DriveViewModel(
                             vm.getAllStatuses()
                         } else {
                             // If drive empty -> send data
-                            driveSyncManual(true)
+                            driveSyncManual(true, context)
                         }
                     } else {
                         // Data edited
                         if (data.modifiedTime == appSettings.dataReceivedDate || data.modifiedTime == null) {
                             // Send data
-                            driveSyncManual(true)
+                            driveSyncManual(true, context)
                         } else {
                             // Get user to choose
                             vm.openSyncDialog(true)
@@ -72,24 +85,28 @@ class DriveViewModel(
 
     fun driveSyncManualThread(
         isExport: Boolean,
+        context: Context,
         before: () -> Unit = { vm.changeSyncNow(true) },
         after: () -> Unit = { vm.changeSyncNow(false) }
     ) {
-        viewModelScope.launch(Dispatchers.Default) {
+        scope.launch(Dispatchers.Default) {
             before()
-            driveSyncManual(isExport)
+            driveSyncManual(isExport, context)
             after()
         }
     }
 
-    private suspend fun driveSyncManual(isExport: Boolean) {
+    private suspend fun driveSyncManual(
+        isExport: Boolean,
+        context: Context
+    ) {
         if (isExport) {
             // Send data
-            drive.sendData(exportDB().toString())
+            drive.sendData(exportDB().toString(), context)
             vm.db.setting.upsert(vm.db.setting.getS()?.copy(isNotesEdited = false) ?: SettingsObj(isNotesEdited = false))
         }
         // Get data
-        val data = drive.getData()
+        val data = drive.getData(context)
         if (!isExport && data.modifiedTime != null) {
             // Update local
             importDB(data.data.toString())

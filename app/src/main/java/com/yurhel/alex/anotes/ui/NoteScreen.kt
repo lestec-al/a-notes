@@ -3,22 +3,14 @@ package com.yurhel.alex.anotes.ui
 import android.view.ViewTreeObserver
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text2.BasicTextField2
 import androidx.compose.foundation.text2.input.clearText
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Delete
-import androidx.compose.material3.BottomAppBar
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -35,7 +27,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.layout.boundsInWindow
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -52,8 +43,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.yurhel.alex.anotes.R
-import com.yurhel.alex.anotes.ui.components.Tooltip
-import com.yurhel.alex.anotes.ui.components.TooltipText
+import com.yurhel.alex.anotes.ui.components.BottomAppBarAssembled
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -65,7 +55,7 @@ fun NoteScreen(
 ) {
     LaunchedEffect(Unit) {
         if (vm.editText.text.isEmpty()) {
-            vm.prepareNote(redirectToNotesScreen = onBack)
+            vm.prepareNote(redirectToNotesScreen = onBack, redirectToTasksScreen = toTasks)
         }
     }
 
@@ -92,52 +82,19 @@ fun NoteScreen(
     Surface(modifier = Modifier.fillMaxSize()) {
         Scaffold(
             bottomBar = {
-                BottomAppBar(modifier = Modifier.height(50.dp)) {
-                    // Delete note
-                    val deleteNoteText = context.getString(R.string.delete) + " " + context.getString(R.string.note)
-                    Tooltip(
-                        tooltipText = deleteNoteText
-                    ) {
-                        IconButton(
-                            modifier = Modifier.padding(5.dp, 5.dp, 5.dp, 10.dp),
-                            onClick = {
-                                vm.deleteNote()
-                                vm.editText.clearText()
-                                onBack()
-                            }
-                        ) {
-                            Icon(Icons.Outlined.Delete, deleteNoteText)
-                        }
-                    }
-
-                    // Open tasks
-                    val editTasksText = context.getString(R.string.edit_tasks)
-                    Tooltip(
-                        tooltipText = editTasksText
-                    ) {
-                        IconButton(
-                            modifier = Modifier.padding(5.dp, 5.dp, 5.dp, 10.dp),
-                            onClick = {
-                                vm.saveNote(true)
-                                vm.editText.clearText()
-                                toTasks()
-                            }
-                        ) {
-                            Image(
-                                painter = painterResource(R.drawable.ic_tasks),
-                                contentDescription = editTasksText,
-                                colorFilter = ColorFilter.tint(LocalContentColor.current)
-                            )
-                        }
-                    }
-
-                    // Note updated text
-                    TooltipText(
-                        text = "${context.getString(R.string.updated)}: ${vm.getNoteDate(context)}",
-                        tooltipText = "${context.getString(R.string.created)}: ${vm.getNoteDate(context, true)}",
-                        coroutineScope = coroutineScope
-                    )
-                }
+                BottomAppBarAssembled(
+                    context = context,
+                    vm = vm,
+                    coroutineScope = coroutineScope,
+                    onBack = onBack,
+                    secondButtonAction = {
+                        vm.saveNote(true)
+                        vm.editText.clearText()
+                        toTasks()
+                    },
+                    secondButtonIcon = painterResource(R.drawable.ic_tasks),
+                    secondButtonText = context.getString(R.string.edit_tasks)
+                )
             }
         ) { padding ->
             // Edit text field

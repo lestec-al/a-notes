@@ -31,7 +31,10 @@ interface TaskDao {
     @Query("SELECT * FROM TasksObj WHERE note = :noteId ORDER BY position ASC") //DESC
     fun getManyByNote(noteId: Int): List<TasksObj>
 
-    @Query("SELECT * FROM TasksObj")
+    @Query("SELECT COUNT(*) FROM TasksObj WHERE note = :noteId")
+    fun getManyByNoteCount(noteId: Int): Int
+
+    @Query("SELECT * FROM TasksObj ORDER BY position ASC") //DESC
     fun getAll(): List<TasksObj>
 
 

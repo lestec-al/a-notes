@@ -1,34 +1,25 @@
 package com.yurhel.alex.anotes.ui
 
 import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.absoluteOffset
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListItemInfo
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.text2.input.clearText
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.outlined.Delete
-import androidx.compose.material3.BottomAppBar
-import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SmallFloatingActionButton
@@ -46,8 +37,9 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
@@ -56,13 +48,14 @@ import androidx.compose.ui.unit.dp
 import com.yurhel.alex.anotes.R
 import com.yurhel.alex.anotes.data.local.obj.StatusObj
 import com.yurhel.alex.anotes.data.local.obj.TasksObj
+import com.yurhel.alex.anotes.ui.components.BottomAppBarAssembled
 import com.yurhel.alex.anotes.ui.components.EditDialog
 import com.yurhel.alex.anotes.ui.components.StatusCard
+import com.yurhel.alex.anotes.ui.components.Task
 import com.yurhel.alex.anotes.ui.components.Tooltip
-import com.yurhel.alex.anotes.ui.components.TooltipText
 import kotlin.math.roundToInt
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TasksScreen(
     vm: MainViewModel,
@@ -82,10 +75,11 @@ fun TasksScreen(
     // For info: tasks pos & idx starts from 1
     val lastTaskPos = tasks.size
 
+    val onBackgroundColor = MaterialTheme.colorScheme.onBackground
+
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
-
-    val onBackgroundColor = MaterialTheme.colorScheme.onBackground
+    val lazyListState = rememberLazyListState()
 
     Surface(
         modifier = Modifier.fillMaxSize()
@@ -109,60 +103,26 @@ fun TasksScreen(
                 }
             },
             bottomBar = {
-                BottomAppBar(modifier = Modifier.height(50.dp)) {
-                    // Delete note
-                    val deleteNoteText = context.getString(R.string.delete) + " " + context.getString(R.string.note)
-                    Tooltip(
-                        tooltipText = deleteNoteText
-                    ) {
-                        IconButton(
-                            modifier = Modifier.padding(5.dp, 5.dp, 5.dp, 10.dp),
-                            onClick = {
-                                vm.selectStatus(0)
-                                vm.clearTasks()
-                                vm.deleteNote()
-                                vm.editText.clearText()
-                                onBack()
-                            }
-                        ) {
-                            Icon(Icons.Outlined.Delete, deleteNoteText)
-                        }
-                    }
-
-                    // Edit note
-                    val editNoteText = context.getString(R.string.edit_note)
-                    Tooltip(
-                        tooltipText = editNoteText
-                    ) {
-                        IconButton(
-                            modifier = Modifier.padding(5.dp, 5.dp, 5.dp, 10.dp),
-                            onClick = {
-                                vm.saveNote(showTasksState = false, withoutNoteTextUpdate = true)
-                                vm.selectStatus(0)
-                                vm.clearTasks()
-                                toNote()
-                            }
-                        ) {
-                            Image(
-                                painter = painterResource(R.drawable.ic_edit_note),
-                                contentDescription = editNoteText,
-                                colorFilter = ColorFilter.tint(LocalContentColor.current)
-                            )
-                        }
-                    }
-
-                    // Note updated text
-                    TooltipText(
-                        text = "${context.getString(R.string.updated)}: ${vm.formatDate(context, selectedNote?.dateUpdate)}",
-                        tooltipText = "${context.getString(R.string.created)}: ${vm.formatDate(context, selectedNote?.dateCreate)}",
-                        coroutineScope = coroutineScope
-                    )
-                }
+                BottomAppBarAssembled(
+                    context = context,
+                    vm = vm,
+                    coroutineScope = coroutineScope,
+                    onBack = onBack,
+                    secondButtonAction = {
+                        vm.saveNote(showTasksState = false, withoutNoteTextUpdate = true)
+                        vm.selectStatus(0)
+                        vm.clearTasks()
+                        toNote()
+                    },
+                    secondButtonIcon = painterResource(R.drawable.ic_edit_note),
+                    secondButtonText = context.getString(R.string.edit_note)
+                )
             }
         ) { paddingValues ->
             // Need update tasks (ids) after drag drop change position
             key(tasks) {
                 LazyColumn(
+                    state = lazyListState,
                     modifier = Modifier
                         .padding(paddingValues)
                         .fillMaxSize()
@@ -228,21 +188,26 @@ fun TasksScreen(
                     }
 
                     // Tasks
-                    items(items = tasks) {task: TasksObj ->
+                    itemsIndexed(items = tasks) { idx: Int, task: TasksObj ->
                         // For drag & drop
                         var offsetY by remember { mutableFloatStateOf(0f) }
+                        var posTop = 0f
+                        var posBottom = 0f
+                        val itemIdx = idx + 2
 
-                        Card(
+                        Task(
+                            task = task,
                             onClick = {
                                 vm.onEvent(Event.ShowEditDialog(Types.Task, ActionTypes.Update, task))
                             },
-                            colors = CardDefaults.cardColors(
-                                containerColor = Color.Transparent
-                            ),
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(5.dp)
                                 // For drag & drop
+                                .onGloballyPositioned {
+                                    posTop = it.positionInParent().y
+                                    posBottom = it.positionInParent().y + it.size.height
+                                }
                                 .absoluteOffset(
                                     y = offsetY
                                         .roundToInt()
@@ -255,49 +220,59 @@ fun TasksScreen(
                                         detectDragGesturesAfterLongPress(
                                             onDragStart = {},
                                             onDragEnd = {
-                                                savePos(offsetY, vm, task, lastTaskPos) {
-                                                    offsetY = 0f
-                                                }
+                                                offsetY = 0f
                                             },
                                             onDragCancel = {
-                                                savePos(offsetY, vm, task, lastTaskPos) {
-                                                    offsetY = 0f
-                                                }
+                                                offsetY = 0f
                                             },
                                             onDrag = { _, dragAmount ->
                                                 //change.consume()
                                                 offsetY += dragAmount.y
+
+                                                val posTopDynamic = (posTop + offsetY).toInt()
+                                                val posBottomDynamic = (posBottom + offsetY).toInt()
+
+                                                // Check offsets of all items
+                                                // Try to find that touching item
+                                                var foundedIdx: Int? = null
+                                                for (it in lazyListState.layoutInfo.visibleItemsInfo) {
+                                                    if (itemIdx != it.index) {
+                                                        for (offset in (it.offset + 50)..(it.offsetEnd - 50)) {
+                                                            if (offset in (posTopDynamic + 50)..(posBottomDynamic - 50)) {
+                                                                foundedIdx = it.index
+                                                                break
+                                                            }
+                                                        }
+                                                    }
+                                                    if (foundedIdx != null) break
+                                                }
+                                                if (foundedIdx != null) {
+                                                    if (foundedIdx > itemIdx && task.position != 1) {
+                                                        // Move item to down
+                                                        vm.onEvent(
+                                                            Event.ChangePos(
+                                                                pos = Pos.Prev,
+                                                                task = task
+                                                            )
+                                                        )
+                                                    } else if (foundedIdx < itemIdx && task.position != lastTaskPos) {
+                                                        // Move item to up
+                                                        vm.onEvent(
+                                                            Event.ChangePos(
+                                                                pos = Pos.Next,
+                                                                task = task
+                                                            )
+                                                        )
+                                                    }
+                                                }
                                             }
                                         )
                                     }
-                                }
-                        ) {
-                            Row(horizontalArrangement = Arrangement.Center) {
-                                // Color indicator
-                                Canvas(
-                                    modifier = Modifier
-                                        .padding(top = 18.dp) // 10.dp + 8.dp (text native padding?)
-                                        .size(10.dp)
-                                ) {
-                                    drawCircle(
-                                        color = try {
-                                            Color(statuses.find { it.id == task.status }!!.color)
-                                        } catch (e: Exception) {
-                                            onBackgroundColor
-                                        }
-                                    )
-                                }
-
-                                // Description
-                                Text(
-                                    text = task.description,
-                                    modifier = Modifier.padding(
-                                        horizontal = 5.dp,
-                                        vertical = 10.dp
-                                    )
-                                )
-                            }
-                        }
+                                },
+                            tasksTextPadding = 10,
+                            statuses = statuses,
+                            onBackgroundColor = onBackgroundColor
+                        )
                     }
                 }
             }
@@ -313,39 +288,5 @@ fun TasksScreen(
 @Composable
 fun Int.pxToDp() = with(LocalDensity.current) { this@pxToDp.toDp() }
 
-
-private fun savePos(
-    offsetY: Float,
-    vm: MainViewModel,
-    task: TasksObj,
-    lastTaskPos: Int,
-    updateUI: () -> Unit
-) {
-    if (offsetY > 200) {
-        if (task.position == 1) {
-            updateUI()
-        } else {
-            // Scroll down
-            vm.onEvent(
-                Event.ChangePos(
-                    pos = Pos.Prev,
-                    task = task
-                )
-            )
-        }
-    } else if (offsetY < -200) {
-        if (task.position == lastTaskPos) {
-            updateUI()
-        } else {
-            // Scroll up
-            vm.onEvent(
-                Event.ChangePos(
-                    pos = Pos.Next,
-                    task = task
-                )
-            )
-        }
-    } else {
-        updateUI()
-    }
-}
+private val LazyListItemInfo.offsetEnd: Int
+    get() = this.offset + this.size

@@ -47,7 +47,7 @@ compose.desktop {
             includeAllModules = true
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
             packageName = "ANotesDesktop"
-            packageVersion = "1.0.0"
+            packageVersion = "2.0.0"
             description = "Desktop version ANotes app"
             copyright = "© 2024 Alex Yurhel. All rights reserved."
 

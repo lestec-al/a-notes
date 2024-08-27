@@ -266,6 +266,10 @@ class DB {
         return list
     }
 
+    fun getManyByNoteCountTasks(note: Int): Int {
+        return Database(driver).tasksQueries.getManyByNoteCount(note.toLong()).executeAsOne().toInt()
+    }
+
     fun getAllTasks(): List<TasksObj> {
         val list = mutableListOf<TasksObj>()
         val result = Database(driver).tasksQueries.getAll().executeAsList()

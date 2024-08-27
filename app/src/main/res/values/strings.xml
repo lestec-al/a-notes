@@ -22,4 +22,6 @@
     <string name="save">Save</string>
     <string name="up">Up</string>
     <string name="down">Down</string>
+    <string name="back">Back</string>
+    <string name="delete_press_info">Hold the button to delete a note</string>
 </resources>
