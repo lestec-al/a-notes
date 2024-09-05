@@ -186,50 +186,50 @@ fun MainScreen(
                             text = note.text,
                             overflow = TextOverflow.Ellipsis,
                             maxLines = 15,
-                            modifier = Modifier.padding(10.dp, 2.dp, 10.dp, if (note.withTasks) 2.dp else 10.dp)
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 2.dp)
                         )
 
                         // Tasks for this note
-                        if (note.withTasks) {
-                            for (task in allTasks) {
-                                if (task.note == note.id) {
-                                    Card(
-                                        colors = CardDefaults.cardColors(
-                                            containerColor = Color.Transparent
-                                        ),
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(horizontal = 5.dp)
-                                    ) {
-                                        Row(horizontalArrangement = Arrangement.Center) {
-                                            // Color indicator
-                                            Canvas(
-                                                modifier = Modifier
-                                                    .padding(top = 10.dp) // 2.dp + 8.dp (text native padding?)
-                                                    .size(10.dp)
-                                            ) {
-                                                drawCircle(
-                                                    color = try {
-                                                        Color(allStatuses.find { it.id == task.status }!!.color)
-                                                    } catch (e: Exception) {
-                                                        onBackgroundColor
-                                                    }
-                                                )
-                                            }
-
-                                            // Description
-                                            Text(
-                                                text = task.description,
-                                                modifier = Modifier.padding(
-                                                    horizontal = 5.dp,
-                                                    vertical = 2.dp
-                                                )
+                        for (task in allTasks) {
+                            if (task.note == note.id) {
+                                Card(
+                                    colors = CardDefaults.cardColors(
+                                        containerColor = Color.Transparent
+                                    ),
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 5.dp)
+                                ) {
+                                    Row(horizontalArrangement = Arrangement.Center) {
+                                        // Color indicator
+                                        Canvas(
+                                            modifier = Modifier
+                                                .padding(top = 10.dp) // 2.dp + 8.dp (text native padding?)
+                                                .size(10.dp)
+                                        ) {
+                                            drawCircle(
+                                                color = try {
+                                                    Color(allStatuses.find { it.id == task.status }!!.color)
+                                                } catch (e: Exception) {
+                                                    onBackgroundColor
+                                                }
                                             )
                                         }
+
+                                        // Description
+                                        Text(
+                                            text = task.description,
+                                            modifier = Modifier.padding(
+                                                horizontal = 5.dp,
+                                                vertical = 2.dp
+                                            )
+                                        )
                                     }
                                 }
                             }
                         }
+
+                        Spacer(modifier = Modifier.height(8.dp))
                     }
                 }
             }

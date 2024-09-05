@@ -1,4 +1,4 @@
-# ANotes - Android & PC App
+# ANotes - Android & PC Apps
 
 <img title="Android version screenshots"
 src="https://github.com/lestec-al/a-notes/raw/main/readme_logo.png"/>
@@ -22,5 +22,5 @@ src="https://github.com/lestec-al/a-notes/raw/main/readme_logo_pc.png"/>
 - Google Cloud with Google Drive API
 
 ## Other
-- Both apps have some common code (e.g., most of the UI and cloud services), but also have some differences (e.g., database implementations)
+- Both projects have some similar code (e.g., most of the UI), but also have some differences (e.g., database implementations)
 - I am trying to follow recommendations from [Android App Architecture](https://developer.android.com/topic/architecture#recommended-app-arch) while building this apps

@@ -28,14 +28,14 @@ fun TaskCard(
     if (onClick != null) {
         Card(
             onClick = onClick,
-            colors = CardDefaults.cardColors(containerColor = Color.Transparent),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.background),
             modifier = modifier,
             content = content
         )
     } else {
         // No needed ?
         Card(
-            colors = CardDefaults.cardColors(containerColor = Color.Transparent),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.background),
             modifier = modifier,
             content = content
         )
