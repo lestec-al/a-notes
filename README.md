@@ -23,4 +23,5 @@ src="https://github.com/lestec-al/a-notes/raw/main/screenshots_desktop.png"/>
 
 ## Other
 - Both projects have some similar code (e.g., most of the UI), but also have some differences (e.g., database implementations)
+- If you want to create your own executables, remember that to enable sync, you need to create your own Google Cloud Project and create an OAuth credentials. For the Desktop version, download the credential, rename it to "auth.json" and move the file to "ANotesDesktop/src/main/resources/" .
 - I am trying to follow recommendations from [Android App Architecture](https://developer.android.com/topic/architecture#recommended-app-arch) while building this apps
