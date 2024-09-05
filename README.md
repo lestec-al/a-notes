@@ -1,10 +1,10 @@
 # ANotes - Android & PC Apps
 
 <img title="Android version screenshots"
-src="https://github.com/lestec-al/a-notes/raw/main/readme_logo.png"/>
+src="https://github.com/lestec-al/a-notes/raw/main/screenshots_android.png"/>
 
 <img title="PC version screenshots"
-src="https://github.com/lestec-al/a-notes/raw/main/readme_logo_pc.png"/>
+src="https://github.com/lestec-al/a-notes/raw/main/screenshots_desktop.png"/>
 
 ## Features
 - Manage notes
