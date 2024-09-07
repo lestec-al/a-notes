@@ -1,0 +1,35 @@
+CREATE TABLE settingsTable (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    dataReceivedDate TEXT,
+    isNotesEdited INTEGER,
+    viewMode TEXT,
+    screenWidth INTEGER,
+    screenHeight INTEGER,
+    screenPosX INTEGER,
+    screenPosY INTEGER
+);
+
+INSERT INTO settingsTable (dataReceivedDate, isNotesEdited, viewMode, screenWidth, screenHeight, screenPosX, screenPosY)
+VALUES ('', 0, "col",600, 600, 20, 20);
+
+selectAll:
+SELECT * FROM settingsTable;
+
+updateReceived:
+UPDATE settingsTable SET dataReceivedDate = ? WHERE id = 1;
+
+updateEdit:
+UPDATE settingsTable SET isNotesEdited = ? WHERE id = 1;
+
+updateViewMode:
+UPDATE settingsTable SET viewMode = ? WHERE id = 1;
+
+getScreen:
+SELECT screenWidth, screenHeight, screenPosX, screenPosY
+FROM settingsTable
+WHERE id = 1;
+
+setScreen:
+UPDATE settingsTable
+SET screenWidth = ?, screenHeight = ?, screenPosX = ?, screenPosY = ?
+WHERE id = 1;
