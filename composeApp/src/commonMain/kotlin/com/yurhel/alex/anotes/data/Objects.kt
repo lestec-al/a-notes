@@ -1,5 +1,7 @@
 package com.yurhel.alex.anotes.data
 
+import androidx.compose.ui.unit.Dp
+
 data class NoteObj(
     val id: Int = 0,
     val withTasks: Boolean = false,
@@ -39,4 +41,12 @@ data class WidgetObj(
     val id: Int = 0,
     val widgetId: Int,
     val noteCreated: String
+)
+
+
+data class WinScreen(
+    val width: Dp,
+    val height: Dp,
+    val posX: Dp,
+    val posY: Dp
 )

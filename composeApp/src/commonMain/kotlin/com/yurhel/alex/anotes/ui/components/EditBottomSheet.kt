@@ -98,6 +98,7 @@ fun EditBottomSheet(
     ModalBottomSheet(
         onDismissRequest = { vm.onEvent(Event.HideEditDialog) },
         sheetState = sheetState,
+        containerColor = MaterialTheme.colorScheme.surfaceVariant,
         modifier = Modifier.fillMaxSize()
     ) {
         // Edit

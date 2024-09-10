@@ -130,7 +130,7 @@ actual fun NoteScreen(
                 onTextLayout = {
                     coroutineScope.launch {
                         try {
-                            val cursor = it()?.getCursorRect(editText.text.selection.end)
+                            val cursor = it()?.getCursorRect(editText.text.lastIndex)
                             if (cursor != null) {
                                 val bottomOffset = scroll.value + globalViewHeight
                                 if (cursor.top < scroll.value) scroll.scrollTo(cursor.top.toInt())

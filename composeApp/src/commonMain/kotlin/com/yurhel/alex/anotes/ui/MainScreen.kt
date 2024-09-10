@@ -23,6 +23,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -37,6 +38,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -46,7 +48,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalFocusManager
@@ -102,6 +105,10 @@ fun MainScreen(
 
     var isSearchOn by remember { mutableStateOf(false) }
     val focusManager = LocalFocusManager.current
+    val textFocusRequester = remember { FocusRequester() }
+    LaunchedEffect(isSearchOn) {
+        if (isSearchOn) textFocusRequester.requestFocus() else focusManager.clearFocus()
+    }
 
     val onBackgroundColor = MaterialTheme.colorScheme.onBackground
 
@@ -115,133 +122,159 @@ fun MainScreen(
             bottomBar = {
                 if (notNeedChooseWidget) {
                     // Bottom bar
-                    BottomAppBar(modifier = Modifier.height(50.dp)) {
-                        if (isSearchOn && orientation != OrientationObj.Desktop) {
-                            // Only for Android
-                            // Search OFF button
-                            val backText = stringResource(Res.string.back)
-                            Tooltip(tooltipText = backText) {
-                                IconButton(
-                                    modifier = Modifier.padding(5.dp, 5.dp, 5.dp, 10.dp),
-                                    onClick = {
-                                        isSearchOn = false
-                                        focusManager.clearFocus()
-                                    }
-                                ) {
-                                    Icon(Icons.Default.Close, backText)
-                                }
-                            }
-
-                        } else {
-                            // Add new note button
-                            val newNoteText = stringResource(Res.string.create) + " " + stringResource(Res.string.note)
-                            Tooltip(tooltipText = newNoteText) {
-                                IconButton(
-                                    modifier = Modifier.padding(5.dp, 5.dp, 5.dp, 10.dp),
-                                    onClick = {
-                                        vm.selectNote(null)
-                                        openNoteClicked()
-                                    }
-                                ) {
-                                    Icon(Icons.Default.Add, newNoteText)
-                                }
-                            }
-
-                            // Sync indicator / button
-                            val syncText = stringResource(Res.string.sync_drive_action)
-                            if (isSyncNow) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier
-                                        .padding(17.dp, 5.dp, 17.dp, 10.dp)
-                                        .size(24.dp),
-                                    color = MaterialTheme.colorScheme.onPrimaryContainer,
-                                    strokeWidth = 2.dp
-                                )
-                            } else {
-                                Tooltip(tooltipText = syncText) {
+                    BottomAppBar(
+                        modifier = Modifier.height(50.dp),
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
+                    ) {
+                        Row(
+                            horizontalArrangement = Arrangement.SpaceEvenly,
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            if (isSearchOn) {
+                                // Search OFF button
+                                val backText = stringResource(Res.string.back)
+                                Tooltip(tooltipText = backText) {
                                     IconButton(
-                                        modifier = Modifier.padding(5.dp, 5.dp, 5.dp, 10.dp),
                                         onClick = {
-                                            vm.syncData(SyncActionTypes.Auto, vm)
+                                            isSearchOn = false
+                                            vm.getDbNotes("")
                                         }
                                     ) {
-                                        Icon(Icons.Default.Refresh, syncText)
+                                        Icon(Icons.Default.Close, backText, Modifier.size(30.dp))
                                     }
                                 }
-                            }
 
-                            // Change notes view button
-                            val changeViewText = stringResource(Res.string.change_view)
-                            Tooltip(tooltipText = changeViewText) {
-                                IconButton(
-                                    modifier = Modifier.padding(5.dp, 5.dp, 5.dp, 10.dp),
-                                    onClick = {
-                                        vm.changeNotesView()
-                                    }
+                                // Search text field
+                                val interactionSource = remember { MutableInteractionSource() }
+                                val surfaceColor = MaterialTheme.colorScheme.background
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier
+                                        .fillMaxWidth(0.8f)
+                                        .clip(RoundedCornerShape(30.dp))
+                                        .drawBehind { drawRect(surfaceColor) }
                                 ) {
                                     Icon(
-                                        imageVector = vectorResource(
-                                            if (appSettingsView == "grid") Res.drawable.ic_list else Res.drawable.ic_grid
-                                        ),
-                                        contentDescription = changeViewText
+                                        imageVector = Icons.Default.Search,
+                                        contentDescription = stringResource(Res.string.search_text_hint),
+                                        modifier = Modifier.padding(horizontal = 5.dp),
+                                        tint = MaterialTheme.colorScheme.outline
                                     )
-                                }
-                            }
-                        }
 
-                        // Search
-                        val interactionSource = remember { MutableInteractionSource() }
-                        val surfaceColor = MaterialTheme.colorScheme.surfaceVariant
-                        Box(
-                            modifier = Modifier
-                                .padding(5.dp, 5.dp, 15.dp, 10.dp)
-                                .clip(RoundedCornerShape(30.dp))
-                                .drawBehind { drawRect(surfaceColor) }
-                        ) {
-                            Row {
-                                // Edit text
-                                BasicTextField(
-                                    value = searchText,
-                                    onValueChange = { vm.getDbNotes(it) },
-                                    modifier = Modifier
-                                        .padding(10.dp, 0.dp)
-                                        .fillMaxWidth()
-                                        .onFocusChanged {
-                                            if (it.isFocused) isSearchOn = true
-                                        },
-                                    textStyle = TextStyle(
-                                        color = MaterialTheme.colorScheme.onSurface,
-                                        fontSize = MaterialTheme.typography.bodyLarge.fontSize
-                                    ),
-                                    cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
-                                    keyboardOptions = KeyboardOptions(
-                                        keyboardType = KeyboardType.Text,
-                                        imeAction = ImeAction.Search
-                                    ),
-                                    keyboardActions = KeyboardActions { keyboard?.hide() },
-                                    interactionSource = interactionSource,
-                                    singleLine = true
-                                ) { innerTextField ->
-                                    TextFieldDefaults.DecorationBox(
+                                    BasicTextField(
                                         value = searchText,
-                                        visualTransformation = VisualTransformation.None,
-                                        innerTextField = innerTextField,
-                                        placeholder = {
-                                            Text(text = stringResource(Res.string.search_text_hint))
-                                        },
-                                        singleLine = true,
-                                        enabled = true,
-                                        isError = false,
-                                        interactionSource = interactionSource,
-                                        colors = TextFieldDefaults.colors(
-                                            focusedTextColor = Color.Gray,
-                                            disabledTextColor = Color.Transparent,
-                                            focusedIndicatorColor = Color.Transparent,
-                                            unfocusedIndicatorColor = Color.Transparent,
-                                            disabledIndicatorColor = Color.Transparent
+                                        onValueChange = { vm.getDbNotes(it) },
+                                        modifier = Modifier
+                                            .padding(end = 10.dp)
+                                            .fillMaxWidth()
+                                            .focusRequester(textFocusRequester),
+                                        textStyle = TextStyle(
+                                            color = MaterialTheme.colorScheme.onBackground,
+                                            fontStyle = MaterialTheme.typography.bodyLarge.fontStyle
                                         ),
-                                        contentPadding = PaddingValues(0.dp, 4.dp)
+                                        cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+                                        keyboardOptions = KeyboardOptions(
+                                            keyboardType = KeyboardType.Text,
+                                            imeAction = ImeAction.Search
+                                        ),
+                                        keyboardActions = KeyboardActions { keyboard?.hide() },
+                                        interactionSource = interactionSource,
+                                        singleLine = true
+                                    ) { innerTextField ->
+                                        TextFieldDefaults.DecorationBox(
+                                            value = searchText,
+                                            visualTransformation = VisualTransformation.None,
+                                            innerTextField = innerTextField,
+                                            placeholder = {
+                                                Text(text = stringResource(Res.string.search_text_hint))
+                                            },
+                                            singleLine = true,
+                                            enabled = true,
+                                            isError = false,
+                                            interactionSource = interactionSource,
+                                            colors = TextFieldDefaults.colors(
+                                                focusedContainerColor = Color.Transparent,
+                                                unfocusedContainerColor = Color.Transparent,
+                                                focusedTextColor = MaterialTheme.colorScheme.onBackground,
+                                                disabledTextColor = MaterialTheme.colorScheme.onBackground,
+                                                focusedIndicatorColor = Color.Transparent,
+                                                unfocusedIndicatorColor = Color.Transparent,
+                                                disabledIndicatorColor = Color.Transparent
+                                            ),
+                                            contentPadding = PaddingValues(0.dp, 4.dp)
+                                        )
+                                    }
+                                }
+
+                            } else {
+                                // Search ON button
+                                val searchInfoText = stringResource(Res.string.search_text_hint)
+                                Tooltip(tooltipText = searchInfoText) {
+                                    IconButton(
+                                        onClick = {
+                                            isSearchOn = true
+                                        }
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Search,
+                                            contentDescription = searchInfoText,
+                                            modifier = Modifier.size(30.dp)
+                                        )
+                                    }
+                                }
+
+                                // Add new note button
+                                val newNoteText = stringResource(Res.string.create) + " " + stringResource(Res.string.note)
+                                Tooltip(tooltipText = newNoteText) {
+                                    IconButton(
+                                        onClick = {
+                                            vm.selectNote(null)
+                                            openNoteClicked()
+                                        }
+                                    ) {
+                                        Icon(Icons.Default.Add, newNoteText, Modifier.size(30.dp))
+                                    }
+                                }
+
+                                // Sync indicator / button
+                                val syncText = stringResource(Res.string.sync_drive_action)
+                                if (isSyncNow) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier
+                                            .padding(12.dp, 0.dp)
+                                            .size(24.dp),
+                                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                        strokeWidth = 2.dp
                                     )
+                                } else {
+                                    Tooltip(tooltipText = syncText) {
+                                        IconButton(
+                                            onClick = {
+                                                vm.syncData(SyncActionTypes.Auto, vm)
+                                            }
+                                        ) {
+                                            Icon(Icons.Default.Refresh, syncText, Modifier.size(30.dp))
+                                        }
+                                    }
+                                }
+
+                                // Change notes view button
+                                val changeViewText = stringResource(Res.string.change_view)
+                                Tooltip(tooltipText = changeViewText) {
+                                    IconButton(
+                                        onClick = {
+                                            vm.changeNotesView()
+                                        }
+                                    ) {
+                                        Icon(
+                                            imageVector = vectorResource(
+                                                if (appSettingsView == "grid") Res.drawable.ic_list else Res.drawable.ic_grid
+                                            ),
+                                            contentDescription = changeViewText,
+                                            modifier = Modifier.size(30.dp)
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -261,7 +294,6 @@ fun MainScreen(
 
             // Notes - projects
             LazyVerticalStaggeredGrid(
-                // StaggeredGridCells.FixedSize(300.dp)
                 columns = StaggeredGridCells.Fixed(
                     if (appSettingsView == "grid") if (orientation == OrientationObj.Landscape) 3 else 2 else 1
                 ),
@@ -361,4 +393,3 @@ fun MainScreen(
         }
     }
 }
-

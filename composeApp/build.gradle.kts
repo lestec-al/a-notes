@@ -13,8 +13,6 @@ plugins {
 }
 
 kotlin {
-    task("testClasses")
-
     androidTarget {
         @OptIn(ExperimentalKotlinGradlePluginApi::class)
         compilerOptions {
@@ -30,22 +28,19 @@ kotlin {
         androidMain.dependencies {
             implementation(compose.preview)
             implementation(libs.androidx.activity.compose)
-
-            // Glance widgets
-            implementation("androidx.glance:glance:1.1.0")
-            implementation ("androidx.glance:glance-appwidget:1.1.0")
-            implementation ("androidx.glance:glance-material3:1.1.0")
-
+            // Widgets
+            implementation(libs.androidx.glance)
+            implementation (libs.androidx.glance.appwidget)
+            implementation (libs.androidx.glance.material3)
             // Drive / Auth
-            implementation("com.google.apis:google-api-services-drive:v3-rev20240509-2.0.0")
-            implementation("com.google.android.gms:play-services-auth:21.2.0")
-            implementation("com.google.api-client:google-api-client-android:1.23.0")
-            implementation("androidx.credentials:credentials:1.3.0-rc01")
-            implementation("androidx.credentials:credentials-play-services-auth:1.3.0-rc01")
-            implementation("com.google.android.libraries.identity.googleid:googleid:1.1.1")
-
+            implementation(libs.google.api.services.drive)
+            implementation(libs.google.api.client.android)
+            implementation(libs.googleid)
+            implementation(libs.play.services.auth)
+            implementation(libs.androidx.credentials)
+            implementation(libs.androidx.credentials.play.services.auth)
+            // SQL
             implementation(libs.sqldelight.android)
-            implementation(libs.androidx.material.ripple)
         }
         commonMain.dependencies {
             implementation(compose.runtime)
@@ -57,23 +52,22 @@ kotlin {
             implementation(compose.components.uiToolingPreview)
             implementation(libs.androidx.lifecycle.viewmodel)
             implementation(libs.androidx.lifecycle.runtime.compose)
-
-            implementation(libs.sqldelight.coroutines)
-            implementation(libs.kotlinx.serialization.json)
             implementation(libs.lifecycle.viewmodel.compose)
+            implementation(libs.kotlinx.serialization.json)
             implementation(libs.navigation.compose)
+            // SQL
+            implementation(libs.sqldelight.coroutines)
         }
         desktopMain.dependencies {
             implementation(compose.desktop.currentOs)
             implementation(libs.kotlinx.coroutines.swing)
-
-            // Maybe this is the fix for bug in separate desktop ver ???
-            implementation("org.slf4j:slf4j-nop:2.0.10")
-            // Drive
-            implementation("com.google.api-client:google-api-client:2.5.0")
-            implementation("com.google.oauth-client:google-oauth-client-jetty:1.34.1")
-            implementation("com.google.apis:google-api-services-drive:v3-rev20231128-2.0.0")
-
+            // This is the fix for the build bug in desktop ver ???
+            implementation(libs.slf4j.nop)
+            // Drive / Auth
+            implementation(libs.google.api.client)
+            implementation(libs.google.oauth.client.jetty)
+            implementation(libs.google.api.services.drive)
+            // SQL
             implementation(libs.sqldelight.jvm)
         }
     }
@@ -133,7 +127,7 @@ compose.desktop {
         nativeDistributions {
             includeAllModules = true
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
-            packageName = "com.yurhel.alex.anotes"
+            packageName = "Anotes"
             packageVersion = "3.0.0"
             description = "Desktop version ANotes app"
             copyright = "© 2024 Alex Yurhel. All rights reserved."

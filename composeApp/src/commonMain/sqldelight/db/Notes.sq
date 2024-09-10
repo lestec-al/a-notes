@@ -15,8 +15,9 @@ SELECT * FROM notesTable ORDER BY id DESC LIMIT 1;
 getAll:
 SELECT * FROM notesTable;
 
-getOne:
-SELECT * FROM notesTable WHERE id = ?;
+getQuery:
+SELECT * FROM notesTable WHERE LOWER(text) LIKE ('%' || LOWER(:query) || '%')
+OR id IN (SELECT note FROM tasksTable WHERE LOWER(description) LIKE ('%' || LOWER(:query) || '%'));
 
 
 insert:

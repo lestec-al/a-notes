@@ -31,7 +31,7 @@ class LocalDB private constructor(sqlDriver: SqlDriver) {
 
 
 
-    // NOTES DAO
+    // NOTES DAO ---------------------
     fun createNote(noteObj: NoteObj) {
         Database(driver).notesQueries.insert(
             withTasks = if (noteObj.withTasks) 1 else 0,
@@ -88,26 +88,23 @@ class LocalDB private constructor(sqlDriver: SqlDriver) {
 
     fun getNotes(query: String = ""): List<NoteObj> {
         val list = mutableListOf<NoteObj>()
-        val result = Database(driver).notesQueries.getAll().executeAsList()
-        for (i in result) {
-            if (query == "" || i.text?.lowercase()?.contains(query.lowercase()) == true) {
-                list.add(
-                    NoteObj(
-                        id = i.id.toInt(),
-                        withTasks = i.withTasks?.toInt() == 1,
-                        text = i.text ?: "",
-                        dateUpdate = i.dateUpdate?.toLong() ?: 0,
-                        dateCreate = i.dateCreate?.toLong() ?: 0
-                    )
+        for (i in Database(driver).notesQueries.getQuery(query).executeAsList()) {
+            list.add(
+                NoteObj(
+                    id = i.id.toInt(),
+                    withTasks = i.withTasks?.toInt() == 1,
+                    text = i.text ?: "",
+                    dateUpdate = i.dateUpdate?.toLong() ?: 0,
+                    dateCreate = i.dateCreate?.toLong() ?: 0
                 )
-            }
+            )
         }
         return list
     }
 
 
 
-    // SCREENS DAO
+    // SCREENS DAO ---------------------
     fun getScreen(): WinScreen {
         val result = Database(driver).settingsQueries.getScreen().executeAsOne()
         return WinScreen(
@@ -134,7 +131,7 @@ class LocalDB private constructor(sqlDriver: SqlDriver) {
 
 
 
-    // SETTINGS DAO
+    // SETTINGS DAO ---------------------
     fun updateReceived(dataReceivedDate: Long?) {
         Database(driver).settingsQueries.updateReceived("${dataReceivedDate ?: ""}")
     }
@@ -163,7 +160,7 @@ class LocalDB private constructor(sqlDriver: SqlDriver) {
 
 
 
-    // STATUSES DAO
+    // STATUSES DAO ---------------------
     fun insertStatus(statusObj: StatusObj) {
         Database(driver).statusesQueries.insert(
             statusObj.title,
@@ -222,7 +219,7 @@ class LocalDB private constructor(sqlDriver: SqlDriver) {
 
 
 
-    // TASKS DAO
+    // TASKS DAO ---------------------
     fun insertTask(tasksObj: TasksObj) {
         Database(driver).tasksQueries.insert(
             tasksObj.position.toLong(),
@@ -366,7 +363,7 @@ class LocalDB private constructor(sqlDriver: SqlDriver) {
 
 
 
-    // WIDGETS DAO
+    // WIDGETS DAO ---------------------
     fun insertWidget(w: WidgetObj) {
         Database(driver).widgetsQueries.insert(w.widgetId.toLong(), w.noteCreated)
     }
@@ -375,22 +372,21 @@ class LocalDB private constructor(sqlDriver: SqlDriver) {
         Database(driver).widgetsQueries.deleteById(widgetId.toLong())
     }
 
-    fun deleteByCreatedWidget(noteCreated: String) {
-        Database(driver).widgetsQueries.deleteByCreated(noteCreated)
-    }
-
-    fun getByIdWidget(widgetId: Int): WidgetObj? {
-        val res = Database(driver).widgetsQueries.getById(widgetId.toLong()).executeAsList()
-        var widget: WidgetObj? = null
-        for (i in res) {
-            widget = WidgetObj(
-                id = i.id.toInt(),
-                widgetId = i.widgetId?.toInt() ?: 0,
-                noteCreated = i.noteCreated ?: ""
-            )
-        }
-        return widget
-    }
+//    fun deleteByCreatedWidget(noteCreated: String) {
+//        Database(driver).widgetsQueries.deleteByCreated(noteCreated)
+//    }
+//    fun getByIdWidget(widgetId: Int): WidgetObj? {
+//        val res = Database(driver).widgetsQueries.getById(widgetId.toLong()).executeAsList()
+//        var widget: WidgetObj? = null
+//        for (i in res) {
+//            widget = WidgetObj(
+//                id = i.id.toInt(),
+//                widgetId = i.widgetId?.toInt() ?: 0,
+//                noteCreated = i.noteCreated ?: ""
+//            )
+//        }
+//        return widget
+//    }
 
     fun getByCreatedWidget(noteCreated: String): WidgetObj? {
         val res = Database(driver).widgetsQueries.getByCreated(noteCreated).executeAsList()
@@ -407,7 +403,7 @@ class LocalDB private constructor(sqlDriver: SqlDriver) {
 
 
 
-    // EXPORT / IMPORT
+    // EXPORT / IMPORT ---------------------
     fun exportDB(): JsonArray {
         try {
             val db = Database(driver)

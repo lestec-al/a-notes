@@ -10,11 +10,5 @@ INSERT INTO widgetsTable(widgetId, noteCreated) VALUES (?, ?);
 deleteById:
 DELETE FROM widgetsTable WHERE widgetId = ?;
 
-deleteByCreated:
-DELETE FROM widgetsTable WHERE noteCreated = ?;
-
-getById:
-SELECT * FROM widgetsTable WHERE widgetId = ?;
-
 getByCreated:
 SELECT * FROM widgetsTable WHERE noteCreated = ?;

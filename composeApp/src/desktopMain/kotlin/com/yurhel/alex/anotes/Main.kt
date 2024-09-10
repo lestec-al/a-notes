@@ -1,7 +1,6 @@
 package com.yurhel.alex.anotes
 
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.window.MenuBar
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.application
@@ -18,11 +17,15 @@ import com.yurhel.alex.anotes.ui.MainViewModel
 import com.yurhel.alex.anotes.ui.Navigation
 import com.yurhel.alex.anotes.ui.SyncActionTypes
 import org.jetbrains.compose.resources.stringResource
+import java.awt.Color
+import java.awt.Dimension
 import java.text.DateFormat
 import java.util.Calendar
 import java.util.Date
 
 fun main() = application {
+    // Fixes problems with sharpness & flickering ?
+    System.setProperty("skiko.renderApi", "SOFTWARE_FAST")
 
     val db = LocalDB.getInstance(getSqlDriver())
 
@@ -47,10 +50,8 @@ fun main() = application {
         title = stringResource(Res.string.app_name),
         icon = painterResource("icon.png")
     ) {
-        // ???
-        // Fixes the bug when hovering over buttons (moving up and down)
-        // BUT does not fix the blur on the windowed screen
-        this.MenuBar {}
+        this.window.minimumSize = Dimension(400, 600)
+        this.window.background = Color.WHITE
 
         val vm: MainViewModel = viewModel {
             MainViewModel(
