@@ -31,7 +31,7 @@ fun main() = application {
             this.exitApplication()
         },
         state = screenState,
-        title = "ANotes",
+        title = vm.getString("app_name"),
         icon = painterResource("icon.png")
     ) {
         ANotesDesktopTheme {

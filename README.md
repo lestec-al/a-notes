@@ -1,10 +1,12 @@
 # ANotes - Android & PC Apps
 
+This branch consists of 2 separate projects for Android & PC of the Notes app. See the "main" branch for up-to-date information.
+
 <img title="Android version screenshots"
-src="https://github.com/lestec-al/a-notes/raw/main/screenshots_android.png"/>
+src="https://github.com/lestec-al/a-notes/raw/two-apps/screenshots_android.png"/>
 
 <img title="PC version screenshots"
-src="https://github.com/lestec-al/a-notes/raw/main/screenshots_desktop.png"/>
+src="https://github.com/lestec-al/a-notes/raw/two-apps/screenshots_desktop.png"/>
 
 ## Features
 - Manage notes
