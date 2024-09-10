@@ -6,7 +6,7 @@ src="https://github.com/lestec-al/a-notes/raw/two-apps/screenshots_android.png"/
 <img title="PC version screenshots"
 src="https://github.com/lestec-al/a-notes/raw/two-apps/screenshots_desktop.png"/>
 
-Screenshots from versions of the "two-apps" branch. Apps from this project may look slightly different.
+Screenshots from versions of the "[two-apps](https://github.com/lestec-al/a-notes/tree/two-apps?tab=readme-ov-file)" branch. Apps from this project may look slightly different.
 
 ## Features
 - Manage notes
