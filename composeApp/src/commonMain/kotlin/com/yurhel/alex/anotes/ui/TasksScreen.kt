@@ -49,7 +49,7 @@ import anotes.composeapp.generated.resources.status
 import anotes.composeapp.generated.resources.task
 import com.yurhel.alex.anotes.data.StatusObj
 import com.yurhel.alex.anotes.data.TasksObj
-import com.yurhel.alex.anotes.ui.components.BottomAppBarAssembled
+import com.yurhel.alex.anotes.ui.components.BottomAppBarNote
 import com.yurhel.alex.anotes.ui.components.EditBottomSheet
 import com.yurhel.alex.anotes.ui.components.StatusCard
 import com.yurhel.alex.anotes.ui.components.Task
@@ -79,6 +79,8 @@ fun TasksScreen(
     val onBackgroundColor = MaterialTheme.colorScheme.onBackground
     val lazyListState = rememberLazyListState()
 
+    val scrollOffset = if (getOrientation() == OrientationObj.Desktop) 20 else 50
+
     Surface(modifier = Modifier.fillMaxSize()) {
         Scaffold(
             floatingActionButton = {
@@ -97,7 +99,7 @@ fun TasksScreen(
                 }
             },
             bottomBar = {
-                BottomAppBarAssembled(
+                BottomAppBarNote(
                     vm = vm,
                     coroutineScope = rememberCoroutineScope(),
                     onBack = onBack,
@@ -236,8 +238,8 @@ fun TasksScreen(
                                                 var foundedIdx: Int? = null
                                                 for (it in lazyListState.layoutInfo.visibleItemsInfo) {
                                                     if (itemIdx != it.index) {
-                                                        for (offset in (it.offset + 50)..(it.offsetEnd - 50)) {
-                                                            if (offset in (posTopDynamic + 50)..(posBottomDynamic - 50)) {
+                                                        for (offset in (it.offset + scrollOffset)..(it.offsetEnd - scrollOffset)) {
+                                                            if (offset in (posTopDynamic + scrollOffset)..(posBottomDynamic - scrollOffset)) {
                                                                 foundedIdx = it.index
                                                                 break
                                                             }

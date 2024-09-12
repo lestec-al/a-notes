@@ -2,7 +2,6 @@ package com.yurhel.alex.anotes.ui
 
 import android.view.ViewTreeObserver
 import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -46,11 +45,10 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import anotes.composeapp.generated.resources.Res
 import anotes.composeapp.generated.resources.edit_tasks
-import com.yurhel.alex.anotes.ui.components.BottomAppBarAssembled
+import com.yurhel.alex.anotes.ui.components.BottomAppBarNote
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 actual fun NoteScreen(
     vm: MainViewModel,
@@ -93,7 +91,7 @@ actual fun NoteScreen(
     Surface(modifier = Modifier.fillMaxSize()) {
         Scaffold(
             bottomBar = {
-                BottomAppBarAssembled(
+                BottomAppBarNote(
                     vm = vm,
                     coroutineScope = coroutineScope,
                     onBack = onBack,
@@ -130,7 +128,7 @@ actual fun NoteScreen(
                 onTextLayout = {
                     coroutineScope.launch {
                         try {
-                            val cursor = it()?.getCursorRect(editText.text.lastIndex)
+                            val cursor = it()?.getCursorRect(editText.selection.end)
                             if (cursor != null) {
                                 val bottomOffset = scroll.value + globalViewHeight
                                 if (cursor.top < scroll.value) scroll.scrollTo(cursor.top.toInt())

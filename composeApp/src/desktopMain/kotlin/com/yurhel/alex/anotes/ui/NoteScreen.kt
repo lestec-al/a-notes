@@ -24,7 +24,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import anotes.composeapp.generated.resources.Res
 import anotes.composeapp.generated.resources.edit_tasks
-import com.yurhel.alex.anotes.ui.components.BottomAppBarAssembled
+import com.yurhel.alex.anotes.ui.components.BottomAppBarNote
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -43,7 +43,7 @@ actual fun NoteScreen(
     Surface(modifier = Modifier.fillMaxSize()) {
         Scaffold(
             bottomBar = {
-                BottomAppBarAssembled(
+                BottomAppBarNote(
                     vm = vm,
                     coroutineScope = rememberCoroutineScope(),
                     onBack = onBack,
