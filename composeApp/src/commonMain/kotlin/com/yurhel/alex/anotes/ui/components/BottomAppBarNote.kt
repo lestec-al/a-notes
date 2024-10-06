@@ -74,14 +74,16 @@ fun BottomAppBarNote(
             modifier = if (orientation == OrientationObj.Desktop) {
                 Modifier
             } else {
-                Modifier.fillMaxWidth(0.5f)
+                Modifier.fillMaxWidth(0.35f)
             }
         ) {
-            // Back button
-            val backText = stringResource(Res.string.back)
-            Tooltip(backText) {
-                IconButton(onClick = onBackButtonClick) {
-                    Icon(Icons.AutoMirrored.Outlined.ArrowBack, backText, Modifier.size(30.dp))
+            if (orientation == OrientationObj.Desktop) {
+                // Back button
+                val backText = stringResource(Res.string.back)
+                Tooltip(backText) {
+                    IconButton(onClick = onBackButtonClick) {
+                        Icon(Icons.AutoMirrored.Outlined.ArrowBack, backText, Modifier.size(30.dp))
+                    }
                 }
             }
 

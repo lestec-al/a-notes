@@ -13,8 +13,12 @@ import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -30,13 +34,16 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import anotes.composeapp.generated.resources.Res
+import anotes.composeapp.generated.resources.create
 import anotes.composeapp.generated.resources.empty_text
+import anotes.composeapp.generated.resources.note
 import anotes.composeapp.generated.resources.sync_collision
 import anotes.composeapp.generated.resources.sync_drive
 import anotes.composeapp.generated.resources.sync_local
 import com.yurhel.alex.anotes.data.NoteObj
 import com.yurhel.alex.anotes.ui.components.BottomAppBarMain
 import com.yurhel.alex.anotes.ui.components.Task
+import com.yurhel.alex.anotes.ui.components.Tooltip
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -65,8 +72,23 @@ fun MainScreen(
 
     Surface(modifier = Modifier.fillMaxSize()) {
         Scaffold(
+            floatingActionButton = {
+                // Add new note
+                val newNoteText = stringResource(Res.string.create) + " " + stringResource(Res.string.note)
+                Tooltip(newNoteText) {
+                    FloatingActionButton(
+                        shape = CardDefaults.shape,
+                        onClick = {
+                            vm.selectNote(null)
+                            openNoteClicked()
+                        }
+                    ) {
+                        Icon(Icons.Default.Add, newNoteText)
+                    }
+                }
+            },
             bottomBar = {
-                if (notNeedChooseWidget) BottomAppBarMain(vm, openNoteClicked, appSettingsView)
+                if (notNeedChooseWidget) BottomAppBarMain(vm, appSettingsView)
             }
         ) { paddingValues ->
             // Empty text

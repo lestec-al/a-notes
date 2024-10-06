@@ -25,7 +25,7 @@ import java.util.Date
 
 fun main() = application {
     // Fixes problems with sharpness & flickering ?
-    System.setProperty("skiko.renderApi", "SOFTWARE")
+    System.setProperty("skiko.renderApi", "OPENGL")
 
     val db = LocalDB.getInstance(getSqlDriver())
 

@@ -16,7 +16,6 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.BottomAppBar
@@ -52,11 +51,9 @@ import androidx.compose.ui.unit.dp
 import anotes.composeapp.generated.resources.Res
 import anotes.composeapp.generated.resources.back
 import anotes.composeapp.generated.resources.change_view
-import anotes.composeapp.generated.resources.create
 import anotes.composeapp.generated.resources.delete
 import anotes.composeapp.generated.resources.ic_grid
 import anotes.composeapp.generated.resources.ic_list
-import anotes.composeapp.generated.resources.note
 import anotes.composeapp.generated.resources.search_text_hint
 import anotes.composeapp.generated.resources.sync_drive_action
 import com.yurhel.alex.anotes.ui.MainViewModel
@@ -70,7 +67,6 @@ import org.jetbrains.compose.resources.vectorResource
 @Composable
 fun BottomAppBarMain(
     vm: MainViewModel,
-    openNoteClicked: () -> Unit,
     appSettingsView: String
 ) {
     val searchText by vm.searchText.collectAsState()
@@ -109,22 +105,9 @@ fun BottomAppBarMain(
                 modifier = if (orientation == OrientationObj.Desktop) {
                     Modifier
                 } else {
-                    Modifier.fillMaxWidth(0.5f)
+                    Modifier.fillMaxWidth(0.35f)
                 }
             ) {
-                // Add new note button
-                val newNoteText = stringResource(Res.string.create) + " " + stringResource(Res.string.note)
-                Tooltip(newNoteText) {
-                    IconButton(
-                        onClick = {
-                            vm.selectNote(null)
-                            openNoteClicked()
-                        }
-                    ) {
-                        Icon(Icons.Default.Add, newNoteText, Modifier.size(30.dp))
-                    }
-                }
-
                 // Sync indicator / button
                 val syncText = stringResource(Res.string.sync_drive_action)
                 if (isSyncNow) {
