@@ -74,7 +74,9 @@ fun BottomAppBarNote(
             modifier = if (orientation == OrientationObj.Desktop) {
                 Modifier
             } else {
-                Modifier.fillMaxWidth(0.35f)
+                Modifier.fillMaxWidth(
+                    if (orientation == OrientationObj.Landscape) 0.2f else 0.35f
+                )
             }
         ) {
             if (orientation == OrientationObj.Desktop) {

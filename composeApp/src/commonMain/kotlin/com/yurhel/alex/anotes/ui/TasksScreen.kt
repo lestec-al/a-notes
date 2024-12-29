@@ -24,7 +24,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SmallFloatingActionButton
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -81,200 +80,198 @@ fun TasksScreen(
 
     val scrollOffset = if (getOrientation() == OrientationObj.Desktop) 20 else 50
 
-    Surface(modifier = Modifier.fillMaxSize()) {
-        Scaffold(
-            floatingActionButton = {
-                // Add new task
-                val addNewTaskText = stringResource(Res.string.create) + " " + stringResource(Res.string.task)
-                Tooltip(tooltipText = addNewTaskText) {
-                    FloatingActionButton(
-                        elevation = FloatingActionButtonDefaults.elevation(0.dp, 0.dp, 0.dp, 0.dp),
-                        shape = CardDefaults.shape,
-                        onClick = {
-                            vm.onEvent(Event.ShowEditDialog(Types.Task, ActionTypes.Create))
+    Scaffold(
+        floatingActionButton = {
+            // Add new task
+            val addNewTaskText = stringResource(Res.string.create) + " " + stringResource(Res.string.task)
+            Tooltip(tooltipText = addNewTaskText) {
+                FloatingActionButton(
+                    elevation = FloatingActionButtonDefaults.elevation(0.dp, 0.dp, 0.dp, 0.dp),
+                    shape = CardDefaults.shape,
+                    onClick = {
+                        vm.onEvent(Event.ShowEditDialog(Types.Task, ActionTypes.Create))
+                    }
+                ) {
+                    Icon(Icons.Default.Add, addNewTaskText)
+                }
+            }
+        },
+        bottomBar = {
+            BottomAppBarNote(
+                vm = vm,
+                coroutineScope = rememberCoroutineScope(),
+                onBack = onBack,
+                onBackButtonClick = {
+                    vm.selectStatus(0)
+                    vm.clearTasks()
+                    onBack()
+                },
+                onSecondButtonClick = {
+                    vm.selectStatus(0)
+                    vm.clearTasks()
+                    toNote()
+                },
+                secondButtonIcon = Icons.Outlined.Edit,
+                secondButtonText = stringResource(Res.string.edit_note)
+            )
+        }
+    ) { paddingValues ->
+
+        // Need update tasks (ids) after drag drop change position
+        key(tasks) {
+            LazyColumn(
+                state = lazyListState,
+                modifier = Modifier
+                    .padding(paddingValues)
+                    .fillMaxSize()
+            ) {
+
+                // Top bar
+                item {
+                    TopAppBar(
+                        colors = TopAppBarDefaults.topAppBarColors(
+                            scrolledContainerColor = MaterialTheme.colorScheme.background,
+                            containerColor = MaterialTheme.colorScheme.background,
+                        ),
+                        title = {
+                            Text(
+                                text = if (selectedNote != null) selectedNote!!.text else "",
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.padding(0.dp, 0.dp, 10.dp, 0.dp)
+                            )
                         }
+                    )
+                }
+
+                // Statuses
+                item {
+                    LazyRow(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(50.dp)
                     ) {
-                        Icon(Icons.Default.Add, addNewTaskText)
+                        items(items = statuses) { status: StatusObj ->
+                            StatusCard(
+                                selectedStatusId = selectedStatus,
+                                status = status,
+                                onClick = {
+                                    // Change status
+                                    if (selectedStatus != status.id) vm.selectStatus(status.id) else vm.selectStatus(0)
+                                    vm.updateTasksData(false)
+                                },
+                                onLongClicked = {
+                                    vm.onEvent(Event.ShowEditDialog(Types.Status, ActionTypes.Update, status))
+                                }
+                            )
+                        }
+
+                        item {
+                            // Create new status
+                            val addNewStatusText = stringResource(Res.string.create) + " " + stringResource(Res.string.status)
+                            Tooltip(tooltipText = addNewStatusText) {
+                                SmallFloatingActionButton(
+                                    modifier = Modifier.padding(5.dp),
+                                    elevation = FloatingActionButtonDefaults.elevation(0.dp, 0.dp, 0.dp, 0.dp),
+                                    shape = CardDefaults.shape,
+                                    onClick = {
+                                        vm.onEvent(Event.ShowEditDialog(Types.Status, ActionTypes.Create))
+                                    }
+                                ) {
+                                    Icon(Icons.Default.Add, addNewStatusText)
+                                }
+                            }
+                        }
                     }
                 }
-            },
-            bottomBar = {
-                BottomAppBarNote(
-                    vm = vm,
-                    coroutineScope = rememberCoroutineScope(),
-                    onBack = onBack,
-                    onBackButtonClick = {
-                        vm.selectStatus(0)
-                        vm.clearTasks()
-                        onBack()
-                    },
-                    onSecondButtonClick = {
-                        vm.selectStatus(0)
-                        vm.clearTasks()
-                        toNote()
-                    },
-                    secondButtonIcon = Icons.Outlined.Edit,
-                    secondButtonText = stringResource(Res.string.edit_note)
-                )
-            }
-        ) { paddingValues ->
 
-            // Need update tasks (ids) after drag drop change position
-            key(tasks) {
-                LazyColumn(
-                    state = lazyListState,
-                    modifier = Modifier
-                        .padding(paddingValues)
-                        .fillMaxSize()
-                ) {
+                // Tasks
+                itemsIndexed(items = tasks) { idx: Int, task: TasksObj ->
+                    // For drag & drop
+                    var offsetY by remember { mutableFloatStateOf(0f) }
+                    var posTop = 0f
+                    var posBottom = 0f
+                    val itemIdx = idx + 2 // Add topBar & statuses
 
-                    // Top bar
-                    item {
-                        TopAppBar(
-                            colors = TopAppBarDefaults.topAppBarColors(
-                                scrolledContainerColor = MaterialTheme.colorScheme.background,
-                                containerColor = MaterialTheme.colorScheme.background,
-                            ),
-                            title = {
-                                Text(
-                                    text = if (selectedNote != null) selectedNote!!.text else "",
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                    modifier = Modifier.padding(0.dp, 0.dp, 10.dp, 0.dp)
-                                )
+                    Task(
+                        task = task,
+                        cardColor = MaterialTheme.colorScheme.background,
+                        onClick = {
+                            vm.onEvent(Event.ShowEditDialog(Types.Task, ActionTypes.Update, task))
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(5.dp)
+                            // For drag & drop
+                            .onGloballyPositioned {
+                                posTop = it.positionInParent().y
+                                posBottom = it.positionInParent().y + it.size.height
                             }
-                        )
-                    }
+                            .absoluteOffset(
+                                y = offsetY
+                                    .roundToInt()
+                                    .pxToDp()
+                            )
+                            .pointerInput(Unit) {
+                                // If status not selected (all tasks shown)
+                                if (selectedStatus == 0) {
+                                    // Drag & drop
+                                    detectDragGesturesAfterLongPress(
+                                        onDragStart = {},
+                                        onDragEnd = {
+                                            offsetY = 0f
+                                        },
+                                        onDragCancel = {
+                                            offsetY = 0f
+                                        },
+                                        onDrag = { _, dragAmount ->
+                                            //change.consume()
+                                            offsetY += dragAmount.y
 
-                    // Statuses
-                    item {
-                        LazyRow(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(50.dp)
-                        ) {
-                            items(items = statuses) { status: StatusObj ->
-                                StatusCard(
-                                    selectedStatusId = selectedStatus,
-                                    status = status,
-                                    onClick = {
-                                        // Change status
-                                        if (selectedStatus != status.id) vm.selectStatus(status.id) else vm.selectStatus(0)
-                                        vm.updateTasksData(false)
-                                    },
-                                    onLongClicked = {
-                                        vm.onEvent(Event.ShowEditDialog(Types.Status, ActionTypes.Update, status))
-                                    }
-                                )
-                            }
+                                            val posTopDynamic = (posTop + offsetY).toInt()
+                                            val posBottomDynamic = (posBottom + offsetY).toInt()
 
-                            item {
-                                // Create new status
-                                val addNewStatusText = stringResource(Res.string.create) + " " + stringResource(Res.string.status)
-                                Tooltip(tooltipText = addNewStatusText) {
-                                    SmallFloatingActionButton(
-                                        modifier = Modifier.padding(5.dp),
-                                        elevation = FloatingActionButtonDefaults.elevation(0.dp, 0.dp, 0.dp, 0.dp),
-                                        shape = CardDefaults.shape,
-                                        onClick = {
-                                            vm.onEvent(Event.ShowEditDialog(Types.Status, ActionTypes.Create))
-                                        }
-                                    ) {
-                                        Icon(Icons.Default.Add, addNewStatusText)
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    // Tasks
-                    itemsIndexed(items = tasks) { idx: Int, task: TasksObj ->
-                        // For drag & drop
-                        var offsetY by remember { mutableFloatStateOf(0f) }
-                        var posTop = 0f
-                        var posBottom = 0f
-                        val itemIdx = idx + 2 // Add topBar & statuses
-
-                        Task(
-                            task = task,
-                            cardColor = MaterialTheme.colorScheme.background,
-                            onClick = {
-                                vm.onEvent(Event.ShowEditDialog(Types.Task, ActionTypes.Update, task))
-                            },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(5.dp)
-                                // For drag & drop
-                                .onGloballyPositioned {
-                                    posTop = it.positionInParent().y
-                                    posBottom = it.positionInParent().y + it.size.height
-                                }
-                                .absoluteOffset(
-                                    y = offsetY
-                                        .roundToInt()
-                                        .pxToDp()
-                                )
-                                .pointerInput(Unit) {
-                                    // If status not selected (all tasks shown)
-                                    if (selectedStatus == 0) {
-                                        // Drag & drop
-                                        detectDragGesturesAfterLongPress(
-                                            onDragStart = {},
-                                            onDragEnd = {
-                                                offsetY = 0f
-                                            },
-                                            onDragCancel = {
-                                                offsetY = 0f
-                                            },
-                                            onDrag = { _, dragAmount ->
-                                                //change.consume()
-                                                offsetY += dragAmount.y
-
-                                                val posTopDynamic = (posTop + offsetY).toInt()
-                                                val posBottomDynamic = (posBottom + offsetY).toInt()
-
-                                                // Check offsets of all items
-                                                // Try to find that touching item
-                                                var foundedIdx: Int? = null
-                                                for (it in lazyListState.layoutInfo.visibleItemsInfo) {
-                                                    if (itemIdx != it.index) {
-                                                        for (offset in (it.offset + scrollOffset)..(it.offsetEnd - scrollOffset)) {
-                                                            if (offset in (posTopDynamic + scrollOffset)..(posBottomDynamic - scrollOffset)) {
-                                                                foundedIdx = it.index
-                                                                break
-                                                            }
+                                            // Check offsets of all items
+                                            // Try to find that touching item
+                                            var foundedIdx: Int? = null
+                                            for (it in lazyListState.layoutInfo.visibleItemsInfo) {
+                                                if (itemIdx != it.index) {
+                                                    for (offset in (it.offset + scrollOffset)..(it.offsetEnd - scrollOffset)) {
+                                                        if (offset in (posTopDynamic + scrollOffset)..(posBottomDynamic - scrollOffset)) {
+                                                            foundedIdx = it.index
+                                                            break
                                                         }
                                                     }
-                                                    if (foundedIdx != null) break
                                                 }
-                                                if (foundedIdx != null) {
-                                                    if (foundedIdx > itemIdx && task.position != 1) {
-                                                        // Move item to down
-                                                        vm.onEvent(
-                                                            Event.ChangePos(
-                                                                pos = Pos.Prev,
-                                                                task = task
-                                                            )
+                                                if (foundedIdx != null) break
+                                            }
+                                            if (foundedIdx != null) {
+                                                if (foundedIdx > itemIdx && task.position != 1) {
+                                                    // Move item to down
+                                                    vm.onEvent(
+                                                        Event.ChangePos(
+                                                            pos = Pos.Prev,
+                                                            task = task
                                                         )
-                                                    } else if (foundedIdx < itemIdx && task.position != lastTaskPos) {
-                                                        // Move item to up
-                                                        vm.onEvent(
-                                                            Event.ChangePos(
-                                                                pos = Pos.Next,
-                                                                task = task
-                                                            )
+                                                    )
+                                                } else if (foundedIdx < itemIdx && task.position != lastTaskPos) {
+                                                    // Move item to up
+                                                    vm.onEvent(
+                                                        Event.ChangePos(
+                                                            pos = Pos.Next,
+                                                            task = task
                                                         )
-                                                    }
+                                                    )
                                                 }
                                             }
-                                        )
-                                    }
-                                },
-                            tasksTextPadding = 10,
-                            statuses = statuses,
-                            onBackgroundColor = onBackgroundColor
-                        )
-                    }
+                                        }
+                                    )
+                                }
+                            },
+                        tasksTextPadding = 10,
+                        statuses = statuses,
+                        onBackgroundColor = onBackgroundColor
+                    )
                 }
             }
         }

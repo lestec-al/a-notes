@@ -8,9 +8,11 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
+import androidx.core.graphics.ColorUtils
 import androidx.core.view.WindowCompat
 import com.yurhel.alex.anotes.ui.theme.Typography
 import com.yurhel.alex.anotes.ui.theme.darkColorScheme
@@ -36,9 +38,11 @@ fun ANotesTheme(
     if (!view.isInEditMode) {
         SideEffect {
             val window = (view.context as Activity).window
-            // Status bar
+            // Status bar & Navigation bar
             window.statusBarColor = colorScheme.surface.toArgb()
+            window.navigationBarColor = colorScheme.surface.blend(colorScheme.surfaceVariant, 0.4f).toArgb()
             WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !darkTheme
+            WindowCompat.getInsetsController(window, view).isAppearanceLightNavigationBars = !darkTheme
         }
     }
 
@@ -47,4 +51,11 @@ fun ANotesTheme(
         typography = Typography,
         content = content
     )
+}
+
+fun Color.blend(topColor: Color, ratio: Float = 0.5f): Color {
+    if (ratio == 0f) return this
+    if (ratio == 1f) return topColor
+    val intColor = ColorUtils.blendARGB(toArgb(), topColor.toArgb(), ratio)
+    return Color(intColor)
 }

@@ -21,7 +21,6 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -70,94 +69,93 @@ fun MainScreen(
     val notNeedChooseWidget = vm.widgetIdWhenCreated == 0
 
 
-    Surface(modifier = Modifier.fillMaxSize()) {
-        Scaffold(
-            floatingActionButton = {
-                // Add new note
-                val newNoteText = stringResource(Res.string.create) + " " + stringResource(Res.string.note)
-                Tooltip(newNoteText) {
-                    FloatingActionButton(
-                        shape = CardDefaults.shape,
-                        onClick = {
-                            vm.selectNote(null)
-                            openNoteClicked()
-                        }
-                    ) {
-                        Icon(Icons.Default.Add, newNoteText)
+    Scaffold(
+        floatingActionButton = {
+            // Add new note
+            val newNoteText = stringResource(Res.string.create) + " " + stringResource(Res.string.note)
+            Tooltip(newNoteText) {
+                FloatingActionButton(
+                    shape = CardDefaults.shape,
+                    onClick = {
+                        vm.selectNote(null)
+                        openNoteClicked()
                     }
-                }
-            },
-            bottomBar = {
-                if (notNeedChooseWidget) BottomAppBarMain(vm, appSettingsView)
-            }
-        ) { paddingValues ->
-            // Empty text
-            if (allNotes.isEmpty()) {
-                Box(
-                    contentAlignment = Alignment.Center,
-                    modifier = Modifier.fillMaxSize()
                 ) {
-                    Text(text = stringResource(Res.string.empty_text))
+                    Icon(Icons.Default.Add, newNoteText)
                 }
             }
-
-            // Notes - projects
-            LazyVerticalStaggeredGrid(
-                columns = StaggeredGridCells.Fixed(if (appSettingsView == "grid") 2 else 1),
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(5.dp, paddingValues.calculateTopPadding(), 5.dp, 50.dp)
+        },
+        bottomBar = {
+            if (notNeedChooseWidget) BottomAppBarMain(vm, appSettingsView)
+        }
+    ) { paddingValues ->
+        // Empty text
+        if (allNotes.isEmpty()) {
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier.fillMaxSize()
             ) {
-                // Notes
-                items(items = allNotes) { note: NoteObj ->
-                    Card(
-                        onClick = {
-                            vm.selectNote(note)
-                            if (notNeedChooseWidget) {
-                                // Open existing note
-                                openNoteClicked()
-                            } else {
-                                // Init widget
-                                vm.callUpdateWidget(true, vm.widgetIdWhenCreated, note.dateCreate.toString(), note)
-                            }
-                        },
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant
-                        ),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .heightIn(
-                                min = 60.dp,
-                                max = 350.dp
-                            )
-                            .padding(5.dp)
-                    ) {
-                        Text(
-                            text = note.text,
-                            overflow = TextOverflow.Ellipsis,
-                            maxLines = 10,
-                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 2.dp)
-                        )
+                Text(text = stringResource(Res.string.empty_text))
+            }
+        }
 
-                        // Tasks for this note
-                        for (task in allTasks) {
-                            if (task.note == note.id) {
-                                Task(
-                                    task = task,
-                                    cardColor = Color.Transparent,
-                                    onClick = null,
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(horizontal = 5.dp),
-                                    tasksTextPadding = 2,
-                                    statuses = allStatuses,
-                                    onBackgroundColor = onBackgroundColor
-                                )
-                            }
+        // Notes - projects
+        LazyVerticalStaggeredGrid(
+            columns = StaggeredGridCells.Fixed(if (appSettingsView == "grid") 2 else 1),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .padding(horizontal = 5.dp)
+        ) {
+            // Notes
+            items(items = allNotes) { note: NoteObj ->
+                Card(
+                    onClick = {
+                        vm.selectNote(note)
+                        if (notNeedChooseWidget) {
+                            // Open existing note
+                            openNoteClicked()
+                        } else {
+                            // Init widget
+                            vm.callUpdateWidget(true, vm.widgetIdWhenCreated, note.dateCreate.toString(), note)
                         }
+                    },
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(
+                            min = 60.dp,
+                            max = 350.dp
+                        )
+                        .padding(5.dp)
+                ) {
+                    Text(
+                        text = note.text,
+                        overflow = TextOverflow.Ellipsis,
+                        maxLines = 10,
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 2.dp)
+                    )
 
-                        Spacer(modifier = Modifier.height(8.dp))
+                    // Tasks for this note
+                    for (task in allTasks) {
+                        if (task.note == note.id) {
+                            Task(
+                                task = task,
+                                cardColor = Color.Transparent,
+                                onClick = null,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 5.dp),
+                                tasksTextPadding = 2,
+                                statuses = allStatuses,
+                                onBackgroundColor = onBackgroundColor
+                            )
+                        }
                     }
+
+                    Spacer(modifier = Modifier.height(8.dp))
                 }
             }
         }

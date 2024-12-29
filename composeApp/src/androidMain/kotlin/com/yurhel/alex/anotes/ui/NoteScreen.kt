@@ -15,7 +15,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Menu
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -88,68 +87,66 @@ actual fun NoteScreen(
     var globalViewHeight by remember { mutableFloatStateOf(0f) }
 
 
-    Surface(modifier = Modifier.fillMaxSize()) {
-        Scaffold(
-            bottomBar = {
-                BottomAppBarNote(
-                    vm = vm,
-                    coroutineScope = coroutineScope,
-                    onBack = onBack,
-                    onBackButtonClick = {
-                        // Save text from state to main value
-                        vm.changeEditTextValue(editText.text.toString())
+    Scaffold(
+        bottomBar = {
+            BottomAppBarNote(
+                vm = vm,
+                coroutineScope = coroutineScope,
+                onBack = onBack,
+                onBackButtonClick = {
+                    // Save text from state to main value
+                    vm.changeEditTextValue(editText.text.toString())
 
-                        vm.saveNote()
-                        onBack()
-                    },
-                    onSecondButtonClick = {
-                        // Save text from state to main value
-                        vm.changeEditTextValue(editText.text.toString())
-
-                        vm.saveNote(true)
-                        toTasks()
-                    },
-                    secondButtonIcon = Icons.Outlined.Menu,
-                    secondButtonText = stringResource(Res.string.edit_tasks)
-                )
-            }
-        ) { padding ->
-            BasicTextField(
-                state = editText,
-                keyboardOptions = KeyboardOptions(
-                    capitalization = KeyboardCapitalization.Sentences,
-                    keyboardType = KeyboardType.Text,
-                    imeAction = ImeAction.Default
-                ),
-                textStyle = TextStyle(
-                    color = MaterialTheme.colorScheme.onSurface,
-                    fontSize = MaterialTheme.typography.bodyLarge.fontSize
-                ),
-                onTextLayout = {
-                    coroutineScope.launch {
-                        try {
-                            val cursor = it()?.getCursorRect(editText.selection.end)
-                            if (cursor != null) {
-                                val bottomOffset = scroll.value + globalViewHeight
-                                if (cursor.top < scroll.value) scroll.scrollTo(cursor.top.toInt())
-                                else if (cursor.bottom > bottomOffset) scroll.scrollBy(cursor.bottom - bottomOffset)
-                            }
-                        } catch (_: Exception) {}
-                    }
+                    vm.saveNote()
+                    onBack()
                 },
-                cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding)
-                    .padding(20.dp, 20.dp, 20.dp, 0.dp)
-                    .verticalScroll(scroll)
-                    .onGloballyPositioned {
-                        val i = it.boundsInWindow()
-                        globalViewHeight = i.bottom - i.top
-                    }
-                    .focusRequester(focusRequester)
+                onSecondButtonClick = {
+                    // Save text from state to main value
+                    vm.changeEditTextValue(editText.text.toString())
+
+                    vm.saveNote(true)
+                    toTasks()
+                },
+                secondButtonIcon = Icons.Outlined.Menu,
+                secondButtonText = stringResource(Res.string.edit_tasks)
             )
         }
+    ) { paddingValues ->
+        BasicTextField(
+            state = editText,
+            keyboardOptions = KeyboardOptions(
+                capitalization = KeyboardCapitalization.Sentences,
+                keyboardType = KeyboardType.Text,
+                imeAction = ImeAction.Default
+            ),
+            textStyle = TextStyle(
+                color = MaterialTheme.colorScheme.onSurface,
+                fontSize = MaterialTheme.typography.bodyLarge.fontSize
+            ),
+            onTextLayout = {
+                coroutineScope.launch {
+                    try {
+                        val cursor = it()?.getCursorRect(editText.selection.end)
+                        if (cursor != null) {
+                            val bottomOffset = scroll.value + globalViewHeight
+                            if (cursor.top < scroll.value) scroll.scrollTo(cursor.top.toInt())
+                            else if (cursor.bottom > bottomOffset) scroll.scrollBy(cursor.bottom - bottomOffset)
+                        }
+                    } catch (_: Exception) {}
+                }
+            },
+            cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .padding(20.dp, 20.dp, 20.dp, 0.dp)
+                .verticalScroll(scroll)
+                .onGloballyPositioned {
+                    val i = it.boundsInWindow()
+                    globalViewHeight = i.bottom - i.top
+                }
+                .focusRequester(focusRequester)
+        )
     }
 }
 
