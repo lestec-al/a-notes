@@ -34,7 +34,7 @@ class LocalDB private constructor(sqlDriver: SqlDriver) {
     // NOTES DAO ---------------------
     fun createNote(noteObj: NoteObj) {
         Database(driver).notesQueries.insert(
-            withTasks = if (noteObj.withTasks) 1 else 0,
+            withTasks = 0,
             text = noteObj.text,
             dateUpdate = noteObj.dateUpdate.toString(),
             dateCreate = noteObj.dateCreate.toString()
@@ -43,7 +43,7 @@ class LocalDB private constructor(sqlDriver: SqlDriver) {
 
     fun updateNote(noteObj: NoteObj) {
         Database(driver).notesQueries.update(
-            withTasks = if (noteObj.withTasks) 1 else 0,
+            withTasks = 0,
             text = noteObj.text,
             dateUpdate = noteObj.dateUpdate.toString(),
             id = noteObj.id.toLong()
@@ -59,7 +59,6 @@ class LocalDB private constructor(sqlDriver: SqlDriver) {
             val i = Database(driver).notesQueries.getByCreated(noteCreated).executeAsList()[0]
             NoteObj(
                 id = i.id.toInt(),
-                withTasks = i.withTasks?.toInt() == 1,
                 text = i.text ?: "",
                 dateUpdate = i.dateUpdate?.toLong() ?: 0,
                 dateCreate = i.dateCreate?.toLong() ?: 0
@@ -75,7 +74,6 @@ class LocalDB private constructor(sqlDriver: SqlDriver) {
             val i = Database(driver).notesQueries.getLast().executeAsOne()
             NoteObj(
                 id = i.id.toInt(),
-                withTasks = i.withTasks?.toInt() == 1,
                 text = i.text ?: "",
                 dateUpdate = i.dateUpdate?.toLong() ?: 0,
                 dateCreate = i.dateCreate?.toLong() ?: 0
@@ -92,7 +90,6 @@ class LocalDB private constructor(sqlDriver: SqlDriver) {
             list.add(
                 NoteObj(
                     id = i.id.toInt(),
-                    withTasks = i.withTasks?.toInt() == 1,
                     text = i.text ?: "",
                     dateUpdate = i.dateUpdate?.toLong() ?: 0,
                     dateCreate = i.dateCreate?.toLong() ?: 0

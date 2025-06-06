@@ -5,7 +5,7 @@ import androidx.compose.runtime.Composable
 @Composable
 expect fun NoteScreen(
     vm: MainViewModel,
-    onBack: () -> Unit,
+    onBack: (isSaved: Boolean) -> Unit,
     toTasks: () -> Unit
 )
 

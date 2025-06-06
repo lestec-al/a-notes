@@ -28,10 +28,13 @@ fun Navigation(vm: MainViewModel) {
     ) {
 
         composable(route = ScreenObj.Main.name) {
-            MainScreen(
+            NotesScreen(
                 vm = vm,
+                newNoteClicked = {
+                    nav.navigate(ScreenObj.Note.name)
+                },
                 openNoteClicked = {
-                    if (vm.selectedNote.value != null && vm.selectedNote.value!!.withTasks) {
+                    if (vm.checkIfNoteHaveTasks(vm.selectedNote.value!!)) {
                         vm.updateTasksData(false)
                         nav.navigate(ScreenObj.Tasks.name)
                     } else {
@@ -48,7 +51,7 @@ fun Navigation(vm: MainViewModel) {
                     // When an app in opened from widget (only on Android)
                     // Enable normal app functionality after returning from note
                     if (vm.noteCreatedDateFromWidget != "") vm.noteCreatedDateFromWidget = ""
-
+                    if (it) vm.updateNotesScreenScrollItem(Pair(0,0))
                     nav.navigate(ScreenObj.Main.name)
                 },
                 toTasks = {

@@ -100,7 +100,7 @@ fun TasksScreen(
             BottomAppBarNote(
                 vm = vm,
                 coroutineScope = rememberCoroutineScope(),
-                onBack = onBack,
+                onBackAfterDelete = onBack,
                 onBackButtonClick = {
                     vm.selectStatus(0)
                     vm.clearTasks()
@@ -112,11 +112,11 @@ fun TasksScreen(
                     toNote()
                 },
                 secondButtonIcon = Icons.Outlined.Edit,
-                secondButtonText = stringResource(Res.string.edit_note)
+                secondButtonText = stringResource(Res.string.edit_note),
+                onGetTextButtonClick = vm::getTaskTextForNote
             )
         }
     ) { paddingValues ->
-
         // Need update tasks (ids) after drag drop change position
         key(tasks) {
             LazyColumn(
@@ -125,7 +125,6 @@ fun TasksScreen(
                     .padding(paddingValues)
                     .fillMaxSize()
             ) {
-
                 // Top bar
                 item {
                     TopAppBar(
@@ -143,7 +142,6 @@ fun TasksScreen(
                         }
                     )
                 }
-
                 // Statuses
                 item {
                     LazyRow(
@@ -165,9 +163,8 @@ fun TasksScreen(
                                 }
                             )
                         }
-
+                        // Create new status
                         item {
-                            // Create new status
                             val addNewStatusText = stringResource(Res.string.create) + " " + stringResource(Res.string.status)
                             Tooltip(tooltipText = addNewStatusText) {
                                 SmallFloatingActionButton(
@@ -184,7 +181,6 @@ fun TasksScreen(
                         }
                     }
                 }
-
                 // Tasks
                 itemsIndexed(items = tasks) { idx: Int, task: TasksObj ->
                     // For drag & drop
@@ -225,12 +221,9 @@ fun TasksScreen(
                                             offsetY = 0f
                                         },
                                         onDrag = { _, dragAmount ->
-                                            //change.consume()
                                             offsetY += dragAmount.y
-
                                             val posTopDynamic = (posTop + offsetY).toInt()
                                             val posBottomDynamic = (posBottom + offsetY).toInt()
-
                                             // Check offsets of all items
                                             // Try to find that touching item
                                             var foundedIdx: Int? = null
@@ -248,20 +241,10 @@ fun TasksScreen(
                                             if (foundedIdx != null) {
                                                 if (foundedIdx > itemIdx && task.position != 1) {
                                                     // Move item to down
-                                                    vm.onEvent(
-                                                        Event.ChangePos(
-                                                            pos = Pos.Prev,
-                                                            task = task
-                                                        )
-                                                    )
+                                                    vm.onEvent(Event.ChangePos(pos = Pos.Prev, task = task))
                                                 } else if (foundedIdx < itemIdx && task.position != lastTaskPos) {
                                                     // Move item to up
-                                                    vm.onEvent(
-                                                        Event.ChangePos(
-                                                            pos = Pos.Next,
-                                                            task = task
-                                                        )
-                                                    )
+                                                    vm.onEvent(Event.ChangePos(pos = Pos.Next, task = task))
                                                 }
                                             }
                                         }
@@ -276,7 +259,6 @@ fun TasksScreen(
             }
         }
     }
-
     // Sync choose dialog
     val isDialogVisible by vm.editDialogVisibility.collectAsState()
     if (isDialogVisible) EditBottomSheet(vm = vm)

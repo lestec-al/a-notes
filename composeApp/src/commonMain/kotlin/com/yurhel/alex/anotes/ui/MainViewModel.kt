@@ -1,5 +1,8 @@
 package com.yurhel.alex.anotes.ui
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -170,7 +173,7 @@ class MainViewModel(
                     // Note exist
                     selectNote(noteFromWidget)
 
-                    if (noteFromWidget.withTasks) {
+                    if (checkIfNoteHaveTasks(noteFromWidget)) {
                         delay(500L)
                         // When the app is open from widget - noteScreen opens
                         // For tasks, need redirection to taskScreen
@@ -218,30 +221,20 @@ class MainViewModel(
         }
     }
 
-    fun saveNote(
-        showTasksInSavedNote: Boolean? = null,
-        isNoteTextUpdateIfChanged: Boolean = true,
-        isEditDateForcedUpdate: Boolean = false
-    ) {
+    fun saveNote(isEditDateForcedUpdate: Boolean = false): Boolean {
         val edit = _selectedNote.value
         val editTextStr = _editText.value
         clearEditText()
-
         viewModelScope.launch(Dispatchers.Default) {
             // Check if the note exists
             if (edit != null) {
-
                 var text = edit.text
                 var dateUpdate = if (isEditDateForcedUpdate) Date().time else edit.dateUpdate
-
-                if (isNoteTextUpdateIfChanged && editTextStr != origNoteText) {
+                if (!isEditDateForcedUpdate && editTextStr != origNoteText) {
                     text = editTextStr
                     dateUpdate = Date().time
                 }
-
-                val newEdit = edit.copy(
-                    withTasks = showTasksInSavedNote ?: edit.withTasks, text = text, dateUpdate = dateUpdate
-                )
+                val newEdit = edit.copy(text = text, dateUpdate = dateUpdate)
                 // Update selected note
                 selectNote(newEdit)
                 // Update note db
@@ -253,6 +246,7 @@ class MainViewModel(
                 if (widgetId != null) callUpdateWidget(false, widgetId.toInt(), edit.dateCreate.toString(), newEdit)
             }
         }
+        return editTextStr != origNoteText
     }
 
 
@@ -319,7 +313,7 @@ class MainViewModel(
     ) {
         getStatuses(_selectedNote.value!!.id)
         getTasks(noteId = _selectedNote.value!!.id, statusId = _selectedStatus.value)
-        if (isSaveNote) saveNote(isNoteTextUpdateIfChanged = false, isEditDateForcedUpdate = true)
+        if (isSaveNote) saveNote(isEditDateForcedUpdate = true)
     }
 
 
@@ -408,6 +402,30 @@ class MainViewModel(
             i.position = idx
             db.updateTask(i)
             idx++
+        }
+    }
+
+    var notesScreenSavedScroll by mutableStateOf(Pair(0,0))
+        private set
+    fun updateNotesScreenScrollItem(value: Pair<Int,Int>) {
+        notesScreenSavedScroll = value
+    }
+
+    fun checkIfNoteHaveTasks(note: NoteObj): Boolean {
+        val foundStatus = _allStatuses.value.find { it.note == note.id } != null
+        val foundTask = _allTasks.value.find { it.note == note.id } != null
+        return foundStatus || foundTask
+    }
+
+    fun getTaskTextForNote(): String {
+        return buildString {
+            append(_selectedNote.value?.text ?: "")
+            appendLine()
+            _tasks.value.forEach {
+                append(it.description)
+                appendLine()
+                appendLine()
+            }
         }
     }
 }

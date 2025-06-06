@@ -32,13 +32,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import anotes.composeapp.generated.resources.Res
 import anotes.composeapp.generated.resources.back
+import anotes.composeapp.generated.resources.copy
 import anotes.composeapp.generated.resources.created
 import anotes.composeapp.generated.resources.delete
 import anotes.composeapp.generated.resources.delete_info
+import anotes.composeapp.generated.resources.ic_copy
 import anotes.composeapp.generated.resources.updated
 import com.yurhel.alex.anotes.ui.MainViewModel
 import com.yurhel.alex.anotes.ui.OrientationObj
@@ -47,18 +51,21 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
+import org.jetbrains.compose.resources.vectorResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BottomAppBarNote(
     vm: MainViewModel,
     coroutineScope: CoroutineScope,
-    onBack: () -> Unit,
+    onBackAfterDelete: () -> Unit,
     onBackButtonClick: () -> Unit,
     onSecondButtonClick: () -> Unit,
     secondButtonIcon: ImageVector,
-    secondButtonText: String
+    secondButtonText: String,
+    onGetTextButtonClick: () -> String
 ) {
+    val clipboardManager = LocalClipboardManager.current
     var isInfoBottomSheetOpen by remember { mutableStateOf(false) }
     var infoBottomSheetText by remember { mutableStateOf("") }
     val orientation = getOrientation()
@@ -88,7 +95,6 @@ fun BottomAppBarNote(
                     }
                 }
             }
-
             // Delete note
             val delText = stringResource(Res.string.delete)
             Tooltip(delText) {
@@ -103,11 +109,22 @@ fun BottomAppBarNote(
                     Icon(Icons.Outlined.Delete, delText, Modifier.size(30.dp))
                 }
             }
-
             // Second button
             Tooltip(secondButtonText) {
                 IconButton(onClick = onSecondButtonClick) {
                     Icon(secondButtonIcon, secondButtonText, Modifier.size(30.dp))
+                }
+            }
+            // Copy button
+            val copyText = stringResource(Res.string.copy)
+            Tooltip(copyText) {
+                IconButton(
+                    onClick = {
+                        val noteStr = onGetTextButtonClick()
+                        clipboardManager.setText(buildAnnotatedString { append(text = noteStr) })
+                    }
+                ) {
+                    Icon(vectorResource(Res.drawable.ic_copy), copyText, Modifier.size(30.dp))
                 }
             }
         }
@@ -195,7 +212,7 @@ fun BottomAppBarNote(
                     IconButton(
                         onClick = {
                             vm.deleteNote()
-                            onBack()
+                            onBackAfterDelete()
                         }
                     ) {
                         Icon(Icons.Default.Check, "Yes", Modifier.size(30.dp))

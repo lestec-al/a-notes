@@ -25,4 +25,5 @@
     <string name="down">Down</string>
     <string name="back">Back</string>
     <string name="delete_info">The note will be deleted</string>
+    <string name="copy">Copy</string>
 </resources>

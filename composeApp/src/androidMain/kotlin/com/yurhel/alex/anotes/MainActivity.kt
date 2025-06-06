@@ -8,7 +8,6 @@ import android.text.format.DateUtils
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
-import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.glance.appwidget.GlanceAppWidgetManager
@@ -73,7 +72,6 @@ class MainActivity : ComponentActivity() {
                                 it[stringPreferencesKey("noteCreated")] = noteCreated
                                 it[stringPreferencesKey("noteText")] = note.text
                                 it[intPreferencesKey("noteId")] = note.id
-                                it[booleanPreferencesKey("withTasks")] = note.withTasks
                             }
                             NoteWidget().update(this@MainActivity, glanceId)
                             // Initialize widget

@@ -4,7 +4,6 @@ import androidx.compose.ui.unit.Dp
 
 data class NoteObj(
     val id: Int = 0,
-    val withTasks: Boolean = false,
     val text: String,
     // Date
     val dateUpdate: Long,

@@ -14,7 +14,6 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.datastore.preferences.core.Preferences
-import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.glance.GlanceId
@@ -70,12 +69,10 @@ class NoteWidget : GlanceAppWidget() {
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         // In this method, load data needed to render the AppWidget.
         // Use `withContext` to switch to another thread for long running operations.
-
         provideContent {
             val noteCreated = currentState<Preferences>()[stringPreferencesKey("noteCreated")] ?: ""
             val noteText = currentState<Preferences>()[stringPreferencesKey("noteText")] ?: ""
             val noteId = currentState<Preferences>()[intPreferencesKey("noteId")] ?: 0
-            val withTasks = currentState<Preferences>()[booleanPreferencesKey("withTasks")] ?: false
 
             var statuses: List<StatusObj> by remember { mutableStateOf(emptyList()) }
             var tasks: List<TasksObj> by remember { mutableStateOf(emptyList()) }
@@ -88,7 +85,6 @@ class NoteWidget : GlanceAppWidget() {
                 }
             }
 
-
             Box(
                 contentAlignment = Alignment.BottomEnd,
                 modifier = GlanceModifier
@@ -97,6 +93,7 @@ class NoteWidget : GlanceAppWidget() {
             ) {
                 // Widget data
                 LazyColumn {
+                    // Text
                     item {
                         Text(
                             text = noteText,
@@ -109,57 +106,52 @@ class NoteWidget : GlanceAppWidget() {
                                 .fillMaxSize()
                         )
                     }
-
                     // Tasks for this note
-                    if (withTasks) {
-                        items(items = tasks) {task ->
-                            Row(
+                    items(items = tasks) { task ->
+                        Row(
+                            modifier = GlanceModifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 5.dp),
+                        ) {
+                            // Color indicator
+                            Box(
+                                contentAlignment = Alignment.BottomCenter,
                                 modifier = GlanceModifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 5.dp),
+                                    .height(22.dp)
+                                    .width(10.dp)
                             ) {
-                                // Color indicator
                                 Box(
-                                    contentAlignment = Alignment.BottomCenter,
                                     modifier = GlanceModifier
-                                        .height(22.dp)
-                                        .width(10.dp)
-                                ) {
-                                    Box(
-                                        modifier = GlanceModifier
-                                            .background(
-                                                try {
-                                                    Color(statuses.find { it.id == task.status }!!.color)
-                                                } catch (e: Exception) {
-                                                    Color(
-                                                        ColorProvider(androidx.glance.R.color.glance_colorOnBackground)
-                                                            .getColor(context)
-                                                            .toArgb()
-                                                    )
-                                                }
-                                            )
-                                            .cornerRadius(5.dp)
-                                            .size(10.dp)
-                                    ) {}
-                                }
-
-                                // Description
-                                Text(
-                                    text = task.description,
-                                    style = TextStyle(
-                                        color = ColorProvider(androidx.glance.R.color.glance_colorOnSurface),
-                                        fontSize = 20.sp
-                                    ),
-                                    modifier = GlanceModifier.padding(
-                                        horizontal = 5.dp,
-                                        vertical = 2.dp
-                                    )
-                                )
+                                        .background(
+                                            try {
+                                                Color(statuses.find { it.id == task.status }!!.color)
+                                            } catch (e: Exception) {
+                                                Color(
+                                                    ColorProvider(androidx.glance.R.color.glance_colorOnBackground)
+                                                        .getColor(context)
+                                                        .toArgb()
+                                                )
+                                            }
+                                        )
+                                        .cornerRadius(5.dp)
+                                        .size(10.dp)
+                                ) {}
                             }
+                            // Description
+                            Text(
+                                text = task.description,
+                                style = TextStyle(
+                                    color = ColorProvider(androidx.glance.R.color.glance_colorOnSurface),
+                                    fontSize = 20.sp
+                                ),
+                                modifier = GlanceModifier.padding(
+                                    horizontal = 5.dp,
+                                    vertical = 2.dp
+                                )
+                            )
                         }
                     }
                 }
-
                 // Open note/task button
                 CircleIconButton(
                     imageProvider = ImageProvider(R.drawable.ic_edit),

@@ -30,12 +30,12 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 actual fun NoteScreen(
     vm: MainViewModel,
-    onBack: () -> Unit,
+    onBack: (isSaved: Boolean) -> Unit,
     toTasks: () -> Unit
 ) {
     LaunchedEffect(Unit) {
         if (vm.editText.value.isEmpty()) {
-            vm.prepareNote(redirectToNotesScreen = onBack, redirectToTasksScreen = toTasks)
+            vm.prepareNote(redirectToNotesScreen = { onBack(true) }, redirectToTasksScreen = toTasks)
         }
     }
     val editText by vm.editText.collectAsState()
@@ -46,17 +46,19 @@ actual fun NoteScreen(
                 BottomAppBarNote(
                     vm = vm,
                     coroutineScope = rememberCoroutineScope(),
-                    onBack = onBack,
+                    onBackAfterDelete = {
+                        onBack(true)
+                    },
                     onBackButtonClick = {
-                        vm.saveNote()
-                        onBack()
+                        onBack(vm.saveNote())
                     },
                     onSecondButtonClick = {
-                        vm.saveNote(true)
+                        vm.saveNote()
                         toTasks()
                     },
                     secondButtonIcon = Icons.Outlined.Menu,
-                    secondButtonText = stringResource(Res.string.edit_tasks)
+                    secondButtonText = stringResource(Res.string.edit_tasks),
+                    onGetTextButtonClick = { editText }
                 )
             }
         ) { padding ->
@@ -77,7 +79,7 @@ actual fun NoteScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(padding)
-                    .padding(20.dp, 20.dp, 20.dp, 0.dp)
+                    .padding(horizontal = 10.dp)
                     .verticalScroll(rememberScrollState())
             )
         }

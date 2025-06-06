@@ -1,8 +1,6 @@
 package com.yurhel.alex.anotes.ui
 
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -12,7 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.items
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Card
@@ -22,8 +20,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -31,31 +29,37 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
 import anotes.composeapp.generated.resources.Res
 import anotes.composeapp.generated.resources.create
 import anotes.composeapp.generated.resources.empty_text
 import anotes.composeapp.generated.resources.note
-import anotes.composeapp.generated.resources.sync_collision
-import anotes.composeapp.generated.resources.sync_drive
-import anotes.composeapp.generated.resources.sync_local
 import com.yurhel.alex.anotes.data.NoteObj
 import com.yurhel.alex.anotes.ui.components.BottomAppBarMain
+import com.yurhel.alex.anotes.ui.components.SyncDialog
 import com.yurhel.alex.anotes.ui.components.Task
 import com.yurhel.alex.anotes.ui.components.Tooltip
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
-fun MainScreen(
+fun NotesScreen(
     vm: MainViewModel,
-    openNoteClicked: () -> Unit
+    newNoteClicked: () -> Unit,
+    openNoteClicked: () -> Unit,
 ) {
     BackHandlerCustom(onBack = vm.callExit)
 
-    vm.getDbNotes("")
-    vm.getNotesView()
-    vm.getAllTasks()
-    vm.getAllStatuses()
+    val scrollState = rememberLazyStaggeredGridState()
+
+    LaunchedEffect(Unit) {
+        vm.getDbNotes("")
+        vm.getNotesView()
+        vm.getAllTasks()
+        vm.getAllStatuses()
+        scrollState.scrollToItem(
+            index = vm.notesScreenSavedScroll.first,
+            scrollOffset = vm.notesScreenSavedScroll.second
+        )
+    }
 
     val appSettingsView by vm.appSettingsView.collectAsState()
     val allNotes: List<NoteObj> by vm.allNotes.collectAsState()
@@ -64,10 +68,8 @@ fun MainScreen(
 
     val onBackgroundColor = MaterialTheme.colorScheme.onBackground
 
-    // Check if not need choose widget
-    // Opposed possibly only on Android
+    // Check if no need to choosing widget (possible only on Android)
     val notNeedChooseWidget = vm.widgetIdWhenCreated == 0
-
 
     Scaffold(
         floatingActionButton = {
@@ -78,7 +80,10 @@ fun MainScreen(
                     shape = CardDefaults.shape,
                     onClick = {
                         vm.selectNote(null)
-                        openNoteClicked()
+                        newNoteClicked()
+                        vm.updateNotesScreenScrollItem(
+                            Pair(scrollState.firstVisibleItemIndex, scrollState.firstVisibleItemScrollOffset)
+                        )
                     }
                 ) {
                     Icon(Icons.Default.Add, newNoteText)
@@ -98,10 +103,10 @@ fun MainScreen(
                 Text(text = stringResource(Res.string.empty_text))
             }
         }
-
         // Notes - projects
         LazyVerticalStaggeredGrid(
             columns = StaggeredGridCells.Fixed(if (appSettingsView == "grid") 2 else 1),
+            state = scrollState,
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
@@ -115,6 +120,9 @@ fun MainScreen(
                         if (notNeedChooseWidget) {
                             // Open existing note
                             openNoteClicked()
+                            vm.updateNotesScreenScrollItem(
+                                Pair(scrollState.firstVisibleItemIndex, scrollState.firstVisibleItemScrollOffset)
+                            )
                         } else {
                             // Init widget
                             vm.callUpdateWidget(true, vm.widgetIdWhenCreated, note.dateCreate.toString(), note)
@@ -137,7 +145,6 @@ fun MainScreen(
                         maxLines = 10,
                         modifier = Modifier.padding(horizontal = 10.dp, vertical = 2.dp)
                     )
-
                     // Tasks for this note
                     for (task in allTasks) {
                         if (task.note == note.id) {
@@ -160,41 +167,10 @@ fun MainScreen(
             }
         }
     }
-
     // Sync choose dialog
     val isSyncDialogOpen by vm.isSyncDialogOpen.collectAsState()
-    if (isSyncDialogOpen) {
-        Dialog(onDismissRequest = { vm.openSyncDialog(false) }) {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-            ) {
-                // Title
-                Text(
-                    text = stringResource(Res.string.sync_collision),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp)
-                )
-                // Buttons
-                Row(
-                    horizontalArrangement = Arrangement.Center,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    TextButton(onClick = {
-                        vm.syncData(SyncActionTypes.ManualImport, vm)
-                        vm.openSyncDialog(false)
-                    }) {
-                        Text(text = stringResource(Res.string.sync_drive))
-                    }
-                    TextButton(onClick = {
-                        vm.syncData(SyncActionTypes.ManualExport, vm)
-                        vm.openSyncDialog(false)
-                    }) {
-                        Text(text = stringResource(Res.string.sync_local))
-                    }
-                }
-            }
-        }
-    }
+    SyncDialog(
+        isVisible = isSyncDialogOpen,
+        vm = vm
+    )
 }

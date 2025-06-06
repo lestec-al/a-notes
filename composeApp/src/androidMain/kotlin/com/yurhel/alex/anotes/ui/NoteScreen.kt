@@ -9,7 +9,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.input.rememberTextFieldState
-import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Menu
@@ -51,27 +50,31 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 actual fun NoteScreen(
     vm: MainViewModel,
-    onBack: () -> Unit,
+    onBack: (isSaved: Boolean) -> Unit,
     toTasks: () -> Unit
 ) {
     val editText = rememberTextFieldState("")
 
     LaunchedEffect(Unit) {
         if (vm.editText.value.isEmpty()) {
-            vm.prepareNote(redirectToNotesScreen = onBack, redirectToTasksScreen = toTasks) {
-                editText.setTextAndPlaceCursorAtEnd(vm.editText.value)
+            vm.prepareNote(redirectToNotesScreen = { onBack(true) }, redirectToTasksScreen = toTasks) {
+                editText.edit {
+                    append(vm.editText.value)
+                    try { placeCursorAfterCharAt(0) } catch (_: Exception) {}
+                }
             }
         } else {
-            editText.setTextAndPlaceCursorAtEnd(vm.editText.value)
+            editText.edit {
+                append(vm.editText.value)
+                try { placeCursorAfterCharAt(0) } catch (_: Exception) {}
+            }
         }
     }
 
     BackHandler {
         // Save text from state to main value
         vm.changeEditTextValue(editText.text.toString())
-
-        vm.saveNote()
-        onBack()
+        onBack(vm.saveNote())
     }
 
     // Fixing a bug with BasicTextField2, when keyboard not showed second time
@@ -86,29 +89,28 @@ actual fun NoteScreen(
     val coroutineScope = rememberCoroutineScope()
     var globalViewHeight by remember { mutableFloatStateOf(0f) }
 
-
     Scaffold(
         bottomBar = {
             BottomAppBarNote(
                 vm = vm,
                 coroutineScope = coroutineScope,
-                onBack = onBack,
+                onBackAfterDelete = {
+                    onBack(true)
+                },
                 onBackButtonClick = {
                     // Save text from state to main value
                     vm.changeEditTextValue(editText.text.toString())
-
-                    vm.saveNote()
-                    onBack()
+                    onBack(vm.saveNote())
                 },
                 onSecondButtonClick = {
                     // Save text from state to main value
                     vm.changeEditTextValue(editText.text.toString())
-
-                    vm.saveNote(true)
+                    vm.saveNote()
                     toTasks()
                 },
                 secondButtonIcon = Icons.Outlined.Menu,
-                secondButtonText = stringResource(Res.string.edit_tasks)
+                secondButtonText = stringResource(Res.string.edit_tasks),
+                onGetTextButtonClick = { editText.text.toString() }
             )
         }
     ) { paddingValues ->
@@ -139,7 +141,7 @@ actual fun NoteScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(20.dp, 20.dp, 20.dp, 0.dp)
+                .padding(horizontal = 10.dp)
                 .verticalScroll(scroll)
                 .onGloballyPositioned {
                     val i = it.boundsInWindow()
