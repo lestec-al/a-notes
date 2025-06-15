@@ -264,6 +264,8 @@ class MainViewModel(
                 val newEdit = edit.copy(isArchived = isArchived)
                 selectNote(newEdit)
                 db.updateNote(newEdit)
+                // For sync
+                db.updateEdit(true)
             }
         }
     }
