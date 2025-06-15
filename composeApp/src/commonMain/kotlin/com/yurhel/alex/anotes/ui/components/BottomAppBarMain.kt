@@ -3,12 +3,14 @@ package com.yurhel.alex.anotes.ui.components
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
@@ -17,9 +19,11 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -49,12 +53,19 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import anotes.composeapp.generated.resources.Res
+import anotes.composeapp.generated.resources.ascending
 import anotes.composeapp.generated.resources.back
 import anotes.composeapp.generated.resources.change_view
+import anotes.composeapp.generated.resources.date_create
+import anotes.composeapp.generated.resources.date_update
 import anotes.composeapp.generated.resources.delete
+import anotes.composeapp.generated.resources.descending
 import anotes.composeapp.generated.resources.ic_grid
 import anotes.composeapp.generated.resources.ic_list
 import anotes.composeapp.generated.resources.search_text_hint
+import anotes.composeapp.generated.resources.show_archive_notes
+import anotes.composeapp.generated.resources.show_main_notes
+import anotes.composeapp.generated.resources.sorting
 import anotes.composeapp.generated.resources.sync_drive_action
 import com.yurhel.alex.anotes.ui.MainViewModel
 import com.yurhel.alex.anotes.ui.OrientationObj
@@ -96,19 +107,10 @@ fun BottomAppBarMain(
                     Icon(Icons.AutoMirrored.Default.ArrowBack, backText, Modifier.size(30.dp))
                 }
             }
-
         } else {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceEvenly,
-                // For mobile wider space between buttons ???
-                modifier = if (orientation == OrientationObj.Desktop) {
-                    Modifier
-                } else {
-                    Modifier.fillMaxWidth(
-                        if (orientation == OrientationObj.Landscape) 0.2f else 0.35f
-                    )
-                }
+                horizontalArrangement = Arrangement.SpaceEvenly
             ) {
                 // Sync indicator / button
                 val syncText = stringResource(Res.string.sync_drive_action)
@@ -131,15 +133,10 @@ fun BottomAppBarMain(
                         }
                     }
                 }
-
                 // Change notes view button
                 val changeViewText = stringResource(Res.string.change_view)
                 Tooltip(changeViewText) {
-                    IconButton(
-                        onClick = {
-                            vm.changeNotesView()
-                        }
-                    ) {
+                    IconButton(onClick = { vm.changeNotesView() }) {
                         Icon(
                             vectorResource(if (appSettingsView == "grid") Res.drawable.ic_list else Res.drawable.ic_grid),
                             changeViewText,
@@ -147,9 +144,85 @@ fun BottomAppBarMain(
                         )
                     }
                 }
+                // Change sort button
+                var expandedMenu by remember { mutableStateOf(false) }
+                val sorting = stringResource(Res.string.sorting)
+                Tooltip(sorting) {
+                    IconButton(onClick = { expandedMenu = true }) {
+                        Icon(
+                            Icons.Default.MoreVert,
+                            sorting,
+                            Modifier.size(30.dp)
+                        )
+                    }
+                }
+                DropdownMenu(
+                    expanded = expandedMenu,
+                    onDismissRequest = { expandedMenu = false },
+                    modifier = Modifier
+                        .wrapContentSize()
+                        .width(IntrinsicSize.Max)
+                ) {
+                    var isShowArchive by remember { mutableStateOf(vm.db.getDataShowing() == "archive") }
+                    RadioDropdownMenuItem(
+                        onClick = {
+                            isShowArchive = false
+                            vm.db.updateDataShowing("all")
+                            vm.getDbNotes("")
+                        },
+                        text = stringResource(Res.string.show_main_notes),
+                        isSelected = !isShowArchive
+                    )
+                    RadioDropdownMenuItem(
+                        onClick = {
+                            isShowArchive = true
+                            vm.db.updateDataShowing("archive")
+                            vm.getDbNotes("")
+                        },
+                        text = stringResource(Res.string.show_archive_notes),
+                        isSelected = isShowArchive
+                    )
+                    Text(
+                        text = sorting,
+                        modifier = Modifier.padding(horizontal = 20.dp)
+                    )
+                    var sortType by remember { mutableStateOf(vm.db.getSortType()) }
+                    var sortArrow by remember { mutableStateOf(vm.db.getSortArrow()) }
+                    for (i in listOf("dateUpdate","dateCreate")) {
+                        RadioDropdownMenuItem(
+                            onClick = {
+                                sortType = i
+                                vm.db.updateSortType(i)
+                                vm.getDbNotes("")
+                            },
+                            text = stringResource(
+                                when(i) {
+                                "dateUpdate" -> Res.string.date_update
+                                else -> Res.string.date_create
+                            }
+                            ),
+                            isSelected = sortType == i
+                        )
+                    }
+                    for (i in listOf("ascending","descending")) {
+                        RadioDropdownMenuItem(
+                            onClick = {
+                                sortArrow = i
+                                vm.db.updateSortArrow(i)
+                                vm.getDbNotes("")
+                            },
+                            text = stringResource(
+                                when(i) {
+                                    "ascending" -> Res.string.ascending
+                                    else -> Res.string.descending
+                                }
+                            ),
+                            isSelected = sortArrow == i
+                        )
+                    }
+                }
             }
         }
-
         // Search text field
         val interactionSource = remember { MutableInteractionSource() }
         val surfaceColor = MaterialTheme.colorScheme.background
@@ -224,7 +297,6 @@ fun BottomAppBarMain(
                 )
             }
         }
-
         if (isSearchOnMobile) {
             // Search OFF + Clear text button ???
             val clearText = stringResource(Res.string.delete)

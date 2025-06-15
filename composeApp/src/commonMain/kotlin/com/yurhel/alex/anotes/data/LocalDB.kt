@@ -34,7 +34,7 @@ class LocalDB private constructor(sqlDriver: SqlDriver) {
     // NOTES DAO ---------------------
     fun createNote(noteObj: NoteObj) {
         Database(driver).notesQueries.insert(
-            withTasks = 0,
+            withTasks = if (noteObj.isArchived) 1 else 0,
             text = noteObj.text,
             dateUpdate = noteObj.dateUpdate.toString(),
             dateCreate = noteObj.dateCreate.toString()
@@ -43,7 +43,7 @@ class LocalDB private constructor(sqlDriver: SqlDriver) {
 
     fun updateNote(noteObj: NoteObj) {
         Database(driver).notesQueries.update(
-            withTasks = 0,
+            withTasks = if (noteObj.isArchived) 1 else 0,
             text = noteObj.text,
             dateUpdate = noteObj.dateUpdate.toString(),
             id = noteObj.id.toLong()
@@ -60,6 +60,7 @@ class LocalDB private constructor(sqlDriver: SqlDriver) {
             NoteObj(
                 id = i.id.toInt(),
                 text = i.text ?: "",
+                isArchived = i.withTasks?.toInt() == 1,
                 dateUpdate = i.dateUpdate?.toLong() ?: 0,
                 dateCreate = i.dateCreate?.toLong() ?: 0
             )
@@ -75,6 +76,7 @@ class LocalDB private constructor(sqlDriver: SqlDriver) {
             NoteObj(
                 id = i.id.toInt(),
                 text = i.text ?: "",
+                isArchived = i.withTasks?.toInt() == 1,
                 dateUpdate = i.dateUpdate?.toLong() ?: 0,
                 dateCreate = i.dateCreate?.toLong() ?: 0
             )
@@ -91,6 +93,7 @@ class LocalDB private constructor(sqlDriver: SqlDriver) {
                 NoteObj(
                     id = i.id.toInt(),
                     text = i.text ?: "",
+                    isArchived = i.withTasks?.toInt() == 1,
                     dateUpdate = i.dateUpdate?.toLong() ?: 0,
                     dateCreate = i.dateCreate?.toLong() ?: 0
                 )
@@ -153,6 +156,28 @@ class LocalDB private constructor(sqlDriver: SqlDriver) {
             result.isNotesEdited?.toInt() == 1,
             result.viewMode ?: "col"
         )
+    }
+
+
+
+    // SETTINGS ADDITIONAL DAO ---------------------
+    fun getDataShowing() = Database(driver).settingsAdditionalQueries.getDataShowing().executeAsOne()
+            .dataShowing ?: "all"
+
+    fun getSortType() = Database(driver).settingsAdditionalQueries.getSortType().executeAsOne().sortType ?: "dateUpdate"
+
+    fun getSortArrow() = Database(driver).settingsAdditionalQueries.getSortArrow().executeAsOne().sortArrow ?: "ascending"
+
+    fun updateDataShowing(value: String) {
+        Database(driver).settingsAdditionalQueries.updateDataShowing(value)
+    }
+
+    fun updateSortType(value: String) {
+        Database(driver).settingsAdditionalQueries.updateSortType(value)
+    }
+
+    fun updateSortArrow(value: String) {
+        Database(driver).settingsAdditionalQueries.updateSortArrow(value)
     }
 
 

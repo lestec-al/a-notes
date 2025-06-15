@@ -5,6 +5,7 @@ import androidx.compose.ui.unit.Dp
 data class NoteObj(
     val id: Int = 0,
     val text: String,
+    val isArchived: Boolean,
     // Date
     val dateUpdate: Long,
     val dateCreate: Long

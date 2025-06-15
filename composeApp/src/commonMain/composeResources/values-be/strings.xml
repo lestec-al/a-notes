@@ -26,4 +26,15 @@
     <string name="back">Назад</string>
     <string name="delete_info">Нататка будзе выдалена</string>
     <string name="copy">Скапіяваць</string>
+    <string name="note_archived">Нататка адпраўлена ў архіў</string>
+    <string name="note_restored">Нататка адноўлена</string>
+    <string name="sent_note_to_archive">Нататка дададзена ў архіў</string>
+    <string name="restore_note_from_archive">Аднавіць нататку з архіву</string>
+    <string name="sorting">Сартаваньне</string>
+    <string name="show_main_notes">Асноўныя нататкі</string>
+    <string name="show_archive_notes">Архіўныя нататкі</string>
+    <string name="date_update">Дата зьмяненьня</string>
+    <string name="date_create">Дата стварэньня</string>
+    <string name="ascending">Па ўзрастаньню</string>
+    <string name="descending">Па ўбываньню</string>
 </resources>

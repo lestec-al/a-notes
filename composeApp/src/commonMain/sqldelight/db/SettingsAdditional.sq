@@ -1,0 +1,27 @@
+CREATE TABLE settingsAdditionalTable (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    dataShowing TEXT,
+    sortType TEXT,
+    sortArrow TEXT
+);
+
+INSERT INTO settingsAdditionalTable (dataShowing, sortType, sortArrow)
+VALUES ("all", "dateUpdate", "ascending");
+
+getDataShowing:
+SELECT dataShowing FROM settingsAdditionalTable WHERE id == 1;
+
+getSortType:
+SELECT sortType FROM settingsAdditionalTable WHERE id == 1;
+
+getSortArrow:
+SELECT sortArrow FROM settingsAdditionalTable WHERE id == 1;
+
+updateDataShowing:
+UPDATE settingsAdditionalTable SET dataShowing = ? WHERE id = 1;
+
+updateSortType:
+UPDATE settingsAdditionalTable SET sortType = ? WHERE id = 1;
+
+updateSortArrow:
+UPDATE settingsAdditionalTable SET sortArrow = ? WHERE id = 1;

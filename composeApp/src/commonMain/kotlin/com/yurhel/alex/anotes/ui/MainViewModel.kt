@@ -20,6 +20,7 @@ import java.util.Date
 import kotlin.reflect.KClass
 
 class MainViewModel(
+    val showToast: (text: String) -> Unit,
     val db: LocalDB,
     val formatDate: (Long) -> String,
     val syncData: (SyncActionTypes, MainViewModel) -> Unit,
@@ -27,10 +28,11 @@ class MainViewModel(
     val callExit: () -> Unit,
     var widgetIdWhenCreated: Int,
     var noteCreatedDateFromWidget: String,
-    val callUpdateWidget: (isInitAction: Boolean, widgetId: Int, noteCreated: String, note: NoteObj) -> Unit
+    val callInitUpdateWidget: (isInitAction: Boolean, widgetId: Int, noteCreated: String, note: NoteObj) -> Unit
 ) : ViewModel() {
 
     class Factory(
+        private val showToast: (text: String) -> Unit,
         private val db: LocalDB,
         private val formatDate: (Long) -> String,
         private val syncData: (SyncActionTypes, MainViewModel) -> Unit,
@@ -42,6 +44,7 @@ class MainViewModel(
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: KClass<T>, extras: CreationExtras): T =
             MainViewModel(
+                showToast,
                 db,
                 formatDate,
                 syncData,
@@ -99,19 +102,24 @@ class MainViewModel(
     private val _allNotes: MutableStateFlow<List<NoteObj>> = MutableStateFlow(emptyList())
     val allNotes = _allNotes.asStateFlow()
 
-    fun getDbNotes(
-        query: String,
-        sort: String = "dateUpdate", // dateCreate, dateUpdate
-        sortArrow: String = "ascending" // descending, ascending
-    ) {
+    fun getDbNotes(query: String) {
         viewModelScope.launch(Dispatchers.Default) {
             _searchText.value = query.replace("\n", "")
 
-            _allNotes.value = db.getNotes(query).sortedBy {
-                if (sort == "dateUpdate") it.dateUpdate else it.dateCreate
-            }.let {
-                if (sortArrow == "ascending") it.reversed() else it
-            }
+            val dataShowing = db.getDataShowing()
+            val sortType = db.getSortType()
+            val sortArrow = db.getSortArrow()
+
+            _allNotes.value = db.getNotes(query)
+                .filter {
+                    if (dataShowing == "archive") it.isArchived else !it.isArchived
+                }
+                .sortedBy {
+                    if (sortType == "dateUpdate") it.dateUpdate else it.dateCreate
+                }
+                .let {
+                    if (sortArrow == "ascending") it.reversed() else it
+                }
         }
     }
 
@@ -186,7 +194,7 @@ class MainViewModel(
             } else if (_selectedNote.value == null) {
                 // New note is opened. Create new note
                 val date = Date().time
-                db.createNote(NoteObj(text = "", dateCreate = date, dateUpdate = date))
+                db.createNote(NoteObj(text = "", isArchived = false, dateCreate = date, dateUpdate = date))
                 // ???
                 db.updateEdit(true)
                 // Get new note
@@ -243,12 +251,26 @@ class MainViewModel(
                 db.updateEdit(true)
                 // Update widget if it exist
                 val widgetId = db.getByCreatedWidget(noteCreated = edit.dateCreate.toString())?.widgetId
-                if (widgetId != null) callUpdateWidget(false, widgetId.toInt(), edit.dateCreate.toString(), newEdit)
+                if (widgetId != null) callInitUpdateWidget(false, widgetId.toInt(), edit.dateCreate.toString(), newEdit)
             }
         }
         return editTextStr != origNoteText
     }
 
+    fun archiveOrUnarchiveNote(isArchived: Boolean) {
+        val edit = _selectedNote.value
+        viewModelScope.launch(Dispatchers.Default) {
+            if (edit != null) {
+                val newEdit = edit.copy(isArchived = isArchived)
+                selectNote(newEdit)
+                db.updateNote(newEdit)
+            }
+        }
+    }
+
+    fun getIsSelectedNoteArchived(): Boolean {
+        return if (_selectedNote.value != null) _selectedNote.value!!.isArchived else false
+    }
 
     fun getNoteDate(isCreatedDate: Boolean = false): Long {
         return if (_selectedNote.value != null) {

@@ -42,7 +42,13 @@ import anotes.composeapp.generated.resources.copy
 import anotes.composeapp.generated.resources.created
 import anotes.composeapp.generated.resources.delete
 import anotes.composeapp.generated.resources.delete_info
+import anotes.composeapp.generated.resources.ic_archive
 import anotes.composeapp.generated.resources.ic_copy
+import anotes.composeapp.generated.resources.ic_unarchive
+import anotes.composeapp.generated.resources.note_archived
+import anotes.composeapp.generated.resources.note_restored
+import anotes.composeapp.generated.resources.restore_note_from_archive
+import anotes.composeapp.generated.resources.sent_note_to_archive
 import anotes.composeapp.generated.resources.updated
 import com.yurhel.alex.anotes.ui.MainViewModel
 import com.yurhel.alex.anotes.ui.OrientationObj
@@ -76,15 +82,7 @@ fun BottomAppBarNote(
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceEvenly,
-            // For mobile wider space between buttons ???
-            modifier = if (orientation == OrientationObj.Desktop) {
-                Modifier
-            } else {
-                Modifier.fillMaxWidth(
-                    if (orientation == OrientationObj.Landscape) 0.2f else 0.35f
-                )
-            }
+            horizontalArrangement = Arrangement.SpaceEvenly
         ) {
             if (orientation == OrientationObj.Desktop) {
                 // Back button
@@ -107,6 +105,29 @@ fun BottomAppBarNote(
                     }
                 ) {
                     Icon(Icons.Outlined.Delete, delText, Modifier.size(30.dp))
+                }
+            }
+            // Sent note to archive
+            var isNoteArchived by remember { mutableStateOf(vm.getIsSelectedNoteArchived()) }
+            val archive1 = stringResource(
+                if (isNoteArchived) Res.string.restore_note_from_archive else Res.string.sent_note_to_archive
+            )
+            val archive2 = stringResource(
+                if (isNoteArchived) Res.string.note_restored else Res.string.note_archived
+            )
+            Tooltip(archive1) {
+                IconButton(onClick = {
+                    vm.archiveOrUnarchiveNote(!isNoteArchived)
+                    isNoteArchived = !isNoteArchived
+                    vm.showToast(archive2)
+                }) {
+                    Icon(
+                        imageVector = vectorResource(
+                            if (isNoteArchived) Res.drawable.ic_unarchive else Res.drawable.ic_archive
+                        ),
+                        contentDescription = archive1,
+                        modifier = Modifier.size(30.dp)
+                    )
                 }
             }
             // Second button

@@ -125,7 +125,7 @@ fun NotesScreen(
                             )
                         } else {
                             // Init widget
-                            vm.callUpdateWidget(true, vm.widgetIdWhenCreated, note.dateCreate.toString(), note)
+                            vm.callInitUpdateWidget(true, vm.widgetIdWhenCreated, note.dateCreate.toString(), note)
                         }
                     },
                     colors = CardDefaults.cardColors(

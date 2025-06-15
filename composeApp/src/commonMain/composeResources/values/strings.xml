@@ -26,4 +26,15 @@
     <string name="back">Back</string>
     <string name="delete_info">The note will be deleted</string>
     <string name="copy">Copy</string>
+    <string name="note_archived">Note archived</string>
+    <string name="note_restored">Note restored</string>
+    <string name="sent_note_to_archive">Sent note to archive</string>
+    <string name="restore_note_from_archive">Restore note from archive</string>
+    <string name="sorting">Sorting</string>
+    <string name="show_main_notes">Show main notes</string>
+    <string name="show_archive_notes">Show archive notes</string>
+    <string name="date_update">Date update</string>
+    <string name="date_create">Date create</string>
+    <string name="ascending">Ascending</string>
+    <string name="descending">Descending</string>
 </resources>

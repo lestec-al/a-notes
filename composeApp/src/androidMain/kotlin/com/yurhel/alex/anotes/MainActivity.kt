@@ -5,6 +5,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.text.format.DateFormat
 import android.text.format.DateUtils
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
@@ -37,6 +38,9 @@ class MainActivity : ComponentActivity() {
         setContent {
             val vm: MainViewModel by viewModels {
                 MainViewModel.Factory(
+                    showToast = {
+                        Toast.makeText(this, it, Toast.LENGTH_SHORT).show()
+                    },
                     db = db,
                     formatDate = { dateLong ->
                         if (DateUtils.isToday(dateLong)) {

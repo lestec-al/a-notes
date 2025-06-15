@@ -53,8 +53,9 @@ fun main() = application {
         this.window.minimumSize = Dimension(400, 600)
         this.window.background = Color.WHITE
 
-        val vm: MainViewModel = viewModel {
-            MainViewModel(
+        val vm: MainViewModel = viewModel(
+            factory = MainViewModel.Factory(
+                showToast = {},
                 db = db,
                 formatDate = { dateLong ->
                     val date = Date(dateLong)
@@ -89,9 +90,9 @@ fun main() = application {
                 callExit = {},
                 widgetIdWhenCreated = 0,
                 noteCreatedDateFromWidget = "",
-                callUpdateWidget = { _, _, _, _ -> }
+                callInitUpdateWidget = { _, _, _, _ -> }
             )
-        }
+        )
 
         ANotesTheme {
             Navigation(vm = vm)
