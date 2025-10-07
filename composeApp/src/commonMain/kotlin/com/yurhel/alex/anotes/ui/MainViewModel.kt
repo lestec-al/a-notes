@@ -137,7 +137,7 @@ class MainViewModel(
 
     fun getAllTasks() {
         viewModelScope.launch(Dispatchers.Default) {
-            _allTasks.value = db.getAllTasks().reversed()
+            _allTasks.value = db.getAllTasks().sortedBy { it.position }
         }
     }
 
@@ -319,7 +319,7 @@ class MainViewModel(
                 db.getManyByNoteTasks(noteId)
             } else {
                 db.getManyByNoteAndStatusTasks(noteId, statusId)
-            }.reversed()
+            }.sortedBy { it.position }
         }
     }
 
@@ -362,18 +362,14 @@ class MainViewModel(
             // Task
             is Event.UpsertTask -> {
                 viewModelScope.launch(Dispatchers.Default) {
-                    if (event.task.id == 0) db.insertTask(event.task) else db.updateTask(event.task)
                     if (event.task.id == 0) {
-                        val lastTask = db.getLastTask()
-                        if (lastTask != null) {
-                            db.updateTask(
-                                event.task.copy(
-                                    id = lastTask.id,
-                                    position = db.getManyByNoteCountTasks(event.task.note)
-                                )
+                        db.insertTask(
+                            event.task.copy(
+                                position = db.getHowManyTasksNoteHas(event.task.note)
                             )
-                        }
-                        updateNotesPositions(event.task.note) // ??????
+                        )
+                    } else {
+                        db.updateTask(event.task)
                     }
                     delay(200)
                     updateTasksData(true)
@@ -382,26 +378,46 @@ class MainViewModel(
             is Event.DeleteTask -> {
                 viewModelScope.launch(Dispatchers.Default) {
                     db.deleteTask(event.task.id)
-                    updateNotesPositions(event.task.note) // ??????
                     delay(200)
                     updateTasksData(true)
                 }
             }
             is Event.ChangePos -> {
-                // Is this good enough ???
                 viewModelScope.launch(Dispatchers.Default) {
-                    val targetPos = when(event.pos) {
-                        Pos.Prev -> event.task.position - 1
-                        Pos.Next -> event.task.position + 1
+                    val newIdx = event.pos - 2
+                    val newPos = when {
+                        newIdx < 0 -> 0
+                        else -> newIdx
                     }
-                    val targetTask = db.getByPositionTask(targetPos)
-                    if (targetTask != null) {
-                        db.updateTask(targetTask.copy(position = event.task.position))
-                    }
-                    db.updateTask(event.task.copy(position = targetPos))
-                    updateNotesPositions(event.task.note) // ??????
-                    delay(200)
+                    val oldPos = event.task.position
+                    _tasks.value
+                        .sortedBy { it.position }
+                        .forEach {
+                            if (newPos > oldPos) {
+                                // Next
+                                if (it.position in (oldPos + 1)..newPos) {
+                                    db.updateTask(it.copy(position = it.position - 1))
+                                }
+                            } else {
+                                // Prev
+                                if (it.position in newPos..<oldPos) {
+                                    db.updateTask(it.copy(position = it.position + 1))
+                                }
+                            }
+                        }
+                    db.updateTask(event.task.copy(position = newPos))
                     updateTasksData(false)
+                    // ??????
+                    // Prevent of having problems while drag/drop, because of not unique position vars
+                    // Just set them to unique values
+                    launch {
+                        delay(1000)
+                        _tasks.value
+                            .sortedBy { it.position }
+                            .forEachIndexed { idx, it ->
+                                db.updateTask(it.copy(position = idx))
+                            }
+                    }
                 }
             }
             // Others
@@ -415,17 +431,6 @@ class MainViewModel(
             Event.HideEditDialog -> {
                 _editDialogVisibility.value = false
             }
-        }
-    }
-
-    private suspend fun updateNotesPositions(noteId: Int) {
-        // Set positions for all tasks in specific note
-        delay(200)
-        var idx = 1
-        for (i in db.getManyByNoteTasks(noteId)) {
-            i.position = idx
-            db.updateTask(i)
-            idx++
         }
     }
 

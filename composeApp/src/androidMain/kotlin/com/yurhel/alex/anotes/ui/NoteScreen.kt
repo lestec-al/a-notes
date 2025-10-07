@@ -11,7 +11,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Menu
+import androidx.compose.material.icons.automirrored.outlined.ListAlt
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
@@ -108,7 +108,7 @@ actual fun NoteScreen(
                     vm.saveNote()
                     toTasks()
                 },
-                secondButtonIcon = Icons.Outlined.Menu,
+                secondButtonIcon = Icons.AutoMirrored.Outlined.ListAlt,
                 secondButtonText = stringResource(Res.string.edit_tasks),
                 onGetTextButtonClick = { editText.text.toString() }
             )

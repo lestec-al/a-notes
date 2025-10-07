@@ -26,7 +26,7 @@ data class StatusObj(
 
 data class TasksObj(
     val id: Int = 0,
-    var position: Int = -1,
+    var position: Int = 0,
     val description: String,
     // Foreign keys
     val status: Int,

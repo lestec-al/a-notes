@@ -139,12 +139,15 @@ fun NotesScreen(
                         )
                         .padding(5.dp)
                 ) {
-                    Text(
-                        text = note.text,
-                        overflow = TextOverflow.Ellipsis,
-                        maxLines = 10,
-                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 2.dp)
-                    )
+                    // Text
+                    if (note.text.isNotEmpty()) {
+                        Text(
+                            text = note.text,
+                            overflow = TextOverflow.Ellipsis,
+                            maxLines = 10,
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 2.dp)
+                        )
+                    }
                     // Tasks for this note
                     for (task in allTasks) {
                         if (task.note == note.id) {

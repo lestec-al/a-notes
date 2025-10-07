@@ -11,7 +11,7 @@ interface Event {
     data class UpsertTask(val task: TasksObj): Event
     data class DeleteTask(val task: TasksObj): Event
     data class ChangePos(
-        val pos: Pos,
+        val pos: Int,
         val task: TasksObj
     ): Event
     // Others

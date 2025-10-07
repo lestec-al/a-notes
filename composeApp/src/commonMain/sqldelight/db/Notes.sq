@@ -9,6 +9,9 @@ CREATE TABLE notesTable (
 getByCreated:
 SELECT * FROM notesTable WHERE dateCreate = ?;
 
+getById:
+SELECT * FROM notesTable WHERE id = ?;
+
 getLast:
 SELECT * FROM notesTable ORDER BY id DESC LIMIT 1;
 

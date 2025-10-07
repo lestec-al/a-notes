@@ -21,6 +21,8 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.outlined.GridView
+import androidx.compose.material.icons.outlined.ViewAgenda
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
@@ -60,8 +62,6 @@ import anotes.composeapp.generated.resources.date_create
 import anotes.composeapp.generated.resources.date_update
 import anotes.composeapp.generated.resources.delete
 import anotes.composeapp.generated.resources.descending
-import anotes.composeapp.generated.resources.ic_grid
-import anotes.composeapp.generated.resources.ic_list
 import anotes.composeapp.generated.resources.search_text_hint
 import anotes.composeapp.generated.resources.show_archive_notes
 import anotes.composeapp.generated.resources.show_main_notes
@@ -72,7 +72,6 @@ import com.yurhel.alex.anotes.ui.OrientationObj
 import com.yurhel.alex.anotes.ui.SyncActionTypes
 import com.yurhel.alex.anotes.ui.getOrientation
 import org.jetbrains.compose.resources.stringResource
-import org.jetbrains.compose.resources.vectorResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -136,9 +135,9 @@ fun BottomAppBarMain(
                 // Change notes view button
                 val changeViewText = stringResource(Res.string.change_view)
                 Tooltip(changeViewText) {
-                    IconButton(onClick = { vm.changeNotesView() }) {
+                    IconButton(onClick = vm::changeNotesView) {
                         Icon(
-                            vectorResource(if (appSettingsView == "grid") Res.drawable.ic_list else Res.drawable.ic_grid),
+                            if (appSettingsView == "grid") Icons.Outlined.ViewAgenda else Icons.Outlined.GridView,
                             changeViewText,
                             Modifier.size(30.dp)
                         )

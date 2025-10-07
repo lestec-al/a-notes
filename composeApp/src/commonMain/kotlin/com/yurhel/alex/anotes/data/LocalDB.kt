@@ -102,6 +102,22 @@ class LocalDB private constructor(sqlDriver: SqlDriver) {
         return list
     }
 
+    fun getNoteById(id: Int): NoteObj? {
+        val note = try {
+            val i = Database(driver).notesQueries.getById(id.toLong()).executeAsOne()
+            NoteObj(
+                id = i.id.toInt(),
+                text = i.text ?: "",
+                isArchived = i.withTasks?.toInt() == 1,
+                dateUpdate = i.dateUpdate?.toLong() ?: 0,
+                dateCreate = i.dateCreate?.toLong() ?: 0
+            )
+        } catch (_: Exception) {
+            null
+        }
+        return note
+    }
+
 
 
     // SCREENS DAO ---------------------
@@ -322,7 +338,7 @@ class LocalDB private constructor(sqlDriver: SqlDriver) {
         return list
     }
 
-    fun getManyByNoteCountTasks(note: Int): Int {
+    fun getHowManyTasksNoteHas(note: Int): Int {
         return Database(driver).tasksQueries.getManyByNoteCount(note.toLong()).executeAsOne().toInt()
     }
 
@@ -347,41 +363,40 @@ class LocalDB private constructor(sqlDriver: SqlDriver) {
         return list
     }
 
-    fun getLastTask(): TasksObj? {
-        val res = Database(driver).tasksQueries.getLast().executeAsList()
-        var task: TasksObj? = null
-        for (i in res) {
-            task = TasksObj(
-                id = i.id.toInt(),
-                position = i.position?.toInt() ?: 0,
-                description = i.description ?: "",
-                status = i.status?.toInt() ?: 0,
-                note = i.note?.toInt() ?: 0,
-                dateCreate = i.dateCreate?.toLong() ?: 0,
-                dateUpdate = i.dateUpdate?.toLong() ?: 0,
-                dateUpdateStatus = i.dateUpdateStatus?.toLong() ?: 0
-            )
-        }
-        return task
-    }
-
-    fun getByPositionTask(position: Int): TasksObj? {
-        val res = Database(driver).tasksQueries.getByPosition(position.toLong()).executeAsList()
-        var task: TasksObj? = null
-        for (i in res) {
-            task = TasksObj(
-                id = i.id.toInt(),
-                position = i.position?.toInt() ?: 0,
-                description = i.description ?: "",
-                status = i.status?.toInt() ?: 0,
-                note = i.note?.toInt() ?: 0,
-                dateCreate = i.dateCreate?.toLong() ?: 0,
-                dateUpdate = i.dateUpdate?.toLong() ?: 0,
-                dateUpdateStatus = i.dateUpdateStatus?.toLong() ?: 0
-            )
-        }
-        return task
-    }
+//    fun getLastTask(): TasksObj? {
+//        val res = Database(driver).tasksQueries.getLast().executeAsList()
+//        var task: TasksObj? = null
+//        for (i in res) {
+//            task = TasksObj(
+//                id = i.id.toInt(),
+//                position = i.position?.toInt() ?: 0,
+//                description = i.description ?: "",
+//                status = i.status?.toInt() ?: 0,
+//                note = i.note?.toInt() ?: 0,
+//                dateCreate = i.dateCreate?.toLong() ?: 0,
+//                dateUpdate = i.dateUpdate?.toLong() ?: 0,
+//                dateUpdateStatus = i.dateUpdateStatus?.toLong() ?: 0
+//            )
+//        }
+//        return task
+//    }
+//    fun getTaskByPosition(position: Int): TasksObj? {
+//        val res = Database(driver).tasksQueries.getByPosition(position.toLong()).executeAsList()
+//        var task: TasksObj? = null
+//        for (i in res) {
+//            task = TasksObj(
+//                id = i.id.toInt(),
+//                position = i.position?.toInt() ?: 0,
+//                description = i.description ?: "",
+//                status = i.status?.toInt() ?: 0,
+//                note = i.note?.toInt() ?: 0,
+//                dateCreate = i.dateCreate?.toLong() ?: 0,
+//                dateUpdate = i.dateUpdate?.toLong() ?: 0,
+//                dateUpdateStatus = i.dateUpdateStatus?.toLong() ?: 0
+//            )
+//        }
+//        return task
+//    }
 
 
 

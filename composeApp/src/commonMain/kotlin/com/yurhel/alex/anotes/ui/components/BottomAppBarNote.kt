@@ -15,7 +15,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.CopyAll
+import androidx.compose.material.icons.outlined.Archive
 import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.Unarchive
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -42,9 +45,6 @@ import anotes.composeapp.generated.resources.copy
 import anotes.composeapp.generated.resources.created
 import anotes.composeapp.generated.resources.delete
 import anotes.composeapp.generated.resources.delete_info
-import anotes.composeapp.generated.resources.ic_archive
-import anotes.composeapp.generated.resources.ic_copy
-import anotes.composeapp.generated.resources.ic_unarchive
 import anotes.composeapp.generated.resources.note_archived
 import anotes.composeapp.generated.resources.note_restored
 import anotes.composeapp.generated.resources.restore_note_from_archive
@@ -57,7 +57,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
-import org.jetbrains.compose.resources.vectorResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -122,18 +121,10 @@ fun BottomAppBarNote(
                     vm.showToast(archive2)
                 }) {
                     Icon(
-                        imageVector = vectorResource(
-                            if (isNoteArchived) Res.drawable.ic_unarchive else Res.drawable.ic_archive
-                        ),
+                        imageVector = if (isNoteArchived) Icons.Outlined.Unarchive else Icons.Outlined.Archive,
                         contentDescription = archive1,
                         modifier = Modifier.size(30.dp)
                     )
-                }
-            }
-            // Second button
-            Tooltip(secondButtonText) {
-                IconButton(onClick = onSecondButtonClick) {
-                    Icon(secondButtonIcon, secondButtonText, Modifier.size(30.dp))
                 }
             }
             // Copy button
@@ -145,7 +136,13 @@ fun BottomAppBarNote(
                         clipboardManager.setText(buildAnnotatedString { append(text = noteStr) })
                     }
                 ) {
-                    Icon(vectorResource(Res.drawable.ic_copy), copyText, Modifier.size(30.dp))
+                    Icon(Icons.Default.CopyAll, copyText, Modifier.size(30.dp))
+                }
+            }
+            // Second button
+            Tooltip(secondButtonText) {
+                IconButton(onClick = onSecondButtonClick) {
+                    Icon(secondButtonIcon, secondButtonText, Modifier.size(30.dp))
                 }
             }
         }

@@ -57,6 +57,8 @@ kotlin {
             implementation(libs.navigation.compose)
             // SQL
             implementation(libs.sqldelight.coroutines)
+            // Additional icons
+            implementation(compose.materialIconsExtended)
         }
         desktopMain.dependencies {
             implementation(compose.desktop.currentOs)

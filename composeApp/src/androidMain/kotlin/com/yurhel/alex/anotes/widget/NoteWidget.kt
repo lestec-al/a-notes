@@ -2,8 +2,6 @@ package com.yurhel.alex.anotes.widget
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.content.Intent
-import android.content.Intent.FLAG_ACTIVITY_NEW_TASK
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -15,7 +13,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.intPreferencesKey
-import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
 import androidx.glance.GlanceTheme
@@ -43,7 +40,6 @@ import androidx.glance.state.PreferencesGlanceStateDefinition
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
-import com.yurhel.alex.anotes.MainActivity
 import com.yurhel.alex.anotes.R
 import com.yurhel.alex.anotes.data.LocalDB
 import com.yurhel.alex.anotes.data.StatusObj
@@ -65,23 +61,38 @@ class NoteWidget : GlanceAppWidget() {
         }
     }
 
+    private fun updateWidgetData(context: Context, noteId: Int): Triple<List<StatusObj>, List<TasksObj>, String>? {
+        val db = LocalDB.getInstance(getSqlDriver(context))
+        return db.getNoteById(noteId)?.let {
+            Triple(
+                db.getManyByNoteStatuses(noteId),
+                db.getManyByNoteTasks(noteId),
+                it.text
+            )
+        }
+    }
+
     @SuppressLint("RestrictedApi", "PrivateResource")
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         // In this method, load data needed to render the AppWidget.
         // Use `withContext` to switch to another thread for long running operations.
         provideContent {
-            val noteCreated = currentState<Preferences>()[stringPreferencesKey("noteCreated")] ?: ""
-            val noteText = currentState<Preferences>()[stringPreferencesKey("noteText")] ?: ""
+            //val noteCreated = currentState<Preferences>()[stringPreferencesKey("noteCreated")] ?: ""
+            //val noteText = currentState<Preferences>()[stringPreferencesKey("noteText")] ?: ""
             val noteId = currentState<Preferences>()[intPreferencesKey("noteId")] ?: 0
 
             var statuses: List<StatusObj> by remember { mutableStateOf(emptyList()) }
             var tasks: List<TasksObj> by remember { mutableStateOf(emptyList()) }
+            var text: String by remember { mutableStateOf("") }
 
-            LaunchedEffect(key1 = noteText) {
+            LaunchedEffect(key1 = noteId) {
                 launch(Dispatchers.Default) {
-                    val db = LocalDB.getInstance(getSqlDriver(context))
-                    statuses = db.getManyByNoteStatuses(noteId)
-                    tasks = db.getManyByNoteTasks(noteId).reversed()
+                    val res = updateWidgetData(context, noteId)
+                    if (res != null) {
+                        statuses = res.first
+                        tasks = res.second
+                        text = res.third
+                    }
                 }
             }
 
@@ -95,16 +106,18 @@ class NoteWidget : GlanceAppWidget() {
                 LazyColumn {
                     // Text
                     item {
-                        Text(
-                            text = noteText,
-                            style = TextStyle(
-                                color = ColorProvider(androidx.glance.R.color.glance_colorOnSurface),
-                                fontSize = 20.sp
-                            ),
-                            modifier = GlanceModifier
-                                .padding(10.dp, 0.dp, 10.dp, 0.dp)
-                                .fillMaxSize()
-                        )
+                        if (text.isNotEmpty()) {
+                            Text(
+                                text = text,
+                                style = TextStyle(
+                                    color = ColorProvider(androidx.glance.R.color.glance_colorOnSurface),
+                                    fontSize = 20.sp
+                                ),
+                                modifier = GlanceModifier
+                                    .padding(10.dp, 0.dp, 10.dp, 0.dp)
+                                    .fillMaxSize()
+                            )
+                        }
                     }
                     // Tasks for this note
                     items(items = tasks) { task ->
@@ -154,17 +167,17 @@ class NoteWidget : GlanceAppWidget() {
                 }
                 // Open note/task button
                 CircleIconButton(
-                    imageProvider = ImageProvider(R.drawable.ic_edit),
+                    imageProvider = ImageProvider(R.drawable.ic_refresh),
                     contentDescription = "",
                     backgroundColor = null,
                     contentColor = GlanceTheme.colors.outline,
                     onClick = {
-                        Intent(context, MainActivity::class.java)
-                            .putExtra("noteCreated", noteCreated)
-                            .apply{
-                                flags = FLAG_ACTIVITY_NEW_TASK
-                                context.startActivity(this)
-                            }
+                        val res = updateWidgetData(context, noteId)
+                        if (res != null) {
+                            statuses = res.first
+                            tasks = res.second
+                            text = res.third
+                        }
                     }
                 )
             }
