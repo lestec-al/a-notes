@@ -12,24 +12,15 @@ import com.google.api.client.util.store.FileDataStoreFactory
 import com.google.api.services.drive.Drive
 import com.google.api.services.drive.DriveScopes
 import com.google.api.services.drive.model.File
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import java.io.ByteArrayOutputStream
 import java.io.InputStreamReader
-import java.util.*
+import java.util.Collections
 
-class Drive private constructor() {
-
-    companion object {
-        @Volatile
-        private var instance: com.yurhel.alex.anotes.data.Drive? = null
-
-        fun getInstance(): com.yurhel.alex.anotes.data.Drive {
-            return instance ?: synchronized(this) {
-                instance ?: Drive().also { instance = it }
-            }
-        }
-    }
+actual class Drive {
 
     private var service: Drive? = null
 
@@ -37,12 +28,10 @@ class Drive private constructor() {
         if (service == null) {
             val gsonFactory = GsonFactory.getDefaultInstance()
             val httpTransport = GoogleNetHttpTransport.newTrustedTransport()
-
             // Load client secrets
             val clientSecrets = useResource("auth.json") { inputStream ->
                 GoogleClientSecrets.load(gsonFactory, InputStreamReader(inputStream))
             }
-
             // Build flow and trigger user authorization request.
             val flow = GoogleAuthorizationCodeFlow.Builder(httpTransport, gsonFactory, clientSecrets, listOf(DriveScopes.DRIVE_APPDATA))
                 .setDataStoreFactory(FileDataStoreFactory(java.io.File("token")))
@@ -50,7 +39,7 @@ class Drive private constructor() {
                 .build()
             val receiver = LocalServerReceiver.Builder().setPort(8888).build()
             val credentials = AuthorizationCodeInstalledApp(flow, receiver).authorize("user")
-
+            //
             service = Drive.Builder(httpTransport, gsonFactory, credentials)
                 .setApplicationName("com.yurhel.alex.anotes")
                 .build()
@@ -65,7 +54,6 @@ class Drive private constructor() {
             .setPageSize(3)
             .execute()
             .files
-
         // Search notes file
         var id = ""
         var modifiedTime: Long? = null
@@ -75,12 +63,11 @@ class Drive private constructor() {
                 modifiedTime = file.modifiedTime.value
             }
         }
-
         // Return file id, file modified time
         return Pair(id, modifiedTime)
     }
 
-    fun getData(): DriveObj {
+    actual suspend fun getData(): DriveObj {
         var modifiedTime: Long? = null
         var data = JsonArray(emptyList())
         val isServiceOK = try {
@@ -89,22 +76,26 @@ class Drive private constructor() {
                 // Get files
                 val fileIds = getFileIds()
                 modifiedTime = fileIds.second
-
                 // Try to get drive data
                 if (fileIds.first != "") {
                     val outputStream = ByteArrayOutputStream()
                     service!!.files().get(fileIds.first).executeMediaAndDownloadTo(outputStream)
-                    data = Json.decodeFromString<JsonArray>(outputStream.toString("UTF-8")) // UTF-8 - very import for PC ver !!!
+                    data = Json.decodeFromString<JsonArray>(withContext(Dispatchers.IO) {
+                        // UTF-8 - very import for PC ver !!!
+                        outputStream.toString("UTF-8")
+                    })
                 }
+                true
+            } else {
+                false
             }
-            true
         } catch (e: Exception) {
             false
         }
         return DriveObj(data, modifiedTime, isServiceOK)
     }
 
-    fun sendData(localData: String) {
+    actual suspend fun sendData(localData: String) {
         try {
             tryConnectToDrive()
             if (service != null) {
@@ -112,7 +103,6 @@ class Drive private constructor() {
                 val fileIds = getFileIds()
                 val driveFileId = fileIds.first
                 //val driveModifiedTime: Long? = fileIds.second
-
                 if (driveFileId != "") {
                     // Update data
                     service!!.files().update(

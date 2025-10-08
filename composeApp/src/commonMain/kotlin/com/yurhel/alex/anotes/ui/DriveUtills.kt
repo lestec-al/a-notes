@@ -1,31 +1,18 @@
 package com.yurhel.alex.anotes.ui
 
-import android.content.Context
 import com.yurhel.alex.anotes.data.Drive
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
-class DriveUtils private constructor(
+class DriveUtils(
     private val vm: MainViewModel,
     private val drive: Drive
 ) {
-    companion object {
-        @Volatile
-        private var instance: DriveUtils? = null
-
-        fun getInstance(vm: MainViewModel, drive: Drive): DriveUtils {
-            return instance ?: synchronized(this) {
-                instance ?: DriveUtils(vm, drive).also { instance = it }
-            }
-        }
-    }
-
     private val scope = CoroutineScope(Job())
 
     fun driveSyncAuto(
-        context: Context,
         before: () -> Unit = { vm.changeSyncNow(true) },
         after: () -> Unit = { vm.changeSyncNow(false) }
     ) {
@@ -34,7 +21,7 @@ class DriveUtils private constructor(
                 before()
 
                 val appSettings = vm.db.getSettings()
-                val data = drive.getData(context)
+                val data = drive.getData()
 
                 if (data.isServiceOK) {
                     if (!appSettings.isNotesEdited) {
@@ -48,13 +35,13 @@ class DriveUtils private constructor(
                             vm.getAllStatuses()
                         } else {
                             // If drive empty -> send data
-                            driveSyncManual(true, context)
+                            driveSyncManual(true)
                         }
                     } else {
                         // Data edited
                         if (data.modifiedTime == appSettings.dataReceivedDate || data.modifiedTime == null) {
                             // Send data
-                            driveSyncManual(true, context)
+                            driveSyncManual(true)
                         } else {
                             // Get user to choose
                             vm.openSyncDialog(true)
@@ -70,28 +57,24 @@ class DriveUtils private constructor(
 
     fun driveSyncManualThread(
         isExport: Boolean,
-        context: Context,
         before: () -> Unit = { vm.changeSyncNow(true) },
         after: () -> Unit = { vm.changeSyncNow(false) }
     ) {
         scope.launch(Dispatchers.Default) {
             before()
-            driveSyncManual(isExport, context)
+            driveSyncManual(isExport)
             after()
         }
     }
 
-    private suspend fun driveSyncManual(
-        isExport: Boolean,
-        context: Context
-    ) {
+    private suspend fun driveSyncManual(isExport: Boolean) {
         if (isExport) {
             // Send data
-            drive.sendData(vm.db.exportDB().toString(), context)
+            drive.sendData(vm.db.exportDB().toString())
             vm.db.updateEdit(false)
         }
         // Get data
-        val data = drive.getData(context)
+        val data = drive.getData()
         if (!isExport && data.modifiedTime != null) {
             // Update local
             vm.db.importDB(data.data.toString())

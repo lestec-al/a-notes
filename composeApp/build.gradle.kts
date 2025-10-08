@@ -55,10 +55,9 @@ kotlin {
             implementation(libs.lifecycle.viewmodel.compose)
             implementation(libs.kotlinx.serialization.json)
             implementation(libs.navigation.compose)
+            implementation(compose.materialIconsExtended)
             // SQL
             implementation(libs.sqldelight.coroutines)
-            // Additional icons
-            implementation(compose.materialIconsExtended)
         }
         desktopMain.dependencies {
             implementation(compose.desktop.currentOs)

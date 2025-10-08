@@ -97,7 +97,6 @@ class NoteWidget : GlanceAppWidget() {
             }
 
             Box(
-                contentAlignment = Alignment.BottomEnd,
                 modifier = GlanceModifier
                     .fillMaxSize()
                     .background(androidx.glance.R.color.glance_colorBackground)
@@ -166,20 +165,25 @@ class NoteWidget : GlanceAppWidget() {
                     }
                 }
                 // Open note/task button
-                CircleIconButton(
-                    imageProvider = ImageProvider(R.drawable.ic_refresh),
-                    contentDescription = "",
-                    backgroundColor = null,
-                    contentColor = GlanceTheme.colors.outline,
-                    onClick = {
-                        val res = updateWidgetData(context, noteId)
-                        if (res != null) {
-                            statuses = res.first
-                            tasks = res.second
-                            text = res.third
+                Box(
+                    contentAlignment = Alignment.BottomEnd,
+                    modifier = GlanceModifier.fillMaxSize()
+                ) {
+                    CircleIconButton(
+                        imageProvider = ImageProvider(R.drawable.ic_refresh),
+                        contentDescription = "",
+                        backgroundColor = null,
+                        contentColor = GlanceTheme.colors.outline,
+                        onClick = {
+                            val res = updateWidgetData(context, noteId)
+                            if (res != null) {
+                                statuses = res.first
+                                tasks = res.second
+                                text = res.third
+                            }
                         }
-                    }
-                )
+                    )
+                }
             }
         }
     }

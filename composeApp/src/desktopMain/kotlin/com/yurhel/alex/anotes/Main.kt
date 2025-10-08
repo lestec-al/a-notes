@@ -74,16 +74,11 @@ fun main() = application {
                     }
                 },
                 syncData = { syncActionType, vm ->
+                    val driveUtils = DriveUtils(vm, Drive())
                     when (syncActionType) {
-                        SyncActionTypes.Auto -> {
-                            DriveUtils.getInstance(vm, Drive.getInstance()).driveSyncAuto()
-                        }
-                        SyncActionTypes.ManualExport -> {
-                            DriveUtils.getInstance(vm, Drive.getInstance()).driveSyncManualThread(true)
-                        }
-                        SyncActionTypes.ManualImport -> {
-                            DriveUtils.getInstance(vm, Drive.getInstance()).driveSyncManualThread(false)
-                        }
+                        SyncActionTypes.Auto -> driveUtils.driveSyncAuto()
+                        SyncActionTypes.ManualExport -> driveUtils.driveSyncManualThread(true)
+                        SyncActionTypes.ManualImport -> driveUtils.driveSyncManualThread(false)
                     }
                 },
                 // Next used only in Android

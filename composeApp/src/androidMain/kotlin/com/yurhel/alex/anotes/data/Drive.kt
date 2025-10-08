@@ -22,27 +22,15 @@ import kotlinx.serialization.json.JsonArray
 import java.io.ByteArrayOutputStream
 import java.util.Collections
 
-class Drive private constructor() {
-
-    companion object {
-        @Volatile
-        private var instance: com.yurhel.alex.anotes.data.Drive? = null
-
-        fun getInstance(): com.yurhel.alex.anotes.data.Drive {
-            return instance ?: synchronized(this) {
-                instance ?: Drive().also { instance = it }
-            }
-        }
-    }
+actual class Drive(private val context: Context) {
 
     private var service: Drive? = null
 
-    private suspend fun tryConnectToDrive(context: Context) {
+    private suspend fun tryConnectToDrive() {
         if (service == null) {
             // Drive auth
             var isComplete = false
             var needAuth = false
-
             val requestedScopes: List<Scope> = listOf(Scope(Scopes.DRIVE_APPFOLDER))
             val authorizationRequest = AuthorizationRequest.builder().setRequestedScopes(requestedScopes).build()
             Identity.getAuthorizationClient(context)
@@ -50,7 +38,6 @@ class Drive private constructor() {
                 .addOnCompleteListener { task ->
                     if (task.result.hasResolution()) {
                         needAuth = true
-
                     } else {
                         // Setup drive service
                         val credentials = GoogleCredentials.create(AccessToken(task.result.accessToken, null))
@@ -64,11 +51,9 @@ class Drive private constructor() {
                     }
                     isComplete = true
                 }
-
             while (!isComplete) {
                 delay(500)
             }
-
             if (needAuth) {
                 // Google auth
                 try {
@@ -84,11 +69,9 @@ class Drive private constructor() {
                                 .build()
                         )
                         .build()
-
                     val credentialManager = CredentialManager.create(context)
                     credentialManager.getCredential(context, request)
-                    tryConnectToDrive(context)
-
+                    tryConnectToDrive()
                 } catch (_: Exception) {}
             }
         }
@@ -115,42 +98,39 @@ class Drive private constructor() {
         return Pair(id, modifiedTime)
     }
 
-    suspend fun getData(context: Context): DriveObj {
+    actual suspend fun getData(): DriveObj {
         var modifiedTime: Long? = null
         var data = JsonArray(emptyList())
         val isServiceOK = try {
-            tryConnectToDrive(context)
+            tryConnectToDrive()
             if (service != null) {
                 // Get files
                 val fileIds = getFileIds()
                 modifiedTime = fileIds.second
-
                 // Try to get drive data
                 if (fileIds.first != "") {
                     val outputStream = ByteArrayOutputStream()
                     service!!.files().get(fileIds.first).executeMediaAndDownloadTo(outputStream)
                     data = Json.decodeFromString<JsonArray>(outputStream.toString())
                 }
+                true
+            } else {
+                false
             }
-            true
         } catch (e: Exception) {
             false
         }
         return DriveObj(data, modifiedTime, isServiceOK)
     }
 
-    suspend fun sendData(
-        localData: String,
-        context: Context
-    ) {
+    actual suspend fun sendData(localData: String) {
         try {
-            tryConnectToDrive(context)
+            tryConnectToDrive()
             if (service != null) {
                 // Get files
                 val fileIds = getFileIds()
                 val driveFileId = fileIds.first
                 //val driveModifiedTime: Long? = fileIds.second
-
                 if (driveFileId != "") {
                     // Update data
                     service!!.files().update(

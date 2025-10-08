@@ -50,16 +50,11 @@ class MainActivity : ComponentActivity() {
                         }
                     },
                     syncData = { syncActionType, vm ->
+                        val driveUtils = DriveUtils(vm, Drive(this))
                         when (syncActionType) {
-                            SyncActionTypes.Auto -> {
-                                DriveUtils.getInstance(vm, Drive.getInstance()).driveSyncAuto(this)
-                            }
-                            SyncActionTypes.ManualExport -> {
-                                DriveUtils.getInstance(vm, Drive.getInstance()).driveSyncManualThread(true, this)
-                            }
-                            SyncActionTypes.ManualImport -> {
-                                DriveUtils.getInstance(vm, Drive.getInstance()).driveSyncManualThread(false, this)
-                            }
+                            SyncActionTypes.Auto -> driveUtils.driveSyncAuto()
+                            SyncActionTypes.ManualExport -> driveUtils.driveSyncManualThread(true)
+                            SyncActionTypes.ManualImport -> driveUtils.driveSyncManualThread(false)
                         }
                     },
                     callExit = {
