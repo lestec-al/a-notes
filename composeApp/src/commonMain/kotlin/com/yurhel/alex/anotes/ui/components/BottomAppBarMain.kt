@@ -22,6 +22,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.outlined.GridView
+import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.ViewAgenda
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.CircularProgressIndicator
@@ -279,20 +280,24 @@ fun BottomAppBarMain(
                     contentPadding = PaddingValues(0.dp, 4.dp)
                 )
             }
-            // Clear text button
-            if (searchText.isNotEmpty() && !isSearchOnMobile) {
+            // Additional in search field (clear text button or search icon)
+            if (!isSearchOnMobile) {
+                val searchIsEmpty = searchText.isEmpty()
                 Icon(
-                    imageVector = Icons.Default.Close,
-                    contentDescription = stringResource(Res.string.delete),
+                    imageVector = if (searchIsEmpty) Icons.Outlined.Search else Icons.Default.Close,
+                    contentDescription = if (searchIsEmpty) "search" else "delete",
                     tint = MaterialTheme.colorScheme.outline,
                     modifier = Modifier
                         .padding(horizontal = 4.dp)
                         .clip(CircleShape)
-                        .clickable {
-                            isSearchOn = false
-                            focusManager.clearFocus()
-                            vm.getDbNotes("")
-                        }
+                        .clickable(
+                            enabled = !searchIsEmpty,
+                            onClick = {
+                                isSearchOn = false
+                                focusManager.clearFocus()
+                                vm.getDbNotes("")
+                            }
+                        )
                 )
             }
         }

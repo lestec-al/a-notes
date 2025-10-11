@@ -16,6 +16,7 @@
     <string name="text">Text</string>
     <string name="note">Note</string>
     <string name="change_view">Change view</string>
+    <string name="edit">Edit</string>
     <string name="edit_tasks">Edit tasks</string>
     <string name="edit_note">Edit note</string>
     <string name="delete">Delete</string>

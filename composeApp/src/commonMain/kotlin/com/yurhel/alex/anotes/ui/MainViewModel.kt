@@ -406,7 +406,7 @@ class MainViewModel(
                             }
                         }
                     db.updateTask(event.task.copy(position = newPos))
-                    updateTasksData(false)
+                    updateTasksData(true)
                     // ??????
                     // Prevent of having problems while drag/drop, because of not unique position vars
                     // Just set them to unique values

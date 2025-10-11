@@ -110,6 +110,7 @@ fun TasksScreen(
                                 )
                             },
                             onClick = {
+                                isFloatingActionButtonOpened = false
                                 vm.onEvent(Event.ShowEditDialog(Types.Status, ActionTypes.Create))
                             }
                         )
@@ -124,6 +125,7 @@ fun TasksScreen(
                                 )
                             },
                             onClick = {
+                                isFloatingActionButtonOpened = false
                                 vm.onEvent(Event.ShowEditDialog(Types.Task, ActionTypes.Create))
                             }
                         )

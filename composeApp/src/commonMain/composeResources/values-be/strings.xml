@@ -16,6 +16,7 @@
     <string name="text">Тэкст</string>
     <string name="note">Нататку</string>
     <string name="change_view">Зьмяніць выгляд</string>
+    <string name="edit">Рэдагаваць</string>
     <string name="edit_tasks">Рэдагаваць задачы</string>
     <string name="edit_note">Рэдагаваць нататку</string>
     <string name="delete">Выдаліць</string>
