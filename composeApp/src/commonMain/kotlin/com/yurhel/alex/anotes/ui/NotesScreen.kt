@@ -33,6 +33,7 @@ import anotes.composeapp.generated.resources.Res
 import anotes.composeapp.generated.resources.create
 import anotes.composeapp.generated.resources.empty_text
 import anotes.composeapp.generated.resources.note
+import com.yurhel.alex.anotes.BackHandlerCustom
 import com.yurhel.alex.anotes.data.NoteObj
 import com.yurhel.alex.anotes.ui.components.BottomAppBarMain
 import com.yurhel.alex.anotes.ui.components.SyncDialog

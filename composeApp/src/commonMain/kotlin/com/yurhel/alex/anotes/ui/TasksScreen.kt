@@ -3,6 +3,7 @@ package com.yurhel.alex.anotes.ui
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.absoluteOffset
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -52,8 +53,10 @@ import anotes.composeapp.generated.resources.create
 import anotes.composeapp.generated.resources.edit_note
 import anotes.composeapp.generated.resources.status
 import anotes.composeapp.generated.resources.task
+import com.yurhel.alex.anotes.BackHandlerCustom
 import com.yurhel.alex.anotes.data.StatusObj
 import com.yurhel.alex.anotes.data.TasksObj
+import com.yurhel.alex.anotes.getOrientation
 import com.yurhel.alex.anotes.ui.components.BottomAppBarNote
 import com.yurhel.alex.anotes.ui.components.EditBottomSheet
 import com.yurhel.alex.anotes.ui.components.StatusCard
@@ -192,6 +195,7 @@ fun TasksScreen(
                                 scrolledContainerColor = MaterialTheme.colorScheme.background,
                                 containerColor = MaterialTheme.colorScheme.background,
                             ),
+                            windowInsets = WindowInsets(0,0,0,0),
                             title = {
                                 Text(
                                     text = selectedNote!!.text,

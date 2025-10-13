@@ -1,8 +1,31 @@
-package com.yurhel.alex.anotes.data
+package com.yurhel.alex.anotes
 
 import android.content.Context
+import android.content.res.Configuration
+import android.os.Build
+import android.view.ViewTreeObserver
+import androidx.activity.compose.BackHandler
+import androidx.compose.material3.ColorScheme
+import androidx.compose.material3.dynamicDarkColorScheme
+import androidx.compose.material3.dynamicLightColorScheme
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.State
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.platform.LocalWindowInfo
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.credentials.CredentialManager
 import androidx.credentials.GetCredentialRequest
+import app.cash.sqldelight.db.SqlDriver
+import app.cash.sqldelight.driver.android.AndroidSqliteDriver
 import com.google.android.gms.auth.api.identity.AuthorizationRequest
 import com.google.android.gms.auth.api.identity.Identity
 import com.google.android.gms.common.Scopes
@@ -16,11 +39,17 @@ import com.google.api.services.drive.model.File
 import com.google.auth.http.HttpCredentialsAdapter
 import com.google.auth.oauth2.AccessToken
 import com.google.auth.oauth2.GoogleCredentials
+import com.yurhel.alex.anotes.data.DriveObj
+import com.yurhel.alex.anotes.ui.OrientationObj
+import com.yurhel.alex.anotes.ui.theme.darkColorScheme
+import com.yurhel.alex.anotes.ui.theme.lightColorScheme
+import db.Database
 import kotlinx.coroutines.delay
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import java.io.ByteArrayOutputStream
 import java.util.Collections
+
 
 actual class Drive(private val context: Context) {
 
@@ -150,4 +179,49 @@ actual class Drive(private val context: Context) {
             e.printStackTrace()
         }
     }
+}
+
+
+@Composable
+actual fun BackHandlerCustom(onBack: () -> Unit) {
+    BackHandler(true, onBack)
+}
+
+@Composable
+actual fun getOrientation() = if (LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE) OrientationObj.Landscape else OrientationObj.Portrait
+
+@Composable
+actual fun keyboardAsState(): State<Boolean> {
+    val view = LocalView.current
+    var isImeVisible by remember { mutableStateOf(false) }
+    DisposableEffect(LocalWindowInfo.current) {
+        val listener = ViewTreeObserver.OnPreDrawListener {
+            isImeVisible = ViewCompat.getRootWindowInsets(view)?.isVisible(WindowInsetsCompat.Type.ime()) == true
+            true
+        }
+        view.viewTreeObserver.addOnPreDrawListener(listener)
+        onDispose {
+            view.viewTreeObserver.removeOnPreDrawListener(listener)
+        }
+    }
+    return rememberUpdatedState(isImeVisible)
+}
+
+@Composable
+actual fun getColorScheme(
+    dynamicColor: Boolean,
+    darkTheme: Boolean
+): ColorScheme {
+    return when {
+        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
+            val context = LocalContext.current
+            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+        }
+        darkTheme -> darkColorScheme
+        else -> lightColorScheme
+    }
+}
+
+fun getSqlDriver(context: Context): SqlDriver {
+    return AndroidSqliteDriver(Database.Schema, context, "notes.db")
 }

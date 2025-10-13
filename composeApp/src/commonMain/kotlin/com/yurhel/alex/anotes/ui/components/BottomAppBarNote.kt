@@ -6,10 +6,15 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.union
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
@@ -52,7 +57,7 @@ import anotes.composeapp.generated.resources.sent_note_to_archive
 import anotes.composeapp.generated.resources.updated
 import com.yurhel.alex.anotes.ui.MainViewModel
 import com.yurhel.alex.anotes.ui.OrientationObj
-import com.yurhel.alex.anotes.ui.getOrientation
+import com.yurhel.alex.anotes.getOrientation
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.getString
@@ -76,8 +81,11 @@ fun BottomAppBarNote(
     val orientation = getOrientation()
 
     BottomAppBar(
-        modifier = Modifier.height(50.dp),
-        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
+        modifier = Modifier
+            .windowInsetsPadding(WindowInsets.navigationBars.union(WindowInsets.ime))
+            .height(50.dp),
+        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
+        windowInsets = WindowInsets(0, 0, 0, 0)
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,

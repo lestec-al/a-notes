@@ -1,6 +1,12 @@
-package com.yurhel.alex.anotes.data
+package com.yurhel.alex.anotes
 
+import androidx.compose.material3.ColorScheme
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.State
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.res.useResource
+import app.cash.sqldelight.db.SqlDriver
+import app.cash.sqldelight.driver.jdbc.sqlite.JdbcSqliteDriver
 import com.google.api.client.extensions.java6.auth.oauth2.AuthorizationCodeInstalledApp
 import com.google.api.client.extensions.jetty.auth.oauth2.LocalServerReceiver
 import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow
@@ -12,6 +18,11 @@ import com.google.api.client.util.store.FileDataStoreFactory
 import com.google.api.services.drive.Drive
 import com.google.api.services.drive.DriveScopes
 import com.google.api.services.drive.model.File
+import com.yurhel.alex.anotes.data.DriveObj
+import com.yurhel.alex.anotes.ui.OrientationObj
+import com.yurhel.alex.anotes.ui.theme.darkColorScheme
+import com.yurhel.alex.anotes.ui.theme.lightColorScheme
+import db.Database
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
@@ -19,6 +30,7 @@ import kotlinx.serialization.json.JsonArray
 import java.io.ByteArrayOutputStream
 import java.io.InputStreamReader
 import java.util.Collections
+
 
 actual class Drive {
 
@@ -122,4 +134,35 @@ actual class Drive {
             e.printStackTrace()
         }
     }
+}
+
+
+@Composable
+actual fun BackHandlerCustom(onBack: () -> Unit) {}
+
+@Composable
+actual fun getOrientation() = OrientationObj.Desktop
+
+@Composable
+actual fun keyboardAsState(): State<Boolean> {
+    return rememberUpdatedState(false)
+}
+
+@Composable
+actual fun getColorScheme(
+    dynamicColor: Boolean,
+    darkTheme: Boolean
+): ColorScheme {
+    return when {
+        darkTheme -> darkColorScheme
+        else -> lightColorScheme
+    }
+}
+
+fun getSqlDriver(): SqlDriver {
+    val driver: SqlDriver = JdbcSqliteDriver("jdbc:sqlite:notes.db")
+    try {
+        Database.Schema.create(driver)
+    } catch (_: Exception) {}
+    return driver
 }

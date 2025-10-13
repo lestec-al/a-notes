@@ -8,14 +8,12 @@ import androidx.compose.ui.window.rememberWindowState
 import androidx.lifecycle.viewmodel.compose.viewModel
 import anotes.composeapp.generated.resources.Res
 import anotes.composeapp.generated.resources.app_name
-import com.yurhel.alex.anotes.data.Drive
 import com.yurhel.alex.anotes.data.LocalDB
-import com.yurhel.alex.anotes.data.getSqlDriver
-import com.yurhel.alex.anotes.ui.ANotesTheme
 import com.yurhel.alex.anotes.ui.DriveUtils
 import com.yurhel.alex.anotes.ui.MainViewModel
 import com.yurhel.alex.anotes.ui.Navigation
 import com.yurhel.alex.anotes.ui.SyncActionTypes
+import com.yurhel.alex.anotes.ui.theme.ANotesTheme
 import org.jetbrains.compose.resources.stringResource
 import java.awt.Color
 import java.awt.Dimension
@@ -50,7 +48,7 @@ fun main() = application {
         title = stringResource(Res.string.app_name),
         icon = painterResource("icon.png")
     ) {
-        this.window.minimumSize = Dimension(400, 600)
+        this.window.minimumSize = Dimension(600, 600)
         this.window.background = Color.WHITE
 
         val vm: MainViewModel = viewModel(

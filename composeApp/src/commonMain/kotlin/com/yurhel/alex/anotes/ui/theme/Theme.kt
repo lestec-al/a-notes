@@ -1,24 +1,19 @@
-package com.yurhel.alex.anotes.ui
+package com.yurhel.alex.anotes.ui.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import com.yurhel.alex.anotes.ui.theme.Typography
-import com.yurhel.alex.anotes.ui.theme.darkColorScheme
-import com.yurhel.alex.anotes.ui.theme.lightColorScheme
+import com.yurhel.alex.anotes.getColorScheme
 
 @Composable
 fun ANotesTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
+    // Dynamic color is available on Android 12+
+    dynamicColor: Boolean = true,
     content: @Composable () -> Unit
 ) {
-    val colorScheme = when {
-        darkTheme -> darkColorScheme
-        else -> lightColorScheme
-    }
-
     MaterialTheme(
-        colorScheme = colorScheme,
+        colorScheme = getColorScheme(dynamicColor, darkTheme),
         typography = Typography,
         content = content
     )

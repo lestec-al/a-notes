@@ -6,10 +6,15 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.union
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -71,7 +76,7 @@ import anotes.composeapp.generated.resources.sync_drive_action
 import com.yurhel.alex.anotes.ui.MainViewModel
 import com.yurhel.alex.anotes.ui.OrientationObj
 import com.yurhel.alex.anotes.ui.SyncActionTypes
-import com.yurhel.alex.anotes.ui.getOrientation
+import com.yurhel.alex.anotes.getOrientation
 import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -91,8 +96,11 @@ fun BottomAppBarMain(
     val isSearchOnMobile = isSearchOn && orientation != OrientationObj.Desktop
 
     BottomAppBar(
-        modifier = Modifier.height(50.dp),
-        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
+        modifier = Modifier
+            .windowInsetsPadding(WindowInsets.navigationBars.union(WindowInsets.ime))
+            .height(50.dp),
+        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
+        windowInsets = WindowInsets(0, 0, 0, 0)
     ) {
         if (isSearchOnMobile) {
             // Search OFF button
@@ -105,6 +113,99 @@ fun BottomAppBarMain(
                     }
                 ) {
                     Icon(Icons.AutoMirrored.Default.ArrowBack, backText, Modifier.size(30.dp))
+                }
+            }
+        }
+        // Search text field
+        val interactionSource = remember { MutableInteractionSource() }
+        val surfaceColor = MaterialTheme.colorScheme.background
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .padding(start = if (isSearchOnMobile) 0.dp else 10.dp)
+                .weight(1f)
+                .clip(RoundedCornerShape(30.dp))
+                .drawBehind { drawRect(surfaceColor) }
+        ) {
+            // Additional in search field (clear text button or search icon)
+            if (!isSearchOnMobile) {
+                val searchIsEmpty = searchText.isEmpty()
+                Icon(
+                    imageVector = if (searchIsEmpty) Icons.Outlined.Search else Icons.Default.Close,
+                    contentDescription = if (searchIsEmpty) "search" else "delete",
+                    tint = MaterialTheme.colorScheme.outline,
+                    modifier = Modifier
+                        .padding(horizontal = 4.dp)
+                        .clip(CircleShape)
+                        .clickable(
+                            enabled = !searchIsEmpty,
+                            onClick = {
+                                isSearchOn = false
+                                focusManager.clearFocus()
+                                vm.getDbNotes("")
+                            }
+                        )
+                )
+            }
+            // Text field
+            BasicTextField(
+                value = searchText,
+                onValueChange = { vm.getDbNotes(it) },
+                modifier = Modifier
+                    .weight(1f)
+                    .focusRequester(textFocusRequester)
+                    .onFocusChanged {
+                        if (it.isFocused) isSearchOn = true
+                    },
+                textStyle = TextStyle(
+                    color = MaterialTheme.colorScheme.onBackground,
+                    fontStyle = MaterialTheme.typography.bodyLarge.fontStyle
+                ),
+                cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Text,
+                    imeAction = ImeAction.Search
+                ),
+                keyboardActions = KeyboardActions { keyboard?.hide() },
+                interactionSource = interactionSource,
+                singleLine = true
+            ) { innerTextField ->
+                TextFieldDefaults.DecorationBox(
+                    value = searchText,
+                    visualTransformation = VisualTransformation.None,
+                    innerTextField = innerTextField,
+                    placeholder = {
+                        Text(text = stringResource(Res.string.search_text_hint))
+                    },
+                    singleLine = true,
+                    enabled = true,
+                    isError = false,
+                    interactionSource = interactionSource,
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = Color.Transparent,
+                        unfocusedContainerColor = Color.Transparent,
+                        focusedTextColor = MaterialTheme.colorScheme.onBackground,
+                        disabledTextColor = MaterialTheme.colorScheme.onBackground,
+                        focusedIndicatorColor = Color.Transparent,
+                        unfocusedIndicatorColor = Color.Transparent,
+                        disabledIndicatorColor = Color.Transparent
+                    ),
+                    contentPadding = PaddingValues(if (isSearchOnMobile) 8.dp else 0.dp, 4.dp)
+                )
+            }
+        }
+        if (isSearchOnMobile) {
+            // Search OFF + Clear text button ???
+            val clearText = stringResource(Res.string.delete)
+            Tooltip(clearText) {
+                IconButton(
+                    onClick = {
+                        isSearchOn = false
+                        focusManager.clearFocus()
+                        vm.getDbNotes("")
+                    }
+                ) {
+                    Icon(Icons.Default.Close, clearText, Modifier.size(30.dp))
                 }
             }
         } else {
@@ -197,9 +298,9 @@ fun BottomAppBarMain(
                             },
                             text = stringResource(
                                 when(i) {
-                                "dateUpdate" -> Res.string.date_update
-                                else -> Res.string.date_create
-                            }
+                                    "dateUpdate" -> Res.string.date_update
+                                    else -> Res.string.date_create
+                                }
                             ),
                             isSelected = sortType == i
                         )
@@ -220,99 +321,6 @@ fun BottomAppBarMain(
                             isSelected = sortArrow == i
                         )
                     }
-                }
-            }
-        }
-        // Search text field
-        val interactionSource = remember { MutableInteractionSource() }
-        val surfaceColor = MaterialTheme.colorScheme.background
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier
-                .padding(end = if (isSearchOnMobile) 0.dp else 10.dp)
-                .weight(1f)
-                .clip(RoundedCornerShape(30.dp))
-                .drawBehind { drawRect(surfaceColor) }
-        ) {
-            BasicTextField(
-                value = searchText,
-                onValueChange = { vm.getDbNotes(it) },
-                modifier = Modifier
-                    .padding(start = 10.dp)
-                    .weight(1f)
-                    .focusRequester(textFocusRequester)
-                    .onFocusChanged {
-                        if (it.isFocused) isSearchOn = true
-                    },
-                textStyle = TextStyle(
-                    color = MaterialTheme.colorScheme.onBackground,
-                    fontStyle = MaterialTheme.typography.bodyLarge.fontStyle
-                ),
-                cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Text,
-                    imeAction = ImeAction.Search
-                ),
-                keyboardActions = KeyboardActions { keyboard?.hide() },
-                interactionSource = interactionSource,
-                singleLine = true
-            ) { innerTextField ->
-                TextFieldDefaults.DecorationBox(
-                    value = searchText,
-                    visualTransformation = VisualTransformation.None,
-                    innerTextField = innerTextField,
-                    placeholder = {
-                        Text(text = stringResource(Res.string.search_text_hint))
-                    },
-                    singleLine = true,
-                    enabled = true,
-                    isError = false,
-                    interactionSource = interactionSource,
-                    colors = TextFieldDefaults.colors(
-                        focusedContainerColor = Color.Transparent,
-                        unfocusedContainerColor = Color.Transparent,
-                        focusedTextColor = MaterialTheme.colorScheme.onBackground,
-                        disabledTextColor = MaterialTheme.colorScheme.onBackground,
-                        focusedIndicatorColor = Color.Transparent,
-                        unfocusedIndicatorColor = Color.Transparent,
-                        disabledIndicatorColor = Color.Transparent
-                    ),
-                    contentPadding = PaddingValues(0.dp, 4.dp)
-                )
-            }
-            // Additional in search field (clear text button or search icon)
-            if (!isSearchOnMobile) {
-                val searchIsEmpty = searchText.isEmpty()
-                Icon(
-                    imageVector = if (searchIsEmpty) Icons.Outlined.Search else Icons.Default.Close,
-                    contentDescription = if (searchIsEmpty) "search" else "delete",
-                    tint = MaterialTheme.colorScheme.outline,
-                    modifier = Modifier
-                        .padding(horizontal = 4.dp)
-                        .clip(CircleShape)
-                        .clickable(
-                            enabled = !searchIsEmpty,
-                            onClick = {
-                                isSearchOn = false
-                                focusManager.clearFocus()
-                                vm.getDbNotes("")
-                            }
-                        )
-                )
-            }
-        }
-        if (isSearchOnMobile) {
-            // Search OFF + Clear text button ???
-            val clearText = stringResource(Res.string.delete)
-            Tooltip(clearText) {
-                IconButton(
-                    onClick = {
-                        isSearchOn = false
-                        focusManager.clearFocus()
-                        vm.getDbNotes("")
-                    }
-                ) {
-                    Icon(Icons.Default.Close, clearText, Modifier.size(30.dp))
                 }
             }
         }

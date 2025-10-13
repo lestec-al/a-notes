@@ -1,4 +1,4 @@
-package com.yurhel.alex.anotes.widget
+package com.yurhel.alex.anotes
 
 import android.annotation.SuppressLint
 import android.content.Context
@@ -40,11 +40,9 @@ import androidx.glance.state.PreferencesGlanceStateDefinition
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
-import com.yurhel.alex.anotes.R
 import com.yurhel.alex.anotes.data.LocalDB
 import com.yurhel.alex.anotes.data.StatusObj
 import com.yurhel.alex.anotes.data.TasksObj
-import com.yurhel.alex.anotes.data.getSqlDriver
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext

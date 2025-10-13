@@ -8,6 +8,7 @@ import android.text.format.DateUtils
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
@@ -15,15 +16,12 @@ import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.glance.appwidget.state.updateAppWidgetState
 import androidx.lifecycle.lifecycleScope
 import com.yurhel.alex.anotes.data.LocalDB
-import com.yurhel.alex.anotes.data.Drive
 import com.yurhel.alex.anotes.data.WidgetObj
-import com.yurhel.alex.anotes.data.getSqlDriver
-import com.yurhel.alex.anotes.ui.ANotesTheme
 import com.yurhel.alex.anotes.ui.DriveUtils
 import com.yurhel.alex.anotes.ui.MainViewModel
 import com.yurhel.alex.anotes.ui.Navigation
 import com.yurhel.alex.anotes.ui.SyncActionTypes
-import com.yurhel.alex.anotes.widget.NoteWidget
+import com.yurhel.alex.anotes.ui.theme.ANotesTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.util.Date
@@ -32,6 +30,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
 
         val db = LocalDB.getInstance(getSqlDriver(applicationContext))
 
