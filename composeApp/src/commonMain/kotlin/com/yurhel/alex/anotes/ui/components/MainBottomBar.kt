@@ -6,15 +6,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.ime
-import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.union
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -29,7 +23,6 @@ import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.outlined.GridView
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.ViewAgenda
-import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -73,15 +66,15 @@ import anotes.composeapp.generated.resources.show_archive_notes
 import anotes.composeapp.generated.resources.show_main_notes
 import anotes.composeapp.generated.resources.sorting
 import anotes.composeapp.generated.resources.sync_drive_action
+import com.yurhel.alex.anotes.getOrientation
 import com.yurhel.alex.anotes.ui.MainViewModel
 import com.yurhel.alex.anotes.ui.OrientationObj
 import com.yurhel.alex.anotes.ui.SyncActionTypes
-import com.yurhel.alex.anotes.getOrientation
 import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun BottomAppBarMain(
+fun MainBottomBar(
     vm: MainViewModel,
     appSettingsView: String
 ) {
@@ -95,25 +88,16 @@ fun BottomAppBarMain(
     val orientation = getOrientation()
     val isSearchOnMobile = isSearchOn && orientation != OrientationObj.Desktop
 
-    BottomAppBar(
-        modifier = Modifier
-            .windowInsetsPadding(WindowInsets.navigationBars.union(WindowInsets.ime))
-            .height(50.dp),
-        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
-        windowInsets = WindowInsets(0, 0, 0, 0)
-    ) {
+    BaseBottomBar {
         if (isSearchOnMobile) {
             // Search OFF button
-            val backText = stringResource(Res.string.back)
-            Tooltip(backText) {
-                IconButton(
-                    onClick = {
-                        isSearchOn = false
-                        focusManager.clearFocus()
-                    }
-                ) {
-                    Icon(Icons.AutoMirrored.Default.ArrowBack, backText, Modifier.size(30.dp))
+            IconButton(
+                onClick = {
+                    isSearchOn = false
+                    focusManager.clearFocus()
                 }
+            ) {
+                Icon(Icons.AutoMirrored.Default.ArrowBack, stringResource(Res.string.back), Modifier.size(30.dp))
             }
         }
         // Search text field
@@ -196,17 +180,14 @@ fun BottomAppBarMain(
         }
         if (isSearchOnMobile) {
             // Search OFF + Clear text button ???
-            val clearText = stringResource(Res.string.delete)
-            Tooltip(clearText) {
-                IconButton(
-                    onClick = {
-                        isSearchOn = false
-                        focusManager.clearFocus()
-                        vm.getDbNotes("")
-                    }
-                ) {
-                    Icon(Icons.Default.Close, clearText, Modifier.size(30.dp))
+            IconButton(
+                onClick = {
+                    isSearchOn = false
+                    focusManager.clearFocus()
+                    vm.getDbNotes("")
                 }
+            ) {
+                Icon(Icons.Default.Close, stringResource(Res.string.delete), Modifier.size(30.dp))
             }
         } else {
             Row(
@@ -214,7 +195,6 @@ fun BottomAppBarMain(
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
                 // Sync indicator / button
-                val syncText = stringResource(Res.string.sync_drive_action)
                 if (isSyncNow) {
                     CircularProgressIndicator(
                         modifier = Modifier
@@ -224,38 +204,31 @@ fun BottomAppBarMain(
                         strokeWidth = 2.dp
                     )
                 } else {
-                    Tooltip(syncText) {
-                        IconButton(
-                            onClick = {
-                                vm.syncData(SyncActionTypes.Auto, vm)
-                            }
-                        ) {
-                            Icon(Icons.Default.Refresh, syncText, Modifier.size(30.dp))
+                    IconButton(
+                        onClick = {
+                            vm.syncData(SyncActionTypes.Auto, vm)
                         }
+                    ) {
+                        Icon(Icons.Default.Refresh, stringResource(Res.string.sync_drive_action), Modifier.size(30.dp))
                     }
                 }
                 // Change notes view button
-                val changeViewText = stringResource(Res.string.change_view)
-                Tooltip(changeViewText) {
-                    IconButton(onClick = vm::changeNotesView) {
-                        Icon(
-                            if (appSettingsView == "grid") Icons.Outlined.ViewAgenda else Icons.Outlined.GridView,
-                            changeViewText,
-                            Modifier.size(30.dp)
-                        )
-                    }
+                IconButton(onClick = vm::changeNotesView) {
+                    Icon(
+                        if (appSettingsView == "grid") Icons.Outlined.ViewAgenda else Icons.Outlined.GridView,
+                        stringResource(Res.string.change_view),
+                        Modifier.size(30.dp)
+                    )
                 }
                 // Change sort button
                 var expandedMenu by remember { mutableStateOf(false) }
                 val sorting = stringResource(Res.string.sorting)
-                Tooltip(sorting) {
-                    IconButton(onClick = { expandedMenu = true }) {
-                        Icon(
-                            Icons.Default.MoreVert,
-                            sorting,
-                            Modifier.size(30.dp)
-                        )
-                    }
+                IconButton(onClick = { expandedMenu = true }) {
+                    Icon(
+                        Icons.Default.MoreVert,
+                        sorting,
+                        Modifier.size(30.dp)
+                    )
                 }
                 DropdownMenu(
                     expanded = expandedMenu,

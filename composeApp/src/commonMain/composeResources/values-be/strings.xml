@@ -17,8 +17,8 @@
     <string name="note">Нататку</string>
     <string name="change_view">Зьмяніць выгляд</string>
     <string name="edit">Рэдагаваць</string>
-    <string name="edit_tasks">Рэдагаваць задачы</string>
-    <string name="edit_note">Рэдагаваць нататку</string>
+    <string name="edit_tasks">Рэдагаваць Задачы</string>
+    <string name="edit_note">Рэдагаваць Нататку</string>
     <string name="delete">Выдаліць</string>
     <string name="create">Стварыць</string>
     <string name="save">Захаваць</string>
@@ -38,4 +38,13 @@
     <string name="date_create">Дата стварэньня</string>
     <string name="ascending">Па ўзрастаньню</string>
     <string name="descending">Па ўбываньню</string>
+    <string name="color">Колер RGB</string>
+    <!-- Board only -->
+    <string name="thickness">Таўшчыня</string>
+    <string name="opacity">Непразрыстасьць</string>
+    <string name="draw">Маляваньне</string>
+    <string name="disable_all_actions">Адключыць усе дзеяньні</string>
+    <string name="enable_draw">Уключыць маляваньне</string>
+    <string name="undo">Адмяніць</string>
+    <string name="checked">Пастаўлена</string>
 </resources>

@@ -2,7 +2,10 @@ package com.yurhel.alex.anotes
 
 import android.content.Context
 import android.content.res.Configuration
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.os.Build
+import android.util.Base64
 import android.view.ViewTreeObserver
 import androidx.activity.compose.BackHandler
 import androidx.compose.material3.ColorScheme
@@ -16,6 +19,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asAndroidBitmap
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
@@ -49,7 +55,6 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import java.io.ByteArrayOutputStream
 import java.util.Collections
-
 
 actual class Drive(private val context: Context) {
 
@@ -224,4 +229,21 @@ actual fun getColorScheme(
 
 fun getSqlDriver(context: Context): SqlDriver {
     return AndroidSqliteDriver(Database.Schema, context, "notes.db")
+}
+
+actual fun ImageBitmap.toBase64(): String? {
+    return try {
+        val bitmap = this.asAndroidBitmap()
+        val byteArrayOutputStream = ByteArrayOutputStream()
+        bitmap.compress(Bitmap.CompressFormat.PNG, 100, byteArrayOutputStream)
+        val byteArray = byteArrayOutputStream.toByteArray()
+        Base64.encodeToString(byteArray, Base64.DEFAULT)
+    } catch (e: Exception) {
+        null
+    }
+}
+
+actual fun String.toImageBitmap(): ImageBitmap? {
+    val decodedString = Base64.decode(this, Base64.DEFAULT)
+    return BitmapFactory.decodeByteArray(decodedString, 0, decodedString.size).asImageBitmap()
 }

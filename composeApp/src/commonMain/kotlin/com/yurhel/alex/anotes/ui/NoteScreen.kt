@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ListAlt
@@ -35,38 +34,19 @@ import anotes.composeapp.generated.resources.Res
 import anotes.composeapp.generated.resources.edit_tasks
 import com.yurhel.alex.anotes.BackHandlerCustom
 import com.yurhel.alex.anotes.keyboardAsState
-import com.yurhel.alex.anotes.ui.components.BottomAppBarNote
+import com.yurhel.alex.anotes.ui.components.NoteBottomBar
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun NoteScreen(
     vm: MainViewModel,
-    onBack: (isSaved: Boolean) -> Unit,
+    onBack: () -> Unit,
     toTasks: () -> Unit
 ) {
-    val editText = rememberTextFieldState("")
-
-    LaunchedEffect(Unit) {
-        if (vm.editText.value.isEmpty()) {
-            vm.prepareNote(redirectToNotesScreen = { onBack(true) }, redirectToTasksScreen = toTasks) {
-                editText.edit {
-                    append(vm.editText.value)
-                    try { placeCursorAfterCharAt(0) } catch (_: Exception) {}
-                }
-            }
-        } else {
-            editText.edit {
-                append(vm.editText.value)
-                try { placeCursorAfterCharAt(0) } catch (_: Exception) {}
-            }
-        }
-    }
-
     BackHandlerCustom {
-        // Save text from state to main value
-        vm.changeEditTextValue(editText.text.toString())
-        onBack(vm.saveNote())
+        vm.saveNote()
+        onBack()
     }
 
     // Fixing a bug with BasicTextField2, when keyboard not showed second time
@@ -83,33 +63,31 @@ fun NoteScreen(
 
     Scaffold(
         bottomBar = {
-            BottomAppBarNote(
+            NoteBottomBar(
                 vm = vm,
                 coroutineScope = coroutineScope,
                 onBackAfterDelete = {
-                    onBack(true)
+                    onBack()
                 },
                 onBackButtonClick = {
-                    // Save text from state to main value
-                    vm.changeEditTextValue(editText.text.toString())
-                    onBack(vm.saveNote())
-                },
-                onSecondButtonClick = {
-                    // Save text from state to main value
-                    vm.changeEditTextValue(editText.text.toString())
                     vm.saveNote()
-                    toTasks()
+                    onBack()
                 },
-                secondButtonIcon = Icons.AutoMirrored.Outlined.ListAlt,
-                secondButtonText = stringResource(Res.string.edit_tasks),
                 onGetTextButtonClick = {
-                    editText.text.toString()
-                }
+                    vm.editText.text.toString()
+                },
+                additionalButtons = listOf(
+                    // Change type (note - tasks)
+                    Triple(stringResource(Res.string.edit_tasks), Icons.AutoMirrored.Outlined.ListAlt) {
+                        vm.saveNote()
+                        toTasks()
+                    }
+                )
             )
         }
     ) { padding ->
         BasicTextField(
-            state = editText,
+            state = vm.editText,
             keyboardOptions = KeyboardOptions(
                 capitalization = KeyboardCapitalization.Sentences,
                 keyboardType = KeyboardType.Text,
@@ -122,7 +100,7 @@ fun NoteScreen(
             onTextLayout = {
                 coroutineScope.launch {
                     try {
-                        val cursor = it()?.getCursorRect(editText.selection.end)
+                        val cursor = it()?.getCursorRect(vm.editText.selection.end)
                         if (cursor != null) {
                             val bottomOffset = scroll.value + globalViewHeight
                             if (cursor.top < scroll.value) scroll.scrollTo(cursor.top.toInt())

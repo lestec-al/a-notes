@@ -1,5 +1,7 @@
 package com.yurhel.alex.anotes.ui
 
+import androidx.compose.foundation.text.input.TextFieldState
+import androidx.compose.foundation.text.input.clearText
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -11,6 +13,7 @@ import com.yurhel.alex.anotes.data.LocalDB
 import com.yurhel.alex.anotes.data.NoteObj
 import com.yurhel.alex.anotes.data.StatusObj
 import com.yurhel.alex.anotes.data.TasksObj
+import com.yurhel.alex.anotes.toImageBitmap
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -145,76 +148,45 @@ class MainViewModel(
     // NOTE SCREEN
     private var origNoteText = ""
 
-    private val _editText = MutableStateFlow("")
-    val editText = _editText.asStateFlow()
+    var editText by mutableStateOf(TextFieldState(""))
+        private set
 
-    fun changeEditTextValue(text: String) {
-        _editText.value = text
-    }
-
-    private fun clearEditText() {
-        _editText.value = ""
-    }
-
-    /**
-     * Creates new note or opens existed. Also if screen open from widget but note deleted (from DB) - redirect to notes screen.
-     **/
-    fun prepareNote(
-        redirectToNotesScreen: () -> Unit,
-        redirectToTasksScreen: () -> Unit,
-        after: () -> Unit = {}
+    fun updateEditTextValue(
+        text: String?,
+        cursorIdx: Int? = null
     ) {
-        viewModelScope.launch(Dispatchers.Default) {
-            val noteText: String? = if (noteCreatedDateFromWidget != "") {
-                // Note open from widget
-                val noteFromWidget = db.getByCreatedNote(noteCreatedDateFromWidget)
-                if (noteFromWidget == null) {
-                    // Note doesn't exist. Open widget settings
-                    val widgetId = db.getByCreatedWidget(noteCreatedDateFromWidget)?.widgetId
-                    if (widgetId != null) {
-                        widgetIdWhenCreated = widgetId.toInt()
-                        delay(500L)
-                        launch(Dispatchers.Main) { redirectToNotesScreen() }
-                    }
-                    null
-                } else {
-                    // Note exist
-                    selectNote(noteFromWidget)
-
-                    if (checkIfNoteHaveTasks(noteFromWidget)) {
-                        delay(500L)
-                        // When the app is open from widget - noteScreen opens
-                        // For tasks, need redirection to taskScreen
-                        launch(Dispatchers.Main) { redirectToTasksScreen() }
-                        null
-                    } else {
-                        noteFromWidget.text
-                    }
+        editText.clearText()
+        if (text != null) {
+            editText.edit {
+                append(text)
+                if (cursorIdx != null) {
+                    try { placeCursorAfterCharAt(cursorIdx) } catch (_: Exception) {}
                 }
-            } else if (_selectedNote.value == null) {
-                // New note is opened. Create new note
-                val date = Date().time
-                db.createNote(NoteObj(text = "", isArchived = false, dateCreate = date, dateUpdate = date))
-                // ???
-                db.updateEdit(true)
-                // Get new note
-                selectNote(db.getLastNote())
-                ""
-            } else {
-                // Existed note open
-                _selectedNote.value!!.text
             }
-
-            _editText.value = noteText ?: ""
-            origNoteText = noteText ?: ""
-
-            after()
         }
     }
 
-    fun deleteNote() {
-        clearEditText()
+    /**
+     * Creates new note or selects existed.
+     **/
+    fun prepareNote(isNewNote: Boolean) {
+        val noteText: String = if (isNewNote || _selectedNote.value == null) {
+            // New note is opened. Create new note
+            val date = Date().time
+            db.createNote(NoteObj(text = "", isArchived = false, dateCreate = date, dateUpdate = date))
+            db.updateEdit(true)
+            selectNote(db.getLastNote())
+            ""
+        } else {
+            // Existed note open
+            _selectedNote.value!!.text
+        }
+        updateEditTextValue(noteText, 0)
+        origNoteText = noteText
+    }
 
+    fun deleteNote() {
+        updateEditTextValue(null)
         viewModelScope.launch(Dispatchers.Default) {
             val note = _selectedNote.value
             if (note != null) {
@@ -223,16 +195,19 @@ class MainViewModel(
                 // Delete tasks
                 db.deleteManyByNoteStatuses(note.id)
                 db.deleteManyByNoteTasks(note.id)
+                // Delete draws
+                db.board.delDraws(note.id)
+                db.board.delImage(note.id)
                 // For sync
                 db.updateEdit(true)
             }
         }
     }
 
-    fun saveNote(isEditDateForcedUpdate: Boolean = false): Boolean {
+    fun saveNote(isEditDateForcedUpdate: Boolean = false) {
         val edit = _selectedNote.value
-        val editTextStr = _editText.value
-        clearEditText()
+        val editTextStr = editText.text.toString()
+        updateEditTextValue(null)
         viewModelScope.launch(Dispatchers.Default) {
             // Check if the note exists
             if (edit != null) {
@@ -254,7 +229,6 @@ class MainViewModel(
                 if (widgetId != null) callInitUpdateWidget(false, widgetId.toInt(), edit.dateCreate.toString(), newEdit)
             }
         }
-        return editTextStr != origNoteText
     }
 
     fun archiveOrUnarchiveNote(isArchived: Boolean) {
@@ -288,7 +262,6 @@ class MainViewModel(
 
 
     // TASK SCREEN
-    // Statuses
     private val _statuses: MutableStateFlow<List<StatusObj>> = MutableStateFlow(emptyList())
     val statuses = _statuses.asStateFlow()
 
@@ -305,7 +278,6 @@ class MainViewModel(
         _selectedStatus.value = statusId
     }
 
-    // Tasks
     private val _tasks: MutableStateFlow<List<TasksObj>> = MutableStateFlow(emptyList())
     val tasks = _tasks.asStateFlow()
 
@@ -323,14 +295,12 @@ class MainViewModel(
         }
     }
 
-    // Edit dialog
     private val _editDialogVisibility = MutableStateFlow(false)
     val editDialogVisibility = _editDialogVisibility.asStateFlow()
 
     var editDialogDataType = Types.Task
     var editDialogActionType = ActionTypes.Create
     var editDialogObj: Any? = null
-
 
     fun updateTasksData(
         isSaveNote: Boolean
@@ -339,7 +309,6 @@ class MainViewModel(
         getTasks(noteId = _selectedNote.value!!.id, statusId = _selectedStatus.value)
         if (isSaveNote) saveNote(isEditDateForcedUpdate = true)
     }
-
 
     fun onEvent(event: Event) {
         when (event) {
@@ -407,7 +376,6 @@ class MainViewModel(
                         }
                     db.updateTask(event.task.copy(position = newPos))
                     updateTasksData(true)
-                    // ??????
                     // Prevent of having problems while drag/drop, because of not unique position vars
                     // Just set them to unique values
                     launch {
@@ -425,7 +393,6 @@ class MainViewModel(
                 editDialogDataType = event.dataType
                 editDialogActionType = event.actionType
                 editDialogObj = event.selectedObj
-
                 _editDialogVisibility.value = true
             }
             Event.HideEditDialog -> {
@@ -457,4 +424,10 @@ class MainViewModel(
             }
         }
     }
+
+
+    // DRAW
+    fun checkIfNoteIsDraw(noteId: Int) = db.board.getImage(noteId) != null
+
+    fun tryGetImage(noteId: Int) = db.board.getImage(noteId)?.toImageBitmap()
 }

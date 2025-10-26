@@ -1,5 +1,7 @@
 package com.yurhel.alex.anotes.ui
 
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -11,12 +13,8 @@ import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -27,18 +25,20 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import anotes.composeapp.generated.resources.Res
 import anotes.composeapp.generated.resources.create
+import anotes.composeapp.generated.resources.draw
 import anotes.composeapp.generated.resources.empty_text
 import anotes.composeapp.generated.resources.note
 import com.yurhel.alex.anotes.BackHandlerCustom
 import com.yurhel.alex.anotes.data.NoteObj
-import com.yurhel.alex.anotes.ui.components.BottomAppBarMain
+import com.yurhel.alex.anotes.ui.components.DropFloatingActionButton
+import com.yurhel.alex.anotes.ui.components.MainBottomBar
 import com.yurhel.alex.anotes.ui.components.SyncDialog
 import com.yurhel.alex.anotes.ui.components.Task
-import com.yurhel.alex.anotes.ui.components.Tooltip
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -46,6 +46,7 @@ fun NotesScreen(
     vm: MainViewModel,
     newNoteClicked: () -> Unit,
     openNoteClicked: () -> Unit,
+    newDrawClicked: () -> Unit
 ) {
     BackHandlerCustom(onBack = vm.callExit)
 
@@ -74,25 +75,28 @@ fun NotesScreen(
 
     Scaffold(
         floatingActionButton = {
-            // Add new note
-            val newNoteText = stringResource(Res.string.create) + " " + stringResource(Res.string.note)
-            Tooltip(newNoteText) {
-                FloatingActionButton(
-                    shape = CardDefaults.shape,
-                    onClick = {
+            DropFloatingActionButton(
+                listOf(
+                    // Add new note button
+                    Pair(stringResource(Res.string.create) + " " + stringResource(Res.string.note)) {
                         vm.selectNote(null)
                         newNoteClicked()
                         vm.updateNotesScreenScrollItem(
                             Pair(scrollState.firstVisibleItemIndex, scrollState.firstVisibleItemScrollOffset)
                         )
+                    },
+                    // Add new drawing button
+                    Pair(stringResource(Res.string.create) + " " + stringResource(Res.string.draw)) {
+                        newDrawClicked()
+                        vm.updateNotesScreenScrollItem(
+                            Pair(scrollState.firstVisibleItemIndex, scrollState.firstVisibleItemScrollOffset)
+                        )
                     }
-                ) {
-                    Icon(Icons.Default.Add, newNoteText)
-                }
-            }
+                )
+            )
         },
         bottomBar = {
-            if (notNeedChooseWidget) BottomAppBarMain(vm, appSettingsView)
+            if (notNeedChooseWidget) MainBottomBar(vm, appSettingsView)
         }
     ) { paddingValues ->
         // Empty text
@@ -115,6 +119,7 @@ fun NotesScreen(
         ) {
             // Notes
             items(items = allNotes) { note: NoteObj ->
+                val image = vm.tryGetImage(note.id)
                 Card(
                     onClick = {
                         vm.selectNote(note)
@@ -130,7 +135,7 @@ fun NotesScreen(
                         }
                     },
                     colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant
+                        containerColor = if (image != null) Color.White else MaterialTheme.colorScheme.surfaceVariant
                     ),
                     modifier = Modifier
                         .fillMaxWidth()
@@ -146,6 +151,7 @@ fun NotesScreen(
                             text = note.text,
                             overflow = TextOverflow.Ellipsis,
                             maxLines = 10,
+                            color = if (image != null) Color.Black else Color.Unspecified,
                             modifier = Modifier.padding(horizontal = 10.dp, vertical = 2.dp)
                         )
                     }
@@ -165,7 +171,17 @@ fun NotesScreen(
                             )
                         }
                     }
-
+                    // Try to draw an image
+                    if (image != null) {
+                        Image(
+                            bitmap = image,
+                            contentDescription = "note drawing",
+                            contentScale = ContentScale.FillHeight,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(Color.White)
+                        )
+                    }
                     Spacer(modifier = Modifier.height(8.dp))
                 }
             }

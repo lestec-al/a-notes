@@ -15,10 +15,10 @@
     <string name="status">Status</string>
     <string name="text">Text</string>
     <string name="note">Note</string>
-    <string name="change_view">Change view</string>
+    <string name="change_view">Change View</string>
     <string name="edit">Edit</string>
-    <string name="edit_tasks">Edit tasks</string>
-    <string name="edit_note">Edit note</string>
+    <string name="edit_tasks">Edit Tasks</string>
+    <string name="edit_note">Edit Note</string>
     <string name="delete">Delete</string>
     <string name="create">Create</string>
     <string name="save">Save</string>
@@ -38,4 +38,13 @@
     <string name="date_create">Date create</string>
     <string name="ascending">Ascending</string>
     <string name="descending">Descending</string>
+    <string name="color">Color RGB</string>
+    <!-- Board only -->
+    <string name="thickness">Thickness</string>
+    <string name="opacity">Opacity</string>
+    <string name="draw">Draw</string>
+    <string name="disable_all_actions">Disable all actions</string>
+    <string name="enable_draw">Enable draw</string>
+    <string name="undo">Undo</string>
+    <string name="checked">Checked</string>
 </resources>

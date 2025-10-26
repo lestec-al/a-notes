@@ -6,15 +6,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.ime
-import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.union
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
@@ -24,7 +19,6 @@ import androidx.compose.material.icons.filled.CopyAll
 import androidx.compose.material.icons.outlined.Archive
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Unarchive
-import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -55,9 +49,9 @@ import anotes.composeapp.generated.resources.note_restored
 import anotes.composeapp.generated.resources.restore_note_from_archive
 import anotes.composeapp.generated.resources.sent_note_to_archive
 import anotes.composeapp.generated.resources.updated
+import com.yurhel.alex.anotes.getOrientation
 import com.yurhel.alex.anotes.ui.MainViewModel
 import com.yurhel.alex.anotes.ui.OrientationObj
-import com.yurhel.alex.anotes.getOrientation
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.getString
@@ -65,96 +59,77 @@ import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun BottomAppBarNote(
+fun NoteBottomBar(
     vm: MainViewModel,
     coroutineScope: CoroutineScope,
     onBackAfterDelete: () -> Unit,
     onBackButtonClick: () -> Unit,
-    onSecondButtonClick: () -> Unit,
-    secondButtonIcon: ImageVector,
-    secondButtonText: String,
-    onGetTextButtonClick: () -> String
+    onGetTextButtonClick: (() -> String)?,
+    additionalButtons: List<Triple<String, ImageVector, () -> Unit>>
 ) {
     val clipboardManager = LocalClipboardManager.current
     var isInfoBottomSheetOpen by remember { mutableStateOf(false) }
     var infoBottomSheetText by remember { mutableStateOf("") }
     val orientation = getOrientation()
 
-    BottomAppBar(
-        modifier = Modifier
-            .windowInsetsPadding(WindowInsets.navigationBars.union(WindowInsets.ime))
-            .height(50.dp),
-        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
-        windowInsets = WindowInsets(0, 0, 0, 0)
-    ) {
+    BaseBottomBar {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
             if (orientation == OrientationObj.Desktop) {
                 // Back button
-                val backText = stringResource(Res.string.back)
-                Tooltip(backText) {
-                    IconButton(onClick = onBackButtonClick) {
-                        Icon(Icons.AutoMirrored.Outlined.ArrowBack, backText, Modifier.size(30.dp))
-                    }
+                IconButton(onClick = onBackButtonClick) {
+                    Icon(Icons.AutoMirrored.Outlined.ArrowBack, stringResource(Res.string.back), Modifier.size(30.dp))
                 }
             }
             // Delete note
-            val delText = stringResource(Res.string.delete)
-            Tooltip(delText) {
-                IconButton(
-                    onClick = {
-                        coroutineScope.launch {
-                            infoBottomSheetText = getString(Res.string.delete_info)
-                            isInfoBottomSheetOpen = true
-                        }
+            IconButton(
+                onClick = {
+                    coroutineScope.launch {
+                        infoBottomSheetText = getString(Res.string.delete_info)
+                        isInfoBottomSheetOpen = true
                     }
-                ) {
-                    Icon(Icons.Outlined.Delete, delText, Modifier.size(30.dp))
                 }
+            ) {
+                Icon(Icons.Outlined.Delete, stringResource(Res.string.delete), Modifier.size(30.dp))
             }
             // Sent note to archive
             var isNoteArchived by remember { mutableStateOf(vm.getIsSelectedNoteArchived()) }
-            val archive1 = stringResource(
-                if (isNoteArchived) Res.string.restore_note_from_archive else Res.string.sent_note_to_archive
-            )
             val archive2 = stringResource(
                 if (isNoteArchived) Res.string.note_restored else Res.string.note_archived
             )
-            Tooltip(archive1) {
-                IconButton(onClick = {
-                    vm.archiveOrUnarchiveNote(!isNoteArchived)
-                    isNoteArchived = !isNoteArchived
-                    vm.showToast(archive2)
-                }) {
-                    Icon(
-                        imageVector = if (isNoteArchived) Icons.Outlined.Unarchive else Icons.Outlined.Archive,
-                        contentDescription = archive1,
-                        modifier = Modifier.size(30.dp)
-                    )
-                }
+            IconButton(onClick = {
+                vm.archiveOrUnarchiveNote(!isNoteArchived)
+                isNoteArchived = !isNoteArchived
+                vm.showToast(archive2)
+            }) {
+                Icon(
+                    imageVector = if (isNoteArchived) Icons.Outlined.Unarchive else Icons.Outlined.Archive,
+                    contentDescription = stringResource(
+                        if (isNoteArchived) Res.string.restore_note_from_archive else Res.string.sent_note_to_archive
+                    ),
+                    modifier = Modifier.size(30.dp)
+                )
             }
             // Copy button
-            val copyText = stringResource(Res.string.copy)
-            Tooltip(copyText) {
+            if (onGetTextButtonClick != null) {
                 IconButton(
                     onClick = {
                         val noteStr = onGetTextButtonClick()
                         clipboardManager.setText(buildAnnotatedString { append(text = noteStr) })
                     }
                 ) {
-                    Icon(Icons.Default.CopyAll, copyText, Modifier.size(30.dp))
+                    Icon(Icons.Default.CopyAll, stringResource(Res.string.copy), Modifier.size(30.dp))
                 }
             }
-            // Second button
-            Tooltip(secondButtonText) {
-                IconButton(onClick = onSecondButtonClick) {
-                    Icon(secondButtonIcon, secondButtonText, Modifier.size(30.dp))
+            // Additional buttons
+            additionalButtons.forEach {
+                IconButton(onClick = it.third) {
+                    Icon(it.second, it.first, Modifier.size(30.dp))
                 }
             }
         }
-
         // Note updated text ???
         Column(
             verticalArrangement = Arrangement.Center,
@@ -173,37 +148,33 @@ fun BottomAppBarNote(
                     text = "${stringResource(Res.string.created)}: ${vm.formatDate(vm.getNoteDate(true))}",
                     style = MaterialTheme.typography.labelMedium
                 )
-
             } else {
                 // Only for android
-                Tooltip(stringResource(Res.string.updated)) {
-                    Box(
-                        contentAlignment = Alignment.Center,
-                        modifier = Modifier
-                            .clip(CircleShape)
-                            .clickable {
-                                // Open info about note
-                                coroutineScope.launch {
-                                    infoBottomSheetText = """
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier
+                        .clip(CircleShape)
+                        .clickable {
+                            // Open info about note
+                            coroutineScope.launch {
+                                infoBottomSheetText = """
                                         ${getString(Res.string.updated)}: ${vm.formatDate(vm.getNoteDate())}
                                         ${getString(Res.string.created)}: ${vm.formatDate(vm.getNoteDate(true))}
                                     """.trimIndent()
-                                    isInfoBottomSheetOpen = true
-                                }
+                                isInfoBottomSheetOpen = true
                             }
-                    ) {
-                        Text(
-                            text = vm.formatDate(vm.getNoteDate()),
-                            style = MaterialTheme.typography.labelLarge,
-                            modifier = Modifier.padding(5.dp)
-                        )
-                    }
+                        }
+                ) {
+                    Text(
+                        text = vm.formatDate(vm.getNoteDate()),
+                        style = MaterialTheme.typography.labelLarge,
+                        modifier = Modifier.padding(5.dp)
+                    )
                 }
             }
         }
     }
-
-    // BottomSheet for asking for deletion
+    // BottomSheet
     if (isInfoBottomSheetOpen) {
         ModalBottomSheet(
             onDismissRequest = {
@@ -217,7 +188,6 @@ fun BottomAppBarNote(
                 textAlign = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth()
             )
-
             // If delete text - show buttons
             if (infoBottomSheetText == stringResource(Res.string.delete_info)) {
                 Row(
@@ -234,7 +204,6 @@ fun BottomAppBarNote(
                     ) {
                         Icon(Icons.Default.Close, "No", Modifier.size(30.dp))
                     }
-
                     IconButton(
                         onClick = {
                             vm.deleteNote()
@@ -245,7 +214,6 @@ fun BottomAppBarNote(
                     }
                 }
             }
-
             Spacer(Modifier.fillMaxWidth().height(50.dp))
         }
     }

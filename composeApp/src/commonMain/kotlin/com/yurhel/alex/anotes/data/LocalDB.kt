@@ -2,6 +2,7 @@ package com.yurhel.alex.anotes.data
 
 import androidx.compose.ui.unit.dp
 import app.cash.sqldelight.db.SqlDriver
+import com.yurhel.alex.anotes.feature_board.data.BoardDao
 import db.Database
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
@@ -28,6 +29,7 @@ class LocalDB private constructor(sqlDriver: SqlDriver) {
     }
 
     val driver: SqlDriver = sqlDriver
+    val board = BoardDao(Database(driver).drawingsQueries)
 
 
 
@@ -54,21 +56,21 @@ class LocalDB private constructor(sqlDriver: SqlDriver) {
         Database(driver).notesQueries.delete(id.toLong())
     }
 
-    fun getByCreatedNote(noteCreated: String): NoteObj? {
-        val note = try {
-            val i = Database(driver).notesQueries.getByCreated(noteCreated).executeAsList()[0]
-            NoteObj(
-                id = i.id.toInt(),
-                text = i.text ?: "",
-                isArchived = i.withTasks?.toInt() == 1,
-                dateUpdate = i.dateUpdate?.toLong() ?: 0,
-                dateCreate = i.dateCreate?.toLong() ?: 0
-            )
-        } catch (_: Exception) {
-            null
-        }
-        return note
-    }
+//    fun getByCreatedNote(noteCreated: String): NoteObj? {
+//        val note = try {
+//            val i = Database(driver).notesQueries.getByCreated(noteCreated).executeAsList()[0]
+//            NoteObj(
+//                id = i.id.toInt(),
+//                text = i.text ?: "",
+//                isArchived = i.withTasks?.toInt() == 1,
+//                dateUpdate = i.dateUpdate?.toLong() ?: 0,
+//                dateCreate = i.dateCreate?.toLong() ?: 0
+//            )
+//        } catch (_: Exception) {
+//            null
+//        }
+//        return note
+//    }
 
     fun getLastNote(): NoteObj? {
         val note = try {

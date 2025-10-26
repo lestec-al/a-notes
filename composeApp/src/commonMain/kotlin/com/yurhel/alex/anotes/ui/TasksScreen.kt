@@ -1,8 +1,6 @@
 package com.yurhel.alex.anotes.ui
 
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.absoluteOffset
 import androidx.compose.foundation.layout.fillMaxSize
@@ -17,14 +15,7 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.Article
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -39,13 +30,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInParent
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import anotes.composeapp.generated.resources.Res
@@ -57,10 +45,12 @@ import com.yurhel.alex.anotes.BackHandlerCustom
 import com.yurhel.alex.anotes.data.StatusObj
 import com.yurhel.alex.anotes.data.TasksObj
 import com.yurhel.alex.anotes.getOrientation
-import com.yurhel.alex.anotes.ui.components.BottomAppBarNote
+import com.yurhel.alex.anotes.ui.components.NoteBottomBar
+import com.yurhel.alex.anotes.ui.components.DropFloatingActionButton
 import com.yurhel.alex.anotes.ui.components.EditBottomSheet
 import com.yurhel.alex.anotes.ui.components.StatusCard
 import com.yurhel.alex.anotes.ui.components.Task
+import com.yurhel.alex.anotes.ui.components.pxToDp
 import org.jetbrains.compose.resources.stringResource
 import kotlin.math.roundToInt
 
@@ -87,79 +77,25 @@ fun TasksScreen(
 
     val onBackgroundColor = MaterialTheme.colorScheme.onBackground
     val lazyListState = rememberLazyListState()
-
     val scrollOffset = if (getOrientation() == OrientationObj.Desktop) 20 else 50
-    var isFloatingActionButtonOpened: Boolean by remember { mutableStateOf(false) }
 
     Scaffold(
         floatingActionButton = {
-            if (isFloatingActionButtonOpened) {
-                Column(horizontalAlignment = Alignment.End) {
-                    DropdownMenu(
-                        expanded = true,
-                        onDismissRequest = {
-                            isFloatingActionButtonOpened = false
-                        },
-                        shape = CardDefaults.shape
-                    ) {
-                        // Create new status
-                        val addNewStatusText = stringResource(Res.string.create) + " " + stringResource(Res.string.status)
-                        DropdownMenuItem(
-                            text = {
-                                Text(
-                                    text = addNewStatusText.uppercase(),
-                                    textAlign = TextAlign.End,
-                                    modifier = Modifier.fillMaxWidth()
-                                )
-                            },
-                            onClick = {
-                                isFloatingActionButtonOpened = false
-                                vm.onEvent(Event.ShowEditDialog(Types.Status, ActionTypes.Create))
-                            }
-                        )
-                        // Add new task
-                        val addNewTaskText = stringResource(Res.string.create) + " " + stringResource(Res.string.task)
-                        DropdownMenuItem(
-                            text = {
-                                Text(
-                                    text = addNewTaskText.uppercase(),
-                                    textAlign = TextAlign.End,
-                                    modifier = Modifier.fillMaxWidth()
-                                )
-                            },
-                            onClick = {
-                                isFloatingActionButtonOpened = false
-                                vm.onEvent(Event.ShowEditDialog(Types.Task, ActionTypes.Create))
-                            }
-                        )
-                    }
-                    Spacer(Modifier.height(5.dp))
-                    // Close buttons
-                    FloatingActionButton(
-                        onClick = {
-                            isFloatingActionButtonOpened = false
-                        },
-                        shape = CardDefaults.shape,
-                        content = {
-                            Icon(Icons.Default.Close, null)
-                        }
-                    )
-                }
-            } else {
-                // Open buttons
-                FloatingActionButton(
-                    shape = CardDefaults.shape,
-                    onClick = {
-                        isFloatingActionButtonOpened = true
+            DropFloatingActionButton(
+                listOf(
+                    // Create new status button
+                    Pair(stringResource(Res.string.create) + " " + stringResource(Res.string.status)) {
+                        vm.onEvent(Event.ShowEditDialog(Types.Status, ActionTypes.Create))
                     },
-                    content = {
-                        Icon(Icons.Default.Add, "")
+                    // Add new task button
+                    Pair(stringResource(Res.string.create) + " " + stringResource(Res.string.task)) {
+                        vm.onEvent(Event.ShowEditDialog(Types.Task, ActionTypes.Create))
                     }
                 )
-            }
+            )
         },
         bottomBar = {
-            BottomAppBarNote(
+            NoteBottomBar(
                 vm = vm,
                 coroutineScope = rememberCoroutineScope(),
                 onBackAfterDelete = onBack,
@@ -168,14 +104,14 @@ fun TasksScreen(
                     vm.clearTasks()
                     onBack()
                 },
-                onSecondButtonClick = {
-                    vm.selectStatus(0)
-                    vm.clearTasks()
-                    toNote()
-                },
-                secondButtonIcon = Icons.AutoMirrored.Outlined.Article,
-                secondButtonText = stringResource(Res.string.edit_note),
-                onGetTextButtonClick = vm::getTaskTextForNote
+                onGetTextButtonClick = vm::getTaskTextForNote,
+                additionalButtons = listOf(
+                    Triple(stringResource(Res.string.edit_note), Icons.AutoMirrored.Outlined.Article) {
+                        vm.selectStatus(0)
+                        vm.clearTasks()
+                        toNote()
+                    }
+                )
             )
         }
     ) { paddingValues ->
@@ -314,10 +250,6 @@ fun TasksScreen(
     val isDialogVisible by vm.editDialogVisibility.collectAsState()
     if (isDialogVisible) EditBottomSheet(vm = vm)
 }
-
-
-@Composable
-fun Int.pxToDp() = with(LocalDensity.current) { this@pxToDp.toDp() }
 
 private val LazyListItemInfo.offsetEnd: Int
     get() = this.offset + this.size

@@ -4,6 +4,9 @@ import androidx.compose.material3.ColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.toAwtImage
+import androidx.compose.ui.graphics.toComposeImageBitmap
 import androidx.compose.ui.res.useResource
 import app.cash.sqldelight.db.SqlDriver
 import app.cash.sqldelight.driver.jdbc.sqlite.JdbcSqliteDriver
@@ -27,10 +30,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
+import org.jetbrains.skia.Image
 import java.io.ByteArrayOutputStream
 import java.io.InputStreamReader
+import java.util.Base64
 import java.util.Collections
-
+import javax.imageio.ImageIO
 
 actual class Drive {
 
@@ -165,4 +170,16 @@ fun getSqlDriver(): SqlDriver {
         Database.Schema.create(driver)
     } catch (_: Exception) {}
     return driver
+}
+
+actual fun ImageBitmap.toBase64(): String? {
+    val bufferedImage = this.toAwtImage()
+    val outputStream = ByteArrayOutputStream()
+    ImageIO.write(bufferedImage, "PNG", outputStream)
+    return Base64.getEncoder().encodeToString(outputStream.toByteArray())
+}
+
+actual fun String.toImageBitmap(): ImageBitmap? {
+    val byteArray = Base64.getDecoder().decode(this)
+    return Image.makeFromEncoded(byteArray).toComposeImageBitmap()
 }

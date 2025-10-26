@@ -4,7 +4,7 @@ enum class Types { Status, Task }
 
 enum class ActionTypes { Create, Update }
 
-enum class ScreenObj { Main, Note, Tasks }
+enum class ScreenObj { Main, Note, Tasks, Draw }
 
 enum class SyncActionTypes { Auto, ManualExport, ManualImport }
 

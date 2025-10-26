@@ -5,9 +5,12 @@ import androidx.compose.animation.ExitTransition
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.yurhel.alex.anotes.feature_board.ui.BoardScreen
+import com.yurhel.alex.anotes.feature_board.ui.BoardViewModel
 
 @Composable
 fun Navigation(vm: MainViewModel) {
@@ -31,15 +34,23 @@ fun Navigation(vm: MainViewModel) {
             NotesScreen(
                 vm = vm,
                 newNoteClicked = {
+                    vm.prepareNote(true)
                     nav.navigate(ScreenObj.Note.name)
                 },
                 openNoteClicked = {
+                    vm.prepareNote(false)
                     if (vm.checkIfNoteHaveTasks(vm.selectedNote.value!!)) {
                         vm.updateTasksData(false)
                         nav.navigate(ScreenObj.Tasks.name)
+                    } else if (vm.checkIfNoteIsDraw(vm.selectedNote.value!!.id)) {
+                        nav.navigate(ScreenObj.Draw.name)
                     } else {
                         nav.navigate(ScreenObj.Note.name)
                     }
+                },
+                newDrawClicked = {
+                    vm.prepareNote(true)
+                    nav.navigate(ScreenObj.Draw.name)
                 }
             )
         }
@@ -48,10 +59,6 @@ fun Navigation(vm: MainViewModel) {
             NoteScreen(
                 vm = vm,
                 onBack = {
-                    // When an app in opened from widget (only on Android)
-                    // Enable normal app functionality after returning from note
-                    if (vm.noteCreatedDateFromWidget != "") vm.noteCreatedDateFromWidget = ""
-                    if (it) vm.updateNotesScreenScrollItem(Pair(0,0))
                     nav.navigate(ScreenObj.Main.name)
                 },
                 toTasks = {
@@ -65,14 +72,20 @@ fun Navigation(vm: MainViewModel) {
             TasksScreen(
                 vm = vm,
                 onBack = {
-                    // When an app in opened from widget
-                    // Enable normal app functionality after returning from note
-                    if (vm.noteCreatedDateFromWidget != "") vm.noteCreatedDateFromWidget = ""
-
                     nav.navigate(ScreenObj.Main.name)
                 },
                 toNote = {
                     nav.navigate(ScreenObj.Note.name)
+                }
+            )
+        }
+
+        composable(route = ScreenObj.Draw.name) {
+            BoardScreen(
+                vm = vm,
+                vmBoard = viewModel(factory = BoardViewModel.Factory(vm)),
+                onBack = {
+                    nav.navigate(ScreenObj.Main.name)
                 }
             )
         }
