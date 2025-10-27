@@ -12,6 +12,7 @@
     <string name="updated">Updated</string>
     <string name="created">Created</string>
     <string name="task">Task</string>
+    <string name="tasks">Tasks</string>
     <string name="status">Status</string>
     <string name="text">Text</string>
     <string name="note">Note</string>
@@ -32,6 +33,7 @@
     <string name="sent_note_to_archive">Sent note to archive</string>
     <string name="restore_note_from_archive">Restore note from archive</string>
     <string name="sorting">Sorting</string>
+    <string name="filtering">Filtering</string>
     <string name="show_main_notes">Show main notes</string>
     <string name="show_archive_notes">Show archive notes</string>
     <string name="date_update">Date update</string>
@@ -42,7 +44,7 @@
     <!-- Board only -->
     <string name="thickness">Thickness</string>
     <string name="opacity">Opacity</string>
-    <string name="draw">Draw</string>
+    <string name="draw">Drawing</string>
     <string name="disable_all_actions">Disable all actions</string>
     <string name="enable_draw">Enable draw</string>
     <string name="undo">Undo</string>

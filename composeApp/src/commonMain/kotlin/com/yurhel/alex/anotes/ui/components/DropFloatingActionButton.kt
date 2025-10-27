@@ -20,11 +20,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun DropFloatingActionButton(dropDownMenuItems: List<Pair<String, () -> Unit>>) {
+fun DropFloatingActionButton(dropDownMenuItems: List<Triple<String, ImageVector, () -> Unit>>) {
     var isOpened: Boolean by remember { mutableStateOf(false) }
     if (isOpened) {
         Column(horizontalAlignment = Alignment.End) {
@@ -39,14 +40,20 @@ fun DropFloatingActionButton(dropDownMenuItems: List<Pair<String, () -> Unit>>) 
                     DropdownMenuItem(
                         text = {
                             Text(
-                                text = it.first.uppercase(),
+                                text = it.first,
                                 textAlign = TextAlign.End,
                                 modifier = Modifier.fillMaxWidth()
                             )
                         },
                         onClick = {
                             isOpened = false
-                            it.second()
+                            it.third()
+                        },
+                        trailingIcon = {
+                            Icon(
+                                imageVector = it.second,
+                                contentDescription = it.first
+                            )
                         }
                     )
                 }

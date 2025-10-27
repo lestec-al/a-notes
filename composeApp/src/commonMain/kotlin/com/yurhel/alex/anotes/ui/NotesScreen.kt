@@ -13,6 +13,10 @@ import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.FormatListBulleted
+import androidx.compose.material.icons.outlined.Brush
+import androidx.compose.material.icons.outlined.TextFields
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
@@ -29,10 +33,10 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import anotes.composeapp.generated.resources.Res
-import anotes.composeapp.generated.resources.create
 import anotes.composeapp.generated.resources.draw
 import anotes.composeapp.generated.resources.empty_text
 import anotes.composeapp.generated.resources.note
+import anotes.composeapp.generated.resources.tasks
 import com.yurhel.alex.anotes.BackHandlerCustom
 import com.yurhel.alex.anotes.data.NoteObj
 import com.yurhel.alex.anotes.ui.components.DropFloatingActionButton
@@ -44,9 +48,8 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 fun NotesScreen(
     vm: MainViewModel,
-    newNoteClicked: () -> Unit,
-    openNoteClicked: () -> Unit,
-    newDrawClicked: () -> Unit
+    newNoteClicked: (type: String) -> Unit,
+    openNoteClicked: () -> Unit
 ) {
     BackHandlerCustom(onBack = vm.callExit)
 
@@ -73,21 +76,29 @@ fun NotesScreen(
     // Check if no need to choosing widget (possible only on Android)
     val notNeedChooseWidget = vm.widgetIdWhenCreated == 0
 
+    val isSyncDialogOpen by vm.isSyncDialogOpen.collectAsState()
+
     Scaffold(
         floatingActionButton = {
             DropFloatingActionButton(
                 listOf(
-                    // Add new note button
-                    Pair(stringResource(Res.string.create) + " " + stringResource(Res.string.note)) {
-                        vm.selectNote(null)
-                        newNoteClicked()
+                    // Add new drawing button
+                    Triple(stringResource(Res.string.draw), Icons.Outlined.Brush) {
+                        newNoteClicked(NoteType.Draw.name)
                         vm.updateNotesScreenScrollItem(
                             Pair(scrollState.firstVisibleItemIndex, scrollState.firstVisibleItemScrollOffset)
                         )
                     },
-                    // Add new drawing button
-                    Pair(stringResource(Res.string.create) + " " + stringResource(Res.string.draw)) {
-                        newDrawClicked()
+                    // Add new tasks button
+                    Triple(stringResource(Res.string.tasks), Icons.AutoMirrored.Outlined.FormatListBulleted) {
+                        newNoteClicked(NoteType.Tasks.name)
+                        vm.updateNotesScreenScrollItem(
+                            Pair(scrollState.firstVisibleItemIndex, scrollState.firstVisibleItemScrollOffset)
+                        )
+                    },
+                    // Add new note button
+                    Triple(stringResource(Res.string.note), Icons.Outlined.TextFields) {
+                        newNoteClicked(NoteType.Note.name)
                         vm.updateNotesScreenScrollItem(
                             Pair(scrollState.firstVisibleItemIndex, scrollState.firstVisibleItemScrollOffset)
                         )
@@ -187,8 +198,6 @@ fun NotesScreen(
             }
         }
     }
-    // Sync choose dialog
-    val isSyncDialogOpen by vm.isSyncDialogOpen.collectAsState()
     SyncDialog(
         isVisible = isSyncDialogOpen,
         vm = vm

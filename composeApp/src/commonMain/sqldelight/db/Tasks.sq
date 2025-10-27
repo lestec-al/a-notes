@@ -21,7 +21,6 @@ update:
 UPDATE tasksTable SET position = ?, description = ?, status = ?, dateUpdate = ?, dateUpdateStatus = ?
 WHERE id = ?;
 
-
 delete:
 DELETE FROM tasksTable WHERE id = ?;
 
@@ -34,7 +33,6 @@ DELETE FROM tasksTable WHERE status = ?;
 deleteManyByNote:
 DELETE FROM tasksTable WHERE note = ?;
 
-
 getManyByNoteAndStatus:
 SELECT * FROM tasksTable WHERE note = ? AND status = ? ORDER BY position ASC;
 
@@ -46,10 +44,3 @@ SELECT COUNT(*) FROM tasksTable WHERE note = ?;
 
 getAll:
 SELECT * FROM tasksTable ORDER BY position ASC;
-
-
-getLast:
-SELECT * FROM tasksTable ORDER BY id DESC LIMIT 1;
-
-getByPosition:
-SELECT * FROM tasksTable WHERE position = ?;

@@ -14,7 +14,9 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.Article
+import androidx.compose.material.icons.automirrored.outlined.Sort
+import androidx.compose.material.icons.automirrored.outlined.StickyNote2
+import androidx.compose.material.icons.outlined.DriveFileRenameOutline
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -37,7 +39,6 @@ import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import anotes.composeapp.generated.resources.Res
-import anotes.composeapp.generated.resources.create
 import anotes.composeapp.generated.resources.edit_note
 import anotes.composeapp.generated.resources.status
 import anotes.composeapp.generated.resources.task
@@ -45,9 +46,10 @@ import com.yurhel.alex.anotes.BackHandlerCustom
 import com.yurhel.alex.anotes.data.StatusObj
 import com.yurhel.alex.anotes.data.TasksObj
 import com.yurhel.alex.anotes.getOrientation
-import com.yurhel.alex.anotes.ui.components.NoteBottomBar
 import com.yurhel.alex.anotes.ui.components.DropFloatingActionButton
 import com.yurhel.alex.anotes.ui.components.EditBottomSheet
+import com.yurhel.alex.anotes.ui.components.NoteBottomBar
+import com.yurhel.alex.anotes.ui.components.SimpleEditBottomSheet
 import com.yurhel.alex.anotes.ui.components.StatusCard
 import com.yurhel.alex.anotes.ui.components.Task
 import com.yurhel.alex.anotes.ui.components.pxToDp
@@ -58,8 +60,7 @@ import kotlin.math.roundToInt
 @Composable
 fun TasksScreen(
     vm: MainViewModel,
-    onBack: () -> Unit,
-    toNote: () -> Unit
+    onBack: () -> Unit
 ) {
     BackHandlerCustom {
         vm.selectStatus(0)
@@ -79,16 +80,18 @@ fun TasksScreen(
     val lazyListState = rememberLazyListState()
     val scrollOffset = if (getOrientation() == OrientationObj.Desktop) 20 else 50
 
+    val isDialogVisible by vm.editDialogVisibility.collectAsState()
+
     Scaffold(
         floatingActionButton = {
             DropFloatingActionButton(
                 listOf(
                     // Create new status button
-                    Pair(stringResource(Res.string.create) + " " + stringResource(Res.string.status)) {
+                    Triple(stringResource(Res.string.status), Icons.AutoMirrored.Outlined.Sort) {
                         vm.onEvent(Event.ShowEditDialog(Types.Status, ActionTypes.Create))
                     },
                     // Add new task button
-                    Pair(stringResource(Res.string.create) + " " + stringResource(Res.string.task)) {
+                    Triple(stringResource(Res.string.task), Icons.AutoMirrored.Outlined.StickyNote2) {
                         vm.onEvent(Event.ShowEditDialog(Types.Task, ActionTypes.Create))
                     }
                 )
@@ -106,10 +109,8 @@ fun TasksScreen(
                 },
                 onGetTextButtonClick = vm::getTaskTextForNote,
                 additionalButtons = listOf(
-                    Triple(stringResource(Res.string.edit_note), Icons.AutoMirrored.Outlined.Article) {
-                        vm.selectStatus(0)
-                        vm.clearTasks()
-                        toNote()
+                    Triple(stringResource(Res.string.edit_note), Icons.Outlined.DriveFileRenameOutline) {
+                        vm.updateIsEditSheetOpen(true)
                     }
                 )
             )
@@ -246,9 +247,19 @@ fun TasksScreen(
             }
         }
     }
-    // Sync choose dialog
-    val isDialogVisible by vm.editDialogVisibility.collectAsState()
+    // Bottom sheets
     if (isDialogVisible) EditBottomSheet(vm = vm)
+    if (vm.isEditTextSheetOpen) {
+        SimpleEditBottomSheet(
+            onDismissRequest = vm::updateIsEditSheetOpen,
+            onSave = {
+                vm.updateEditTextValue(it)
+                vm.saveNote()
+            },
+            infoText = stringResource(Res.string.edit_note),
+            initText = vm.editText.text.toString()
+        )
+    }
 }
 
 private val LazyListItemInfo.offsetEnd: Int

@@ -7,8 +7,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.ListAlt
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
@@ -30,19 +28,15 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import anotes.composeapp.generated.resources.Res
-import anotes.composeapp.generated.resources.edit_tasks
 import com.yurhel.alex.anotes.BackHandlerCustom
 import com.yurhel.alex.anotes.keyboardAsState
 import com.yurhel.alex.anotes.ui.components.NoteBottomBar
 import kotlinx.coroutines.launch
-import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun NoteScreen(
     vm: MainViewModel,
-    onBack: () -> Unit,
-    toTasks: () -> Unit
+    onBack: () -> Unit
 ) {
     BackHandlerCustom {
         vm.saveNote()
@@ -76,13 +70,7 @@ fun NoteScreen(
                 onGetTextButtonClick = {
                     vm.editText.text.toString()
                 },
-                additionalButtons = listOf(
-                    // Change type (note - tasks)
-                    Triple(stringResource(Res.string.edit_tasks), Icons.AutoMirrored.Outlined.ListAlt) {
-                        vm.saveNote()
-                        toTasks()
-                    }
-                )
+                additionalButtons = listOf()
             )
         }
     ) { padding ->

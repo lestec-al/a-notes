@@ -1,4 +1,4 @@
-package com.yurhel.alex.anotes.feature_board.ui.components
+package com.yurhel.alex.anotes.ui.components
 
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer

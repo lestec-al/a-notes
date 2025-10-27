@@ -13,8 +13,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Undo
 import androidx.compose.material.icons.outlined.BackHand
+import androidx.compose.material.icons.outlined.Brush
 import androidx.compose.material.icons.outlined.DriveFileRenameOutline
-import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SmallFloatingActionButton
@@ -37,7 +37,7 @@ import anotes.composeapp.generated.resources.undo
 import com.yurhel.alex.anotes.BackHandlerCustom
 import com.yurhel.alex.anotes.feature_board.ui.components.ActionButton
 import com.yurhel.alex.anotes.feature_board.ui.components.EditBoardBottomSheet
-import com.yurhel.alex.anotes.feature_board.ui.components.SimpleEditBottomSheet
+import com.yurhel.alex.anotes.ui.components.SimpleEditBottomSheet
 import com.yurhel.alex.anotes.ui.MainViewModel
 import com.yurhel.alex.anotes.ui.components.NoteBottomBar
 import org.jetbrains.compose.resources.stringResource
@@ -92,7 +92,7 @@ fun BoardScreen(
                 ActionButton(
                     onClick = { vmBoard.enableDisableDraw(true) },
                     isActive = vmBoard.isDraw,
-                    icon = Icons.Outlined.Edit,
+                    icon = Icons.Outlined.Brush,
                     contentDescription = stringResource(Res.string.enable_draw)
                 )
                 // Disable all actions

@@ -61,6 +61,7 @@ import anotes.composeapp.generated.resources.date_create
 import anotes.composeapp.generated.resources.date_update
 import anotes.composeapp.generated.resources.delete
 import anotes.composeapp.generated.resources.descending
+import anotes.composeapp.generated.resources.filtering
 import anotes.composeapp.generated.resources.search_text_hint
 import anotes.composeapp.generated.resources.show_archive_notes
 import anotes.composeapp.generated.resources.show_main_notes
@@ -220,7 +221,7 @@ fun MainBottomBar(
                         Modifier.size(30.dp)
                     )
                 }
-                // Change sort button
+                // More button
                 var expandedMenu by remember { mutableStateOf(false) }
                 val sorting = stringResource(Res.string.sorting)
                 IconButton(onClick = { expandedMenu = true }) {
@@ -237,6 +238,10 @@ fun MainBottomBar(
                         .wrapContentSize()
                         .width(IntrinsicSize.Max)
                 ) {
+                    Text(
+                        text = stringResource(Res.string.filtering),
+                        modifier = Modifier.padding(horizontal = 20.dp)
+                    )
                     var isShowArchive by remember { mutableStateOf(vm.db.getDataShowing() == "archive") }
                     RadioDropdownMenuItem(
                         onClick = {

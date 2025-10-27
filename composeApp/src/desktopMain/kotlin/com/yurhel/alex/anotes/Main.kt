@@ -8,12 +8,15 @@ import androidx.compose.ui.window.rememberWindowState
 import androidx.lifecycle.viewmodel.compose.viewModel
 import anotes.composeapp.generated.resources.Res
 import anotes.composeapp.generated.resources.app_name
+import app.cash.sqldelight.db.SqlDriver
+import app.cash.sqldelight.driver.jdbc.sqlite.JdbcSqliteDriver
 import com.yurhel.alex.anotes.data.LocalDB
 import com.yurhel.alex.anotes.ui.DriveUtils
 import com.yurhel.alex.anotes.ui.MainViewModel
 import com.yurhel.alex.anotes.ui.Navigation
 import com.yurhel.alex.anotes.ui.SyncActionTypes
 import com.yurhel.alex.anotes.ui.theme.ANotesTheme
+import db.Database
 import org.jetbrains.compose.resources.stringResource
 import java.awt.Color
 import java.awt.Dimension
@@ -25,7 +28,9 @@ fun main() = application {
     // Fixes problems with sharpness & flickering ?
     System.setProperty("skiko.renderApi", "OPENGL")
 
-    val db = LocalDB.getInstance(getSqlDriver())
+    val driver: SqlDriver = JdbcSqliteDriver("jdbc:sqlite:notes.db")
+    try { Database.Schema.create(driver) } catch (_: Exception) {}
+    val db = LocalDB.getInstance(driver)
 
     val screen = db.getScreen()
     val screenState = rememberWindowState(
@@ -82,7 +87,6 @@ fun main() = application {
                 // Next used only in Android
                 callExit = {},
                 widgetIdWhenCreated = 0,
-                noteCreatedDateFromWidget = "",
                 callInitUpdateWidget = { _, _, _, _ -> }
             )
         )

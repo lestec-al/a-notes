@@ -9,7 +9,7 @@ import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.boolean
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.int
+import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.long
@@ -37,6 +37,7 @@ class LocalDB private constructor(sqlDriver: SqlDriver) {
     fun createNote(noteObj: NoteObj) {
         Database(driver).notesQueries.insert(
             withTasks = if (noteObj.isArchived) 1 else 0,
+            type = noteObj.type,
             text = noteObj.text,
             dateUpdate = noteObj.dateUpdate.toString(),
             dateCreate = noteObj.dateCreate.toString()
@@ -46,6 +47,7 @@ class LocalDB private constructor(sqlDriver: SqlDriver) {
     fun updateNote(noteObj: NoteObj) {
         Database(driver).notesQueries.update(
             withTasks = if (noteObj.isArchived) 1 else 0,
+            type = noteObj.type,
             text = noteObj.text,
             dateUpdate = noteObj.dateUpdate.toString(),
             id = noteObj.id.toLong()
@@ -56,28 +58,13 @@ class LocalDB private constructor(sqlDriver: SqlDriver) {
         Database(driver).notesQueries.delete(id.toLong())
     }
 
-//    fun getByCreatedNote(noteCreated: String): NoteObj? {
-//        val note = try {
-//            val i = Database(driver).notesQueries.getByCreated(noteCreated).executeAsList()[0]
-//            NoteObj(
-//                id = i.id.toInt(),
-//                text = i.text ?: "",
-//                isArchived = i.withTasks?.toInt() == 1,
-//                dateUpdate = i.dateUpdate?.toLong() ?: 0,
-//                dateCreate = i.dateCreate?.toLong() ?: 0
-//            )
-//        } catch (_: Exception) {
-//            null
-//        }
-//        return note
-//    }
-
     fun getLastNote(): NoteObj? {
         val note = try {
             val i = Database(driver).notesQueries.getLast().executeAsOne()
             NoteObj(
                 id = i.id.toInt(),
                 text = i.text ?: "",
+                type = i.type ?: "",
                 isArchived = i.withTasks?.toInt() == 1,
                 dateUpdate = i.dateUpdate?.toLong() ?: 0,
                 dateCreate = i.dateCreate?.toLong() ?: 0
@@ -95,6 +82,7 @@ class LocalDB private constructor(sqlDriver: SqlDriver) {
                 NoteObj(
                     id = i.id.toInt(),
                     text = i.text ?: "",
+                    type = i.type ?: "",
                     isArchived = i.withTasks?.toInt() == 1,
                     dateUpdate = i.dateUpdate?.toLong() ?: 0,
                     dateCreate = i.dateCreate?.toLong() ?: 0
@@ -110,6 +98,7 @@ class LocalDB private constructor(sqlDriver: SqlDriver) {
             NoteObj(
                 id = i.id.toInt(),
                 text = i.text ?: "",
+                type = i.type ?: "",
                 isArchived = i.withTasks?.toInt() == 1,
                 dateUpdate = i.dateUpdate?.toLong() ?: 0,
                 dateCreate = i.dateCreate?.toLong() ?: 0
@@ -176,26 +165,25 @@ class LocalDB private constructor(sqlDriver: SqlDriver) {
         )
     }
 
-
-
-    // SETTINGS ADDITIONAL DAO ---------------------
-    fun getDataShowing() = Database(driver).settingsAdditionalQueries.getDataShowing().executeAsOne()
+    fun getDataShowing() = Database(driver).settingsQueries.getDataShowing().executeAsOne()
             .dataShowing ?: "all"
 
-    fun getSortType() = Database(driver).settingsAdditionalQueries.getSortType().executeAsOne().sortType ?: "dateUpdate"
+    fun getSortType() = Database(driver).settingsQueries.getSortType().executeAsOne()
+        .sortType ?: "dateUpdate"
 
-    fun getSortArrow() = Database(driver).settingsAdditionalQueries.getSortArrow().executeAsOne().sortArrow ?: "ascending"
+    fun getSortArrow() = Database(driver).settingsQueries.getSortArrow().executeAsOne()
+        .sortArrow ?: "ascending"
 
     fun updateDataShowing(value: String) {
-        Database(driver).settingsAdditionalQueries.updateDataShowing(value)
+        Database(driver).settingsQueries.updateDataShowing(value)
     }
 
     fun updateSortType(value: String) {
-        Database(driver).settingsAdditionalQueries.updateSortType(value)
+        Database(driver).settingsQueries.updateSortType(value)
     }
 
     fun updateSortArrow(value: String) {
-        Database(driver).settingsAdditionalQueries.updateSortArrow(value)
+        Database(driver).settingsQueries.updateSortArrow(value)
     }
 
 
@@ -365,41 +353,6 @@ class LocalDB private constructor(sqlDriver: SqlDriver) {
         return list
     }
 
-//    fun getLastTask(): TasksObj? {
-//        val res = Database(driver).tasksQueries.getLast().executeAsList()
-//        var task: TasksObj? = null
-//        for (i in res) {
-//            task = TasksObj(
-//                id = i.id.toInt(),
-//                position = i.position?.toInt() ?: 0,
-//                description = i.description ?: "",
-//                status = i.status?.toInt() ?: 0,
-//                note = i.note?.toInt() ?: 0,
-//                dateCreate = i.dateCreate?.toLong() ?: 0,
-//                dateUpdate = i.dateUpdate?.toLong() ?: 0,
-//                dateUpdateStatus = i.dateUpdateStatus?.toLong() ?: 0
-//            )
-//        }
-//        return task
-//    }
-//    fun getTaskByPosition(position: Int): TasksObj? {
-//        val res = Database(driver).tasksQueries.getByPosition(position.toLong()).executeAsList()
-//        var task: TasksObj? = null
-//        for (i in res) {
-//            task = TasksObj(
-//                id = i.id.toInt(),
-//                position = i.position?.toInt() ?: 0,
-//                description = i.description ?: "",
-//                status = i.status?.toInt() ?: 0,
-//                note = i.note?.toInt() ?: 0,
-//                dateCreate = i.dateCreate?.toLong() ?: 0,
-//                dateUpdate = i.dateUpdate?.toLong() ?: 0,
-//                dateUpdateStatus = i.dateUpdateStatus?.toLong() ?: 0
-//            )
-//        }
-//        return task
-//    }
-
 
 
     // WIDGETS DAO ---------------------
@@ -410,22 +363,6 @@ class LocalDB private constructor(sqlDriver: SqlDriver) {
     fun deleteByIdWidget(widgetId: Int) {
         Database(driver).widgetsQueries.deleteById(widgetId.toLong())
     }
-
-//    fun deleteByCreatedWidget(noteCreated: String) {
-//        Database(driver).widgetsQueries.deleteByCreated(noteCreated)
-//    }
-//    fun getByIdWidget(widgetId: Int): WidgetObj? {
-//        val res = Database(driver).widgetsQueries.getById(widgetId.toLong()).executeAsList()
-//        var widget: WidgetObj? = null
-//        for (i in res) {
-//            widget = WidgetObj(
-//                id = i.id.toInt(),
-//                widgetId = i.widgetId?.toInt() ?: 0,
-//                noteCreated = i.noteCreated ?: ""
-//            )
-//        }
-//        return widget
-//    }
 
     fun getByCreatedWidget(noteCreated: String): WidgetObj? {
         val res = Database(driver).widgetsQueries.getByCreated(noteCreated).executeAsList()
@@ -446,13 +383,13 @@ class LocalDB private constructor(sqlDriver: SqlDriver) {
     fun exportDB(): JsonArray {
         try {
             val db = Database(driver)
-
             return buildJsonArray {
                 for (i in db.notesQueries.getAll().executeAsList()) {
                     add(
                         buildJsonObject {
                             put("id", i.id.toInt())
                             put("withTasks", i.withTasks == 1L)
+                            put("type", i.type ?: "")
                             put("text", i.text ?: "")
                             put("dateUpdate", i.dateUpdate ?: "")
                             put("dateCreate", i.dateCreate ?: "")
@@ -483,6 +420,28 @@ class LocalDB private constructor(sqlDriver: SqlDriver) {
                         }
                     )
                 }
+                for (i in db.drawingsQueries.getAllDraws().executeAsList()) {
+                    add(
+                        buildJsonObject {
+                            put("id", i.id.toInt())
+                            put("noteId", i.noteId!!.toInt())
+                            put("startX", i.startX ?: "")
+                            put("startY", i.startY ?: "")
+                            put("endX", i.endX ?: "")
+                            put("endY", i.endY ?: "")
+                            put("color", i.color ?: "")
+                            put("strokeWidth", i.strokeWidth ?: "")
+                        }
+                    )
+                }
+                for (i in db.drawingsQueries.getAllImages().executeAsList()) {
+                    add(
+                        buildJsonObject {
+                            put("noteId", i.noteId!!.toInt())
+                            put("base64Str", i.base64Str!!)
+                        }
+                    )
+                }
             }
         }  catch (e: Exception) {
             e.printStackTrace()
@@ -491,7 +450,6 @@ class LocalDB private constructor(sqlDriver: SqlDriver) {
     }
 
     fun importDB(data: String): Boolean {
-        //val oldData = exportDB()
         try {
             val db = Database(driver)
             db.notesQueries.deleteAll()
@@ -501,10 +459,19 @@ class LocalDB private constructor(sqlDriver: SqlDriver) {
             val jsonData = Json.decodeFromString<JsonArray>(data)
             for (i in jsonData) {
                 val obj = i.jsonObject
-
                 // Check object type
+                val draw = try {
+                    obj["startX"]?.jsonPrimitive?.content
+                } catch (_: Exception) {
+                    null
+                }
+                val image = try {
+                    obj["base64Str"]?.jsonPrimitive?.content
+                } catch (_: Exception) {
+                    null
+                }
                 val status = try {
-                    obj["color"]?.jsonPrimitive?.int
+                    obj["title"]?.jsonPrimitive?.content
                 } catch (_: Exception) {
                     null
                 }
@@ -513,9 +480,26 @@ class LocalDB private constructor(sqlDriver: SqlDriver) {
                 } catch (_: Exception) {
                     null
                 }
-
                 // Insert obj to DB
                 when {
+                    image != null -> {
+                        db.drawingsQueries.insertImage(
+                            noteId = obj["noteId"]?.jsonPrimitive?.long,
+                            base64Str = obj["base64Str"]?.jsonPrimitive?.content
+                        )
+                    }
+                    draw != null -> {
+                        db.drawingsQueries.insertDrawWithId(
+                            id = obj["id"]?.jsonPrimitive?.long,
+                            noteId = obj["noteId"]?.jsonPrimitive?.long,
+                            startX = obj["startX"]?.jsonPrimitive?.content,
+                            startY = obj["startY"]?.jsonPrimitive?.content,
+                            endX = obj["endX"]?.jsonPrimitive?.content,
+                            endY = obj["endY"]?.jsonPrimitive?.content,
+                            color = obj["color"]?.jsonPrimitive?.content,
+                            strokeWidth = obj["strokeWidth"]?.jsonPrimitive?.content
+                        )
+                    }
                     status != null -> {
                         db.statusesQueries.insertWithId(
                             id = obj["id"]?.jsonPrimitive?.long,
@@ -540,19 +524,17 @@ class LocalDB private constructor(sqlDriver: SqlDriver) {
                         db.notesQueries.insertWithId(
                             id = obj["id"]?.jsonPrimitive?.long,
                             withTasks = if (obj["withTasks"]?.jsonPrimitive?.boolean == true) 1 else 0,
+                            type = obj["type"]?.jsonPrimitive?.contentOrNull ?: "",
                             text = obj["text"]?.jsonPrimitive?.content,
                             dateUpdate = obj["dateUpdate"]?.jsonPrimitive?.content,
                             dateCreate = obj["dateCreate"]?.jsonPrimitive?.content
                         )
                     }
                 }
-
-
             }
             return true
         } catch (e: Exception) {
             e.printStackTrace()
-            //importDB(oldData.toString())
             return false
         }
     }

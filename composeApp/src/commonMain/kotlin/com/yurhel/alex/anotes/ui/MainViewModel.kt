@@ -30,7 +30,6 @@ class MainViewModel(
     // Next used only in Android
     val callExit: () -> Unit,
     var widgetIdWhenCreated: Int,
-    var noteCreatedDateFromWidget: String,
     val callInitUpdateWidget: (isInitAction: Boolean, widgetId: Int, noteCreated: String, note: NoteObj) -> Unit
 ) : ViewModel() {
 
@@ -41,7 +40,6 @@ class MainViewModel(
         private val syncData: (SyncActionTypes, MainViewModel) -> Unit,
         private val callExit: () -> Unit,
         private var widgetIdWhenCreated: Int,
-        private var noteCreatedDateFromWidget: String,
         private val callInitUpdateWidget: (isInitAction: Boolean, widgetId: Int, noteCreated: String, note: NoteObj) -> Unit
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
@@ -53,13 +51,12 @@ class MainViewModel(
                 syncData,
                 callExit,
                 widgetIdWhenCreated,
-                noteCreatedDateFromWidget,
                 callInitUpdateWidget
             ) as T
     }
 
 
-    // DRIVE SYNC
+    // DRIVE
     private val _isSyncNow = MutableStateFlow(false)
     val isSyncNow = _isSyncNow.asStateFlow()
     fun changeSyncNow(isSyncNow: Boolean) {
@@ -80,7 +77,7 @@ class MainViewModel(
     }
 
 
-    // NOTES - MAIN SCREEN
+    // NOTES
     private val _searchText = MutableStateFlow("")
     val searchText = _searchText.asStateFlow()
 
@@ -145,7 +142,7 @@ class MainViewModel(
     }
 
 
-    // NOTE SCREEN
+    // NOTE
     private var origNoteText = ""
 
     var editText by mutableStateOf(TextFieldState(""))
@@ -167,13 +164,13 @@ class MainViewModel(
     }
 
     /**
-     * Creates new note or selects existed.
+     * Creates a new note or selects an existing one.
      **/
-    fun prepareNote(isNewNote: Boolean) {
-        val noteText: String = if (isNewNote || _selectedNote.value == null) {
+    fun prepareNote(newNoteType: String?) {
+        val noteText: String = if (newNoteType != null) {
             // New note is opened. Create new note
             val date = Date().time
-            db.createNote(NoteObj(text = "", isArchived = false, dateCreate = date, dateUpdate = date))
+            db.createNote(NoteObj(text = "", isArchived = false, dateCreate = date, dateUpdate = date, type = newNoteType))
             db.updateEdit(true)
             selectNote(db.getLastNote())
             ""
@@ -261,15 +258,9 @@ class MainViewModel(
     }
 
 
-    // TASK SCREEN
+    // TASKS
     private val _statuses: MutableStateFlow<List<StatusObj>> = MutableStateFlow(emptyList())
     val statuses = _statuses.asStateFlow()
-
-    private fun getStatuses(noteId: Int) {
-        viewModelScope.launch(Dispatchers.Default) {
-            _statuses.value = db.getManyByNoteStatuses(noteId)
-        }
-    }
 
     private val _selectedStatus: MutableStateFlow<Int> = MutableStateFlow(0)
     val selectedStatus = _selectedStatus.asStateFlow()
@@ -285,16 +276,6 @@ class MainViewModel(
         _tasks.value = emptyList()
     }
 
-    private fun getTasks(noteId: Int, statusId: Int) {
-        viewModelScope.launch(Dispatchers.Default) {
-            _tasks.value = if (statusId == 0) {
-                db.getManyByNoteTasks(noteId)
-            } else {
-                db.getManyByNoteAndStatusTasks(noteId, statusId)
-            }.sortedBy { it.position }
-        }
-    }
-
     private val _editDialogVisibility = MutableStateFlow(false)
     val editDialogVisibility = _editDialogVisibility.asStateFlow()
 
@@ -302,11 +283,21 @@ class MainViewModel(
     var editDialogActionType = ActionTypes.Create
     var editDialogObj: Any? = null
 
-    fun updateTasksData(
-        isSaveNote: Boolean
-    ) {
-        getStatuses(_selectedNote.value!!.id)
-        getTasks(noteId = _selectedNote.value!!.id, statusId = _selectedStatus.value)
+    fun updateTasksData(isSaveNote: Boolean) {
+        val noteId = _selectedNote.value!!.id
+        // Get statuses
+        viewModelScope.launch(Dispatchers.Default) {
+            _statuses.value = db.getManyByNoteStatuses(noteId)
+        }
+        // Get tasks
+        val statusId = _selectedStatus.value
+        viewModelScope.launch(Dispatchers.Default) {
+            _tasks.value = if (statusId == 0) {
+                db.getManyByNoteTasks(noteId)
+            } else {
+                db.getManyByNoteAndStatusTasks(noteId, statusId)
+            }.sortedBy { it.position }
+        }
         if (isSaveNote) saveNote(isEditDateForcedUpdate = true)
     }
 
@@ -407,12 +398,6 @@ class MainViewModel(
         notesScreenSavedScroll = value
     }
 
-    fun checkIfNoteHaveTasks(note: NoteObj): Boolean {
-        val foundStatus = _allStatuses.value.find { it.note == note.id } != null
-        val foundTask = _allTasks.value.find { it.note == note.id } != null
-        return foundStatus || foundTask
-    }
-
     fun getTaskTextForNote(): String {
         return buildString {
             append(_selectedNote.value?.text ?: "")
@@ -426,8 +411,31 @@ class MainViewModel(
     }
 
 
-    // DRAW
-    fun checkIfNoteIsDraw(noteId: Int) = db.board.getImage(noteId) != null
+    // OTHERS
+    fun checkNoteType(note: NoteObj): NoteType {
+        return when(note.type) {
+            NoteType.Note.name -> NoteType.Note
+            NoteType.Tasks.name -> NoteType.Tasks
+            NoteType.Draw.name -> NoteType.Draw
+            else -> {
+                val foundStatus = _allStatuses.value.find { it.note == note.id } != null
+                val foundTask = _allTasks.value.find { it.note == note.id } != null
+                if (foundStatus || foundTask) {
+                    NoteType.Tasks
+                } else if (db.board.getImage(note.id) != null) {
+                    NoteType.Draw
+                } else {
+                    NoteType.Note
+                }
+            }
+        }
+    }
 
     fun tryGetImage(noteId: Int) = db.board.getImage(noteId)?.toImageBitmap()
+
+    var isEditTextSheetOpen by mutableStateOf(false)
+        private set
+    fun updateIsEditSheetOpen(value: Boolean = false) {
+        isEditTextSheetOpen = value
+    }
 }

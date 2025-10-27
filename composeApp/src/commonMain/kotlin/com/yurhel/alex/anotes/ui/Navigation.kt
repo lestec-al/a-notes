@@ -18,11 +18,7 @@ fun Navigation(vm: MainViewModel) {
 
     NavHost(
         navController = nav,
-        startDestination = if (vm.noteCreatedDateFromWidget != "") {
-            ScreenObj.Note.name
-        } else {
-            ScreenObj.Main.name
-        },
+        startDestination = ScreenObj.Main.name,
         enterTransition = { EnterTransition.None },
         exitTransition = { ExitTransition.None },
         popEnterTransition = { EnterTransition.None },
@@ -34,23 +30,26 @@ fun Navigation(vm: MainViewModel) {
             NotesScreen(
                 vm = vm,
                 newNoteClicked = {
-                    vm.prepareNote(true)
-                    nav.navigate(ScreenObj.Note.name)
-                },
-                openNoteClicked = {
-                    vm.prepareNote(false)
-                    if (vm.checkIfNoteHaveTasks(vm.selectedNote.value!!)) {
-                        vm.updateTasksData(false)
-                        nav.navigate(ScreenObj.Tasks.name)
-                    } else if (vm.checkIfNoteIsDraw(vm.selectedNote.value!!.id)) {
-                        nav.navigate(ScreenObj.Draw.name)
-                    } else {
-                        nav.navigate(ScreenObj.Note.name)
+                    vm.prepareNote(it)
+                    when (it) {
+                        NoteType.Note.name -> nav.navigate(ScreenObj.Note.name)
+                        NoteType.Tasks.name -> {
+                            vm.updateTasksData(false)
+                            nav.navigate(ScreenObj.Tasks.name)
+                        }
+                        NoteType.Draw.name -> nav.navigate(ScreenObj.Draw.name)
                     }
                 },
-                newDrawClicked = {
-                    vm.prepareNote(true)
-                    nav.navigate(ScreenObj.Draw.name)
+                openNoteClicked = {
+                    vm.prepareNote(null)
+                    when (vm.checkNoteType(vm.selectedNote.value!!)) {
+                        NoteType.Note -> nav.navigate(ScreenObj.Note.name)
+                        NoteType.Tasks -> {
+                            vm.updateTasksData(false)
+                            nav.navigate(ScreenObj.Tasks.name)
+                        }
+                        NoteType.Draw -> nav.navigate(ScreenObj.Draw.name)
+                    }
                 }
             )
         }
@@ -60,10 +59,6 @@ fun Navigation(vm: MainViewModel) {
                 vm = vm,
                 onBack = {
                     nav.navigate(ScreenObj.Main.name)
-                },
-                toTasks = {
-                    vm.updateTasksData(false)
-                    nav.navigate(ScreenObj.Tasks.name)
                 }
             )
         }
@@ -73,9 +68,6 @@ fun Navigation(vm: MainViewModel) {
                 vm = vm,
                 onBack = {
                     nav.navigate(ScreenObj.Main.name)
-                },
-                toNote = {
-                    nav.navigate(ScreenObj.Note.name)
                 }
             )
         }
