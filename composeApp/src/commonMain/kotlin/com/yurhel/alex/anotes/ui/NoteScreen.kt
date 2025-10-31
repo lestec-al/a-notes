@@ -1,14 +1,17 @@
 package com.yurhel.alex.anotes.ui
 
 import androidx.compose.foundation.gestures.scrollBy
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -30,6 +33,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.yurhel.alex.anotes.BackHandlerCustom
 import com.yurhel.alex.anotes.keyboardAsState
+import com.yurhel.alex.anotes.ui.components.CustomScaffold
 import com.yurhel.alex.anotes.ui.components.NoteBottomBar
 import kotlinx.coroutines.launch
 
@@ -55,7 +59,7 @@ fun NoteScreen(
     val coroutineScope = rememberCoroutineScope()
     var globalViewHeight by remember { mutableFloatStateOf(0f) }
 
-    Scaffold(
+    CustomScaffold(
         bottomBar = {
             NoteBottomBar(
                 vm = vm,
@@ -73,7 +77,7 @@ fun NoteScreen(
                 additionalButtons = listOf()
             )
         }
-    ) { padding ->
+    ) { bottomPadding, topPadding ->
         BasicTextField(
             state = vm.editText,
             keyboardOptions = KeyboardOptions(
@@ -98,9 +102,17 @@ fun NoteScreen(
                 }
             },
             cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+            decorator = { innerTextField ->
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    // Status bar spacer
+                    Spacer(Modifier.height(topPadding))
+                    // Text
+                    innerTextField()
+                }
+            },
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
+                .padding(bottom = bottomPadding)
                 .padding(horizontal = 5.dp)
                 .verticalScroll(scroll)
                 .onGloballyPositioned {

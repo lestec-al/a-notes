@@ -1,6 +1,7 @@
 package com.yurhel.alex.anotes.ui
 
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.absoluteOffset
 import androidx.compose.foundation.layout.fillMaxSize
@@ -19,7 +20,6 @@ import androidx.compose.material.icons.automirrored.outlined.StickyNote2
 import androidx.compose.material.icons.outlined.DriveFileRenameOutline
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -46,6 +46,7 @@ import com.yurhel.alex.anotes.BackHandlerCustom
 import com.yurhel.alex.anotes.data.StatusObj
 import com.yurhel.alex.anotes.data.TasksObj
 import com.yurhel.alex.anotes.getOrientation
+import com.yurhel.alex.anotes.ui.components.CustomScaffold
 import com.yurhel.alex.anotes.ui.components.DropFloatingActionButton
 import com.yurhel.alex.anotes.ui.components.EditBottomSheet
 import com.yurhel.alex.anotes.ui.components.NoteBottomBar
@@ -82,21 +83,7 @@ fun TasksScreen(
 
     val isDialogVisible by vm.editDialogVisibility.collectAsState()
 
-    Scaffold(
-        floatingActionButton = {
-            DropFloatingActionButton(
-                listOf(
-                    // Create new status button
-                    Triple(stringResource(Res.string.status), Icons.AutoMirrored.Outlined.Sort) {
-                        vm.onEvent(Event.ShowEditDialog(Types.Status, ActionTypes.Create))
-                    },
-                    // Add new task button
-                    Triple(stringResource(Res.string.task), Icons.AutoMirrored.Outlined.StickyNote2) {
-                        vm.onEvent(Event.ShowEditDialog(Types.Task, ActionTypes.Create))
-                    }
-                )
-            )
-        },
+    CustomScaffold(
         bottomBar = {
             NoteBottomBar(
                 vm = vm,
@@ -114,16 +101,32 @@ fun TasksScreen(
                     }
                 )
             )
+        },
+        floatingActionButton = {
+            DropFloatingActionButton(
+                listOf(
+                    // Create new status button
+                    Triple(stringResource(Res.string.status), Icons.AutoMirrored.Outlined.Sort) {
+                        vm.onEvent(Event.ShowEditDialog(Types.Status, ActionTypes.Create))
+                    },
+                    // Add new task button
+                    Triple(stringResource(Res.string.task), Icons.AutoMirrored.Outlined.StickyNote2) {
+                        vm.onEvent(Event.ShowEditDialog(Types.Task, ActionTypes.Create))
+                    }
+                )
+            )
         }
-    ) { paddingValues ->
+    ) { bottomPadding, topPadding ->
         // Need update tasks (ids) after drag drop change position
         key(tasks) {
             LazyColumn(
                 state = lazyListState,
                 modifier = Modifier
-                    .padding(paddingValues)
+                    .padding(bottom = bottomPadding)
                     .fillMaxSize()
             ) {
+                // Status bar spacer
+                item { Spacer(Modifier.height(topPadding)) }
                 // Top bar
                 item {
                     if (selectedNote != null && selectedNote!!.text.isNotEmpty()) {
@@ -175,7 +178,7 @@ fun TasksScreen(
                     var offsetY by remember { mutableFloatStateOf(0f) }
                     var posTop = 0f
                     var posBottom = 0f
-                    val itemIdx = idx + 2 // Add topBar & statuses
+                    val itemIdx = idx + 3 // Add statusBar, topBar, statuses
 
                     Task(
                         task = task,

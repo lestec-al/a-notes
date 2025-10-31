@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
+import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridItemSpan
 import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
 import androidx.compose.material.icons.Icons
@@ -20,7 +21,6 @@ import androidx.compose.material.icons.outlined.TextFields
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -39,6 +39,7 @@ import anotes.composeapp.generated.resources.note
 import anotes.composeapp.generated.resources.tasks
 import com.yurhel.alex.anotes.BackHandlerCustom
 import com.yurhel.alex.anotes.data.NoteObj
+import com.yurhel.alex.anotes.ui.components.CustomScaffold
 import com.yurhel.alex.anotes.ui.components.DropFloatingActionButton
 import com.yurhel.alex.anotes.ui.components.MainBottomBar
 import com.yurhel.alex.anotes.ui.components.SyncDialog
@@ -78,7 +79,7 @@ fun NotesScreen(
 
     val isSyncDialogOpen by vm.isSyncDialogOpen.collectAsState()
 
-    Scaffold(
+    CustomScaffold(
         floatingActionButton = {
             DropFloatingActionButton(
                 listOf(
@@ -109,7 +110,7 @@ fun NotesScreen(
         bottomBar = {
             if (notNeedChooseWidget) MainBottomBar(vm, appSettingsView)
         }
-    ) { paddingValues ->
+    ) { bottomPadding, topPadding ->
         // Empty text
         if (allNotes.isEmpty()) {
             Box(
@@ -125,9 +126,13 @@ fun NotesScreen(
             state = scrollState,
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues)
+                .padding(bottom = bottomPadding)
                 .padding(horizontal = 5.dp)
         ) {
+            // Status bar spacer
+            item(span = StaggeredGridItemSpan.FullLine) {
+                Spacer(Modifier.height(topPadding))
+            }
             // Notes
             items(items = allNotes) { note: NoteObj ->
                 val image = vm.tryGetImage(note.id)

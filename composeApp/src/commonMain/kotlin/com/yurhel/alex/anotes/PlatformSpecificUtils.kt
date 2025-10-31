@@ -27,6 +27,9 @@ expect fun getColorScheme(
     darkTheme: Boolean
 ): ColorScheme
 
+@Composable
+expect fun SetStatusBarColor(setIsLight: Boolean)
+
 expect fun ImageBitmap.toBase64(): String?
 
 expect fun String.toImageBitmap(): ImageBitmap?

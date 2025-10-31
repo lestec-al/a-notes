@@ -48,3 +48,6 @@ actual fun String.toImageBitmap(): ImageBitmap? {
     val byteArray = Base64.getDecoder().decode(this)
     return Image.makeFromEncoded(byteArray).toComposeImageBitmap()
 }
+
+@Composable
+actual fun SetStatusBarColor(setIsLight: Boolean) {}

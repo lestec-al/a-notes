@@ -16,7 +16,6 @@ import androidx.compose.material.icons.outlined.BackHand
 import androidx.compose.material.icons.outlined.Brush
 import androidx.compose.material.icons.outlined.DriveFileRenameOutline
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
@@ -37,8 +36,10 @@ import anotes.composeapp.generated.resources.undo
 import com.yurhel.alex.anotes.BackHandlerCustom
 import com.yurhel.alex.anotes.feature_board.ui.components.ActionButton
 import com.yurhel.alex.anotes.feature_board.ui.components.EditBoardBottomSheet
+import com.yurhel.alex.anotes.SetStatusBarColor
 import com.yurhel.alex.anotes.ui.components.SimpleEditBottomSheet
 import com.yurhel.alex.anotes.ui.MainViewModel
+import com.yurhel.alex.anotes.ui.components.CustomScaffold
 import com.yurhel.alex.anotes.ui.components.NoteBottomBar
 import org.jetbrains.compose.resources.stringResource
 
@@ -46,15 +47,16 @@ import org.jetbrains.compose.resources.stringResource
 fun BoardScreen(
     vm: MainViewModel,
     vmBoard: BoardViewModel,
-    onBack: () -> Unit,
+    onBack: () -> Unit
 ) {
     val graphicsLayer = rememberGraphicsLayer()
     val boardState = rememberTransformableState { _, offsetChange, _ ->
         vmBoard.updateBoardOffsets(offsetChange)
     }
     BackHandlerCustom { vmBoard.saveDrawToDB(graphicsLayer, onBack) }
+    SetStatusBarColor(true)
 
-    Scaffold(
+    CustomScaffold(
         bottomBar = {
             NoteBottomBar(
                 vm = vm,
@@ -103,12 +105,13 @@ fun BoardScreen(
                     contentDescription = stringResource(Res.string.disable_all_actions)
                 )
             }
-        }
-    ) { paddingValues ->
+        },
+        statusBarColorAlpha = 0f
+    ) { bottomPadding, _ ->
         // Board
         Canvas(
             modifier = Modifier
-                .padding(paddingValues)
+                .padding(bottom = bottomPadding)
                 .fillMaxSize()
                 .background(Color.White)
                 // Move board (making board look infinite)

@@ -1,5 +1,6 @@
 package com.yurhel.alex.anotes
 
+import android.app.Activity
 import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -7,11 +8,13 @@ import android.os.Build
 import android.util.Base64
 import android.view.ViewTreeObserver
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -26,6 +29,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.core.view.ViewCompat
+import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import com.yurhel.alex.anotes.ui.OrientationObj
 import com.yurhel.alex.anotes.ui.theme.darkColorScheme
@@ -87,4 +91,20 @@ actual fun ImageBitmap.toBase64(): String? {
 actual fun String.toImageBitmap(): ImageBitmap? {
     val decodedString = Base64.decode(this, Base64.DEFAULT)
     return BitmapFactory.decodeByteArray(decodedString, 0, decodedString.size).asImageBitmap()
+}
+
+@Composable
+actual fun SetStatusBarColor(setIsLight: Boolean) {
+    val view = LocalView.current
+    val isDark = isSystemInDarkTheme()
+    SideEffect {
+        val window = (view.context as Activity).window
+        WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = setIsLight
+    }
+    DisposableEffect(Unit) {
+        onDispose {
+            val window = (view.context as Activity).window
+            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !isDark
+        }
+    }
 }
