@@ -52,7 +52,7 @@ import com.yurhel.alex.anotes.ui.components.EditBottomSheet
 import com.yurhel.alex.anotes.ui.components.NoteBottomBar
 import com.yurhel.alex.anotes.ui.components.SimpleEditBottomSheet
 import com.yurhel.alex.anotes.ui.components.StatusCard
-import com.yurhel.alex.anotes.ui.components.Task
+import com.yurhel.alex.anotes.ui.components.TaskCard
 import com.yurhel.alex.anotes.ui.components.pxToDp
 import org.jetbrains.compose.resources.stringResource
 import kotlin.math.roundToInt
@@ -180,7 +180,7 @@ fun TasksScreen(
                     var posBottom = 0f
                     val itemIdx = idx + 3 // Add statusBar, topBar, statuses
 
-                    Task(
+                    TaskCard(
                         task = task,
                         cardColor = MaterialTheme.colorScheme.background,
                         onClick = {

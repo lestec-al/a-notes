@@ -37,7 +37,7 @@ import anotes.composeapp.generated.resources.color
 import anotes.composeapp.generated.resources.opacity
 import anotes.composeapp.generated.resources.thickness
 import com.yurhel.alex.anotes.feature_board.ui.BoardViewModel
-import com.yurhel.alex.anotes.feature_board.ui.boardColors
+import com.yurhel.alex.anotes.ui.theme.predefinedColors
 import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -66,7 +66,7 @@ fun EditBoardBottomSheet(vmBoard: BoardViewModel) {
                 .padding(20.dp)
                 .fillMaxWidth()
         ) {
-            boardColors.forEach { c ->
+            predefinedColors.forEach { c ->
                 Box(
                     contentAlignment = Alignment.Center,
                     modifier = Modifier

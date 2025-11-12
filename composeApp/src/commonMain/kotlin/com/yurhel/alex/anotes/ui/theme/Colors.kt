@@ -1,8 +1,8 @@
-package com.yurhel.alex.anotes.feature_board.ui
+package com.yurhel.alex.anotes.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-val boardColors = listOf(
+val predefinedColors = listOf(
     Color.Black,
     Color.Green,
     Color.Magenta,

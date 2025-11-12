@@ -1,6 +1,5 @@
 package com.yurhel.alex.anotes.ui.components
 
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -20,8 +19,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.Slider
-import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
@@ -62,7 +59,6 @@ import com.yurhel.alex.anotes.ui.Event
 import com.yurhel.alex.anotes.ui.MainViewModel
 import com.yurhel.alex.anotes.ui.Types
 import org.jetbrains.compose.resources.stringResource
-import kotlin.random.Random
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -93,19 +89,15 @@ fun EditBottomSheet(
             }
         )
     }
-    val statusColor = if (vm.editDialogDataType == Types.Status && vm.editDialogActionType == ActionTypes.Update) {
-        Color((vm.editDialogObj as StatusObj).color)
-    } else {
-        null
-    }
-    var redColor by remember {
-        mutableIntStateOf(statusColor?.red?.times(255.0)?.toInt() ?: Random.nextInt(256))
-    }
-    var greenColor by remember {
-        mutableIntStateOf(statusColor?.green?.times(255.0)?.toInt() ?: Random.nextInt(256))
-    }
-    var blueColor by remember {
-        mutableIntStateOf(statusColor?.blue?.times(255.0)?.toInt() ?: Random.nextInt(256))
+    val primaryColor = MaterialTheme.colorScheme.primary
+    var statusColor by remember {
+        mutableStateOf(
+            if (vm.editDialogDataType == Types.Status && vm.editDialogActionType == ActionTypes.Update) {
+                Color((vm.editDialogObj as StatusObj).color)
+            } else {
+                primaryColor
+            }
+        )
     }
     val focusRequester = remember { FocusRequester() }
     val value = remember {
@@ -180,7 +172,7 @@ fun EditBottomSheet(
                                             Event.UpsertStatus(
                                                 StatusObj(
                                                     title = edit.value,
-                                                    color = Color(redColor, greenColor, blueColor).toArgb(),
+                                                    color = statusColor.toArgb(),
                                                     note = vm.selectedNote.value!!.id
                                                 )
                                             )
@@ -211,7 +203,7 @@ fun EditBottomSheet(
                                             Event.UpsertStatus(
                                                 (vm.editDialogObj as StatusObj).copy(
                                                     title = edit.value,
-                                                    color = Color(redColor, greenColor, blueColor).toArgb()
+                                                    color = statusColor.toArgb()
                                                 )
                                             )
                                         )
@@ -289,38 +281,12 @@ fun EditBottomSheet(
                 }
             }
         }
-        // Color picker for status
-        if (vm.editDialogDataType == Types.Status) {
-            Column(modifier = Modifier.padding(20.dp)) {
-                Slider(
-                    value = redColor.toFloat(),
-                    onValueChange = { redColor = it.toInt() },
-                    valueRange = 0f..255f,
-                    colors = SliderDefaults.colors(
-                        thumbColor = Color(redColor, greenColor, blueColor),
-                        activeTrackColor = Color(redColor, greenColor, blueColor)
-                    )
-                )
-                Slider(
-                    value = greenColor.toFloat(),
-                    onValueChange = { greenColor = it.toInt() },
-                    valueRange = 0f..255f,
-                    colors = SliderDefaults.colors(
-                        thumbColor = Color(redColor, greenColor, blueColor),
-                        activeTrackColor = Color(redColor, greenColor, blueColor)
-                    )
-                )
-                Slider(
-                    value = blueColor.toFloat(),
-                    onValueChange = { blueColor = it.toInt() },
-                    valueRange = 0f..255f,
-                    colors = SliderDefaults.colors(
-                        thumbColor = Color(redColor, greenColor, blueColor),
-                        activeTrackColor = Color(redColor, greenColor, blueColor)
-                    )
-                )
-            }
-        }
+        ColorPicker(
+            onColorChooserClick = {
+                statusColor = it
+            },
+            initColor = statusColor
+        )
         // Edit text
         TextField(
             value = value.value,
