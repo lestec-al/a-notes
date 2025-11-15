@@ -31,7 +31,7 @@ import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
-import com.yurhel.alex.anotes.ui.OrientationObj
+import com.yurhel.alex.anotes.ui.utils.OrientationObj
 import com.yurhel.alex.anotes.ui.theme.darkColorScheme
 import com.yurhel.alex.anotes.ui.theme.lightColorScheme
 import java.io.ByteArrayOutputStream

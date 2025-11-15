@@ -1,4 +1,4 @@
-package com.yurhel.alex.anotes.feature_board.ui
+package com.yurhel.alex.anotes.ui.feature_board
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -13,7 +13,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
-import com.yurhel.alex.anotes.feature_board.data.LineObj
+import com.yurhel.alex.anotes.data.BoardLineObj
 import com.yurhel.alex.anotes.toBase64
 import com.yurhel.alex.anotes.ui.MainViewModel
 import kotlinx.coroutines.CoroutineScope
@@ -30,7 +30,7 @@ class BoardViewModel(val vm: MainViewModel) : ViewModel() {
         ) as T
     }
 
-    var localDraw = mutableStateListOf<LineObj>()
+    var localDraw = mutableStateListOf<BoardLineObj>()
         private set
     var isDraw by mutableStateOf(false)
         private set
@@ -130,7 +130,7 @@ class BoardViewModel(val vm: MainViewModel) : ViewModel() {
         dragAmount: Offset
     ) {
         change.consume()
-        val obj = LineObj(
+        val obj = BoardLineObj(
             noteId = noteId,
             start = (change.position - dragAmount) - boardOffset,
             end = change.position - boardOffset,

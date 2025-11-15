@@ -69,8 +69,8 @@ import anotes.composeapp.generated.resources.sorting
 import anotes.composeapp.generated.resources.sync_drive_action
 import com.yurhel.alex.anotes.getOrientation
 import com.yurhel.alex.anotes.ui.MainViewModel
-import com.yurhel.alex.anotes.ui.OrientationObj
-import com.yurhel.alex.anotes.ui.SyncActionTypes
+import com.yurhel.alex.anotes.ui.utils.OrientationObj
+import com.yurhel.alex.anotes.ui.utils.SyncActionTypes
 import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)

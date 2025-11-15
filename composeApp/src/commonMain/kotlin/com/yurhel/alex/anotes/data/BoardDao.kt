@@ -1,4 +1,4 @@
-package com.yurhel.alex.anotes.feature_board.data
+package com.yurhel.alex.anotes.data
 
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
@@ -25,7 +25,7 @@ class BoardDao(private val db: DrawingsQueries) {
         db.deleteImagesByNoteId(noteId.toLong())
     }
 
-    fun addDraw(it: LineObj) {
+    fun addDraw(it: BoardLineObj) {
         db.insertDraw(
             noteId = it.noteId.toLong(),
             startX = it.start.x.toString(),
@@ -37,9 +37,9 @@ class BoardDao(private val db: DrawingsQueries) {
         )
     }
 
-    fun getDraws(noteId: Int): List<LineObj> {
+    fun getDraws(noteId: Int): List<BoardLineObj> {
         return db.getDrawsByNoteId(noteId.toLong()).executeAsList().map {
-            LineObj(
+            BoardLineObj(
                 noteId = noteId,
                 start = Offset(x = it.startX!!.toFloat(), y = it.startY!!.toFloat()),
                 end = Offset(x = it.endX!!.toFloat(), y = it.endY!!.toFloat()),

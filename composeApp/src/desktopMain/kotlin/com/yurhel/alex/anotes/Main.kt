@@ -11,10 +11,10 @@ import anotes.composeapp.generated.resources.app_name
 import app.cash.sqldelight.db.SqlDriver
 import app.cash.sqldelight.driver.jdbc.sqlite.JdbcSqliteDriver
 import com.yurhel.alex.anotes.data.LocalDB
-import com.yurhel.alex.anotes.ui.DriveUtils
+import com.yurhel.alex.anotes.ui.utils.DriveUtils
 import com.yurhel.alex.anotes.ui.MainViewModel
 import com.yurhel.alex.anotes.ui.Navigation
-import com.yurhel.alex.anotes.ui.SyncActionTypes
+import com.yurhel.alex.anotes.ui.utils.SyncActionTypes
 import com.yurhel.alex.anotes.ui.theme.ANotesTheme
 import db.Database
 import org.jetbrains.compose.resources.stringResource

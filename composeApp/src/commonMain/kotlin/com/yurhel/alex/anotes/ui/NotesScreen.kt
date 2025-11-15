@@ -17,6 +17,7 @@ import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridS
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.FormatListBulleted
 import androidx.compose.material.icons.outlined.Brush
+import androidx.compose.material.icons.outlined.Swipe
 import androidx.compose.material.icons.outlined.TextFields
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -36,6 +37,7 @@ import anotes.composeapp.generated.resources.Res
 import anotes.composeapp.generated.resources.draw
 import anotes.composeapp.generated.resources.empty_text
 import anotes.composeapp.generated.resources.note
+import anotes.composeapp.generated.resources.swipe_notes
 import anotes.composeapp.generated.resources.tasks
 import com.yurhel.alex.anotes.BackHandlerCustom
 import com.yurhel.alex.anotes.data.NoteObj
@@ -43,7 +45,10 @@ import com.yurhel.alex.anotes.ui.components.CustomScaffold
 import com.yurhel.alex.anotes.ui.components.DropFloatingActionButton
 import com.yurhel.alex.anotes.ui.components.MainBottomBar
 import com.yurhel.alex.anotes.ui.components.SyncDialog
-import com.yurhel.alex.anotes.ui.components.Task
+import com.yurhel.alex.anotes.ui.components.TaskCard
+import com.yurhel.alex.anotes.ui.feature_swipes.components.SwipeNotesCard
+import com.yurhel.alex.anotes.ui.feature_swipes.utils.importSwipesFromText
+import com.yurhel.alex.anotes.ui.utils.NoteType
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -83,6 +88,13 @@ fun NotesScreen(
         floatingActionButton = {
             DropFloatingActionButton(
                 listOf(
+                    // Add new swipe button
+                    Triple(stringResource(Res.string.swipe_notes), Icons.Outlined.Swipe) {
+                        newNoteClicked(NoteType.Swipe.name)
+                        vm.updateNotesScreenScrollItem(
+                            Pair(scrollState.firstVisibleItemIndex, scrollState.firstVisibleItemScrollOffset)
+                        )
+                    },
                     // Add new drawing button
                     Triple(stringResource(Res.string.draw), Icons.Outlined.Brush) {
                         newNoteClicked(NoteType.Draw.name)
@@ -161,20 +173,38 @@ fun NotesScreen(
                         )
                         .padding(5.dp)
                 ) {
-                    // Text
-                    if (note.text.isNotEmpty()) {
-                        Text(
-                            text = note.text,
-                            overflow = TextOverflow.Ellipsis,
-                            maxLines = 10,
-                            color = if (image != null) Color.Black else Color.Unspecified,
-                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 2.dp)
-                        )
+                    if (note.type == NoteType.Swipe.name) {
+                        // Swipes
+                        var leftColor = Color.Red
+                        var rightColor = Color.Green
+                        importSwipesFromText(note.text) { _, lColor, _, rColor ->
+                            leftColor = lColor
+                            rightColor = rColor
+                        }.forEach {
+                            SwipeNotesCard(
+                                onClick = null,
+                                onDragStopped = null,
+                                leftColor = leftColor,
+                                rightColor = rightColor,
+                                obj = it
+                            )
+                        }
+                    } else {
+                        // Normal text
+                        if (note.text.isNotEmpty()) {
+                            Text(
+                                text = note.text,
+                                overflow = TextOverflow.Ellipsis,
+                                maxLines = 10,
+                                color = if (image != null) Color.Black else Color.Unspecified,
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 2.dp)
+                            )
+                        }
                     }
                     // Tasks for this note
                     for (task in allTasks) {
                         if (task.note == note.id) {
-                            Task(
+                            TaskCard(
                                 task = task,
                                 cardColor = Color.Transparent,
                                 onClick = null,
@@ -191,7 +221,7 @@ fun NotesScreen(
                     if (image != null) {
                         Image(
                             bitmap = image,
-                            contentDescription = "note drawing",
+                            contentDescription = stringResource(Res.string.draw),
                             contentScale = ContentScale.FillHeight,
                             modifier = Modifier
                                 .fillMaxWidth()

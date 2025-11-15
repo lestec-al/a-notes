@@ -1,9 +1,9 @@
-package com.yurhel.alex.anotes.feature_board.data
+package com.yurhel.alex.anotes.data
 
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 
-data class LineObj(
+data class BoardLineObj(
     val noteId: Int,
     val start: Offset,
     val end: Offset,

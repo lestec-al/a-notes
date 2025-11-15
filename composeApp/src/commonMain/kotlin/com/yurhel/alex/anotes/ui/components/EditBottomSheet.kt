@@ -54,10 +54,10 @@ import anotes.composeapp.generated.resources.text
 import anotes.composeapp.generated.resources.updated
 import com.yurhel.alex.anotes.data.StatusObj
 import com.yurhel.alex.anotes.data.TasksObj
-import com.yurhel.alex.anotes.ui.ActionTypes
-import com.yurhel.alex.anotes.ui.Event
+import com.yurhel.alex.anotes.ui.utils.ActionTypes
+import com.yurhel.alex.anotes.ui.utils.Event
 import com.yurhel.alex.anotes.ui.MainViewModel
-import com.yurhel.alex.anotes.ui.Types
+import com.yurhel.alex.anotes.ui.utils.Types
 import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -281,12 +281,14 @@ fun EditBottomSheet(
                 }
             }
         }
-        ColorPicker(
-            onColorChooserClick = {
-                statusColor = it
-            },
-            initColor = statusColor
-        )
+        if (vm.editDialogDataType == Types.Status) {
+            ColorPicker(
+                onColorChooserClick = {
+                    statusColor = it
+                },
+                initColor = statusColor
+            )
+        }
         // Edit text
         TextField(
             value = value.value,

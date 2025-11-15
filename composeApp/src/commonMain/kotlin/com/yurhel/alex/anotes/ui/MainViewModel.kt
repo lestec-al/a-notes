@@ -14,6 +14,11 @@ import com.yurhel.alex.anotes.data.NoteObj
 import com.yurhel.alex.anotes.data.StatusObj
 import com.yurhel.alex.anotes.data.TasksObj
 import com.yurhel.alex.anotes.toImageBitmap
+import com.yurhel.alex.anotes.ui.utils.ActionTypes
+import com.yurhel.alex.anotes.ui.utils.Event
+import com.yurhel.alex.anotes.ui.utils.NoteType
+import com.yurhel.alex.anotes.ui.utils.SyncActionTypes
+import com.yurhel.alex.anotes.ui.utils.Types
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -417,6 +422,7 @@ class MainViewModel(
             NoteType.Note.name -> NoteType.Note
             NoteType.Tasks.name -> NoteType.Tasks
             NoteType.Draw.name -> NoteType.Draw
+            NoteType.Swipe.name -> NoteType.Swipe
             else -> {
                 val foundStatus = _allStatuses.value.find { it.note == note.id } != null
                 val foundTask = _allTasks.value.find { it.note == note.id } != null

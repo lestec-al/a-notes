@@ -9,8 +9,12 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.yurhel.alex.anotes.feature_board.ui.BoardScreen
-import com.yurhel.alex.anotes.feature_board.ui.BoardViewModel
+import com.yurhel.alex.anotes.ui.feature_board.BoardScreen
+import com.yurhel.alex.anotes.ui.feature_board.BoardViewModel
+import com.yurhel.alex.anotes.ui.feature_swipes.SwipeNotesScreen
+import com.yurhel.alex.anotes.ui.feature_swipes.SwipeNotesViewModel
+import com.yurhel.alex.anotes.ui.utils.NoteType
+import com.yurhel.alex.anotes.ui.utils.ScreenObj
 
 @Composable
 fun Navigation(vm: MainViewModel) {
@@ -38,6 +42,7 @@ fun Navigation(vm: MainViewModel) {
                             nav.navigate(ScreenObj.Tasks.name)
                         }
                         NoteType.Draw.name -> nav.navigate(ScreenObj.Draw.name)
+                        NoteType.Swipe.name -> nav.navigate(ScreenObj.Swipe.name)
                     }
                 },
                 openNoteClicked = {
@@ -49,6 +54,7 @@ fun Navigation(vm: MainViewModel) {
                             nav.navigate(ScreenObj.Tasks.name)
                         }
                         NoteType.Draw -> nav.navigate(ScreenObj.Draw.name)
+                        NoteType.Swipe -> nav.navigate(ScreenObj.Swipe.name)
                     }
                 }
             )
@@ -76,6 +82,15 @@ fun Navigation(vm: MainViewModel) {
             BoardScreen(
                 vm = vm,
                 vmBoard = viewModel(factory = BoardViewModel.Factory(vm)),
+                onBack = {
+                    nav.navigate(ScreenObj.Main.name)
+                }
+            )
+        }
+
+        composable(route = ScreenObj.Swipe.name) {
+            SwipeNotesScreen(
+                vm = viewModel(factory = SwipeNotesViewModel.Factory(vm)),
                 onBack = {
                     nav.navigate(ScreenObj.Main.name)
                 }

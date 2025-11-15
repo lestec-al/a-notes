@@ -36,6 +36,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInParent
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import anotes.composeapp.generated.resources.Res
@@ -53,7 +54,10 @@ import com.yurhel.alex.anotes.ui.components.NoteBottomBar
 import com.yurhel.alex.anotes.ui.components.SimpleEditBottomSheet
 import com.yurhel.alex.anotes.ui.components.StatusCard
 import com.yurhel.alex.anotes.ui.components.TaskCard
-import com.yurhel.alex.anotes.ui.components.pxToDp
+import com.yurhel.alex.anotes.ui.utils.ActionTypes
+import com.yurhel.alex.anotes.ui.utils.Event
+import com.yurhel.alex.anotes.ui.utils.OrientationObj
+import com.yurhel.alex.anotes.ui.utils.Types
 import org.jetbrains.compose.resources.stringResource
 import kotlin.math.roundToInt
 
@@ -267,3 +271,6 @@ fun TasksScreen(
 
 private val LazyListItemInfo.offsetEnd: Int
     get() = this.offset + this.size
+
+@Composable
+fun Int.pxToDp() = with(LocalDensity.current) { this@pxToDp.toDp() }

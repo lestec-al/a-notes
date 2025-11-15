@@ -2,7 +2,6 @@ package com.yurhel.alex.anotes.data
 
 import androidx.compose.ui.unit.dp
 import app.cash.sqldelight.db.SqlDriver
-import com.yurhel.alex.anotes.feature_board.data.BoardDao
 import db.Database
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray

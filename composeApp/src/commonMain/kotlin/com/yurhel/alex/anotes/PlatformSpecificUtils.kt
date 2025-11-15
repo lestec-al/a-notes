@@ -5,7 +5,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.ui.graphics.ImageBitmap
 import com.yurhel.alex.anotes.data.DriveObj
-import com.yurhel.alex.anotes.ui.OrientationObj
+import com.yurhel.alex.anotes.ui.utils.OrientationObj
 
 expect class Drive {
     suspend fun getData(): DriveObj

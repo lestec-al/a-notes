@@ -18,10 +18,10 @@ import androidx.lifecycle.lifecycleScope
 import app.cash.sqldelight.driver.android.AndroidSqliteDriver
 import com.yurhel.alex.anotes.data.LocalDB
 import com.yurhel.alex.anotes.data.WidgetObj
-import com.yurhel.alex.anotes.ui.DriveUtils
+import com.yurhel.alex.anotes.ui.utils.DriveUtils
 import com.yurhel.alex.anotes.ui.MainViewModel
 import com.yurhel.alex.anotes.ui.Navigation
-import com.yurhel.alex.anotes.ui.SyncActionTypes
+import com.yurhel.alex.anotes.ui.utils.SyncActionTypes
 import com.yurhel.alex.anotes.ui.theme.ANotesTheme
 import db.Database
 import kotlinx.coroutines.Dispatchers

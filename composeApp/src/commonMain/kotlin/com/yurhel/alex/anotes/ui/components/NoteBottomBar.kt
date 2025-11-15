@@ -51,7 +51,7 @@ import anotes.composeapp.generated.resources.sent_note_to_archive
 import anotes.composeapp.generated.resources.updated
 import com.yurhel.alex.anotes.getOrientation
 import com.yurhel.alex.anotes.ui.MainViewModel
-import com.yurhel.alex.anotes.ui.OrientationObj
+import com.yurhel.alex.anotes.ui.utils.OrientationObj
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.getString

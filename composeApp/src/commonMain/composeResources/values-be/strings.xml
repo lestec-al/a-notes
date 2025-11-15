@@ -41,6 +41,10 @@
     <string name="ascending">Па ўзрастаньню</string>
     <string name="descending">Па ўбываньню</string>
     <string name="color">Колер RGB</string>
+    <string name="swipe_notes">Свайпы</string>
+    <string name="edit_side">Рэдагаваць бок</string>
+    <string name="left_side">Левы бок</string>
+    <string name="right_side">Правы бок</string>
     <!-- Board only -->
     <string name="thickness">Таўшчыня</string>
     <string name="opacity">Непразрыстасьць</string>

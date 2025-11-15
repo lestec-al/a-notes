@@ -41,6 +41,10 @@
     <string name="ascending">Ascending</string>
     <string name="descending">Descending</string>
     <string name="color">Color RGB</string>
+    <string name="swipe_notes">Swipes</string>
+    <string name="edit_side">Edit Side</string>
+    <string name="left_side">Left Side</string>
+    <string name="right_side">Right Side</string>
     <!-- Board only -->
     <string name="thickness">Thickness</string>
     <string name="opacity">Opacity</string>

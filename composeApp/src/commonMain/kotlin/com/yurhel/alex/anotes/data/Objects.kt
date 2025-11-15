@@ -43,7 +43,6 @@ data class WidgetObj(
     val noteCreated: String
 )
 
-
 data class WinScreen(
     val width: Dp,
     val height: Dp,

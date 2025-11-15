@@ -7,7 +7,7 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.toAwtImage
 import androidx.compose.ui.graphics.toComposeImageBitmap
-import com.yurhel.alex.anotes.ui.OrientationObj
+import com.yurhel.alex.anotes.ui.utils.OrientationObj
 import com.yurhel.alex.anotes.ui.theme.darkColorScheme
 import com.yurhel.alex.anotes.ui.theme.lightColorScheme
 import org.jetbrains.skia.Image
