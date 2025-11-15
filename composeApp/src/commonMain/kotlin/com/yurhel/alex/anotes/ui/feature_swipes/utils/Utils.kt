@@ -9,6 +9,8 @@ import kotlinx.serialization.json.jsonPrimitive
 
 const val swipesCode = "[{\""
 
+fun getSwipesTitle(text: String) = text.replaceAfter(swipesCode, "").replace(swipesCode, "")
+
 fun importSwipesFromText(
     it: String,
     block: (String, Color, String, Color) -> Unit

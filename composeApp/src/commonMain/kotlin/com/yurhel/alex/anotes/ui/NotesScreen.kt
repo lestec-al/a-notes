@@ -47,6 +47,7 @@ import com.yurhel.alex.anotes.ui.components.MainBottomBar
 import com.yurhel.alex.anotes.ui.components.SyncDialog
 import com.yurhel.alex.anotes.ui.components.TaskCard
 import com.yurhel.alex.anotes.ui.feature_swipes.components.SwipeNotesCard
+import com.yurhel.alex.anotes.ui.feature_swipes.utils.getSwipesTitle
 import com.yurhel.alex.anotes.ui.feature_swipes.utils.importSwipesFromText
 import com.yurhel.alex.anotes.ui.utils.NoteType
 import org.jetbrains.compose.resources.stringResource
@@ -173,7 +174,18 @@ fun NotesScreen(
                         )
                         .padding(5.dp)
                 ) {
-                    if (note.type == NoteType.Swipe.name) {
+                    val isSwipes = note.type == NoteType.Swipe.name
+                    // Normal text
+                    if (note.text.isNotEmpty()) {
+                        Text(
+                            text = if (isSwipes) getSwipesTitle(note.text) else note.text,
+                            overflow = TextOverflow.Ellipsis,
+                            maxLines = 10,
+                            color = if (image != null) Color.Black else Color.Unspecified,
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 2.dp)
+                        )
+                    }
+                    if (isSwipes) {
                         // Swipes
                         var leftColor = Color.Red
                         var rightColor = Color.Green
@@ -187,17 +199,6 @@ fun NotesScreen(
                                 leftColor = leftColor,
                                 rightColor = rightColor,
                                 obj = it
-                            )
-                        }
-                    } else {
-                        // Normal text
-                        if (note.text.isNotEmpty()) {
-                            Text(
-                                text = note.text,
-                                overflow = TextOverflow.Ellipsis,
-                                maxLines = 10,
-                                color = if (image != null) Color.Black else Color.Unspecified,
-                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 2.dp)
                             )
                         }
                     }

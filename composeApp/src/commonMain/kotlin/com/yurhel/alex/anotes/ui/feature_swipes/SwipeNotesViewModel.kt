@@ -13,7 +13,7 @@ import com.yurhel.alex.anotes.ui.feature_swipes.utils.Edit
 import com.yurhel.alex.anotes.ui.feature_swipes.utils.SwipeTextObj
 import com.yurhel.alex.anotes.ui.feature_swipes.utils.SwipeTextPos
 import com.yurhel.alex.anotes.ui.feature_swipes.utils.importSwipesFromText
-import com.yurhel.alex.anotes.ui.feature_swipes.utils.swipesCode
+import com.yurhel.alex.anotes.ui.feature_swipes.utils.getSwipesTitle
 import kotlinx.serialization.json.addJsonObject
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.put
@@ -42,9 +42,7 @@ class SwipeNotesViewModel(val vm: MainViewModel): ViewModel() {
         private set
     var rightText by mutableStateOf("")
         private set
-    var noteText by mutableStateOf(
-        vm.selectedNote.value?.text?.replaceAfter(swipesCode, "")?.replace(swipesCode, "") ?: ""
-    )
+    var noteText by mutableStateOf(getSwipesTitle(vm.selectedNote.value?.text ?: ""))
         private set
 
     var data by mutableStateOf(listOf<SwipeTextObj>().let {

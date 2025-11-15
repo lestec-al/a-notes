@@ -3,6 +3,7 @@ package com.yurhel.alex.anotes.ui.feature_swipes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -99,6 +100,7 @@ fun SwipeNotesScreen(
                             scrolledContainerColor = MaterialTheme.colorScheme.background,
                             containerColor = MaterialTheme.colorScheme.background,
                         ),
+                        windowInsets = WindowInsets(0,0,0,0),
                         title = {
                             Text(
                                 text = vm.noteText,
