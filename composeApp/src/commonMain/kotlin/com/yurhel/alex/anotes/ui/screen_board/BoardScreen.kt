@@ -1,4 +1,4 @@
-package com.yurhel.alex.anotes.ui.feature_board
+package com.yurhel.alex.anotes.ui.screen_board
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -34,8 +34,8 @@ import anotes.composeapp.generated.resources.edit_note
 import anotes.composeapp.generated.resources.enable_draw
 import anotes.composeapp.generated.resources.undo
 import com.yurhel.alex.anotes.BackHandlerCustom
-import com.yurhel.alex.anotes.ui.feature_board.components.ActionButton
-import com.yurhel.alex.anotes.ui.feature_board.components.EditBoardBottomSheet
+import com.yurhel.alex.anotes.ui.screen_board.components.ActionButton
+import com.yurhel.alex.anotes.ui.screen_board.components.EditBoardBottomSheet
 import com.yurhel.alex.anotes.SetStatusBarColor
 import com.yurhel.alex.anotes.ui.components.SimpleEditBottomSheet
 import com.yurhel.alex.anotes.ui.MainViewModel

@@ -1,4 +1,4 @@
-package com.yurhel.alex.anotes.ui.feature_board.components
+package com.yurhel.alex.anotes.ui.screen_board.components
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -17,7 +17,7 @@ import anotes.composeapp.generated.resources.Res
 import anotes.composeapp.generated.resources.color
 import anotes.composeapp.generated.resources.opacity
 import anotes.composeapp.generated.resources.thickness
-import com.yurhel.alex.anotes.ui.feature_board.BoardViewModel
+import com.yurhel.alex.anotes.ui.screen_board.BoardViewModel
 import com.yurhel.alex.anotes.ui.components.ColorPicker
 import org.jetbrains.compose.resources.stringResource
 

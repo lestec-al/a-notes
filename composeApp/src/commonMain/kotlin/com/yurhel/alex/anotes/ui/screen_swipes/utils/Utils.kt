@@ -1,4 +1,4 @@
-package com.yurhel.alex.anotes.ui.feature_swipes.utils
+package com.yurhel.alex.anotes.ui.screen_swipes.utils
 
 import androidx.compose.ui.graphics.Color
 import kotlinx.serialization.json.Json

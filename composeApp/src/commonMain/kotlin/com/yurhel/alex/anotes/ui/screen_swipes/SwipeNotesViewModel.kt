@@ -1,4 +1,4 @@
-package com.yurhel.alex.anotes.ui.feature_swipes
+package com.yurhel.alex.anotes.ui.screen_swipes
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -9,11 +9,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.CreationExtras
 import com.yurhel.alex.anotes.ui.MainViewModel
-import com.yurhel.alex.anotes.ui.feature_swipes.utils.Edit
-import com.yurhel.alex.anotes.ui.feature_swipes.utils.SwipeTextObj
-import com.yurhel.alex.anotes.ui.feature_swipes.utils.SwipeTextPos
-import com.yurhel.alex.anotes.ui.feature_swipes.utils.importSwipesFromText
-import com.yurhel.alex.anotes.ui.feature_swipes.utils.getSwipesTitle
+import com.yurhel.alex.anotes.ui.screen_swipes.utils.Edit
+import com.yurhel.alex.anotes.ui.screen_swipes.utils.SwipeTextObj
+import com.yurhel.alex.anotes.ui.screen_swipes.utils.SwipeTextPos
+import com.yurhel.alex.anotes.ui.screen_swipes.utils.importSwipesFromText
+import com.yurhel.alex.anotes.ui.screen_swipes.utils.getSwipesTitle
 import kotlinx.serialization.json.addJsonObject
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.put

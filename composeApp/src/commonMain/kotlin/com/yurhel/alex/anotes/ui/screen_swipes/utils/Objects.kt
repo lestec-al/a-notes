@@ -1,4 +1,4 @@
-package com.yurhel.alex.anotes.ui.feature_swipes.utils
+package com.yurhel.alex.anotes.ui.screen_swipes.utils
 
 enum class Edit { None, NoteText, SwipeText, Left, Right }
 

@@ -1,4 +1,4 @@
-package com.yurhel.alex.anotes.ui.feature_swipes.components
+package com.yurhel.alex.anotes.ui.screen_swipes.components
 
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer

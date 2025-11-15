@@ -9,10 +9,10 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.yurhel.alex.anotes.ui.feature_board.BoardScreen
-import com.yurhel.alex.anotes.ui.feature_board.BoardViewModel
-import com.yurhel.alex.anotes.ui.feature_swipes.SwipeNotesScreen
-import com.yurhel.alex.anotes.ui.feature_swipes.SwipeNotesViewModel
+import com.yurhel.alex.anotes.ui.screen_board.BoardScreen
+import com.yurhel.alex.anotes.ui.screen_board.BoardViewModel
+import com.yurhel.alex.anotes.ui.screen_swipes.SwipeNotesScreen
+import com.yurhel.alex.anotes.ui.screen_swipes.SwipeNotesViewModel
 import com.yurhel.alex.anotes.ui.utils.NoteType
 import com.yurhel.alex.anotes.ui.utils.ScreenObj
 
@@ -29,7 +29,6 @@ fun Navigation(vm: MainViewModel) {
         popExitTransition = { ExitTransition.None },
         modifier = Modifier.fillMaxSize()
     ) {
-
         composable(route = ScreenObj.Main.name) {
             NotesScreen(
                 vm = vm,
@@ -59,7 +58,6 @@ fun Navigation(vm: MainViewModel) {
                 }
             )
         }
-
         composable(route = ScreenObj.Note.name) {
             NoteScreen(
                 vm = vm,
@@ -68,7 +66,6 @@ fun Navigation(vm: MainViewModel) {
                 }
             )
         }
-
         composable(route = ScreenObj.Tasks.name) {
             TasksScreen(
                 vm = vm,
@@ -77,7 +74,6 @@ fun Navigation(vm: MainViewModel) {
                 }
             )
         }
-
         composable(route = ScreenObj.Draw.name) {
             BoardScreen(
                 vm = vm,
@@ -87,7 +83,6 @@ fun Navigation(vm: MainViewModel) {
                 }
             )
         }
-
         composable(route = ScreenObj.Swipe.name) {
             SwipeNotesScreen(
                 vm = viewModel(factory = SwipeNotesViewModel.Factory(vm)),

@@ -1,4 +1,4 @@
-package com.yurhel.alex.anotes.ui.feature_board
+package com.yurhel.alex.anotes.ui.screen_board
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf

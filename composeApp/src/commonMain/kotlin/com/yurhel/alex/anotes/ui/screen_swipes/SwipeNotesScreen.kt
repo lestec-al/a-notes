@@ -1,4 +1,4 @@
-package com.yurhel.alex.anotes.ui.feature_swipes
+package com.yurhel.alex.anotes.ui.screen_swipes
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
@@ -37,10 +37,10 @@ import anotes.composeapp.generated.resources.task
 import com.yurhel.alex.anotes.BackHandlerCustom
 import com.yurhel.alex.anotes.ui.components.CustomScaffold
 import com.yurhel.alex.anotes.ui.components.NoteBottomBar
-import com.yurhel.alex.anotes.ui.feature_swipes.components.SwipeNotesCard
-import com.yurhel.alex.anotes.ui.feature_swipes.components.SwipeNotesSheet
-import com.yurhel.alex.anotes.ui.feature_swipes.utils.Edit
-import com.yurhel.alex.anotes.ui.feature_swipes.utils.swipesCode
+import com.yurhel.alex.anotes.ui.screen_swipes.components.SwipeNotesCard
+import com.yurhel.alex.anotes.ui.screen_swipes.components.SwipeNotesSheet
+import com.yurhel.alex.anotes.ui.screen_swipes.utils.Edit
+import com.yurhel.alex.anotes.ui.screen_swipes.utils.swipesCode
 import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)

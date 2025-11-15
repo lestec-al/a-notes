@@ -46,9 +46,9 @@ import com.yurhel.alex.anotes.ui.components.DropFloatingActionButton
 import com.yurhel.alex.anotes.ui.components.MainBottomBar
 import com.yurhel.alex.anotes.ui.components.SyncDialog
 import com.yurhel.alex.anotes.ui.components.TaskCard
-import com.yurhel.alex.anotes.ui.feature_swipes.components.SwipeNotesCard
-import com.yurhel.alex.anotes.ui.feature_swipes.utils.getSwipesTitle
-import com.yurhel.alex.anotes.ui.feature_swipes.utils.importSwipesFromText
+import com.yurhel.alex.anotes.ui.screen_swipes.components.SwipeNotesCard
+import com.yurhel.alex.anotes.ui.screen_swipes.utils.getSwipesTitle
+import com.yurhel.alex.anotes.ui.screen_swipes.utils.importSwipesFromText
 import com.yurhel.alex.anotes.ui.utils.NoteType
 import org.jetbrains.compose.resources.stringResource
 

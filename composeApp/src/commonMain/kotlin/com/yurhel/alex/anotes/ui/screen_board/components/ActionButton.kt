@@ -1,4 +1,4 @@
-package com.yurhel.alex.anotes.ui.feature_board.components
+package com.yurhel.alex.anotes.ui.screen_board.components
 
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.CardDefaults

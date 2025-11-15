@@ -1,4 +1,4 @@
-package com.yurhel.alex.anotes.ui.feature_swipes.components
+package com.yurhel.alex.anotes.ui.screen_swipes.components
 
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.draggable
@@ -21,8 +21,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.yurhel.alex.anotes.ui.components.CardOnClick
-import com.yurhel.alex.anotes.ui.feature_swipes.utils.SwipeTextObj
-import com.yurhel.alex.anotes.ui.feature_swipes.utils.SwipeTextPos
+import com.yurhel.alex.anotes.ui.screen_swipes.utils.SwipeTextObj
+import com.yurhel.alex.anotes.ui.screen_swipes.utils.SwipeTextPos
 import kotlin.math.roundToInt
 
 @Composable
