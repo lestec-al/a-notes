@@ -40,9 +40,11 @@ import androidx.glance.state.PreferencesGlanceStateDefinition
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
+import app.cash.sqldelight.driver.android.AndroidSqliteDriver
 import com.yurhel.alex.anotes.data.LocalDB
 import com.yurhel.alex.anotes.data.StatusObj
 import com.yurhel.alex.anotes.data.TasksObj
+import db.Database
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -55,12 +57,12 @@ class NoteWidget : GlanceAppWidget() {
         super.onDelete(context, glanceId)
         // Delete widget entry from db
         withContext(Dispatchers.Default) {
-            LocalDB.getInstance(getSqlDriver(context)).deleteByIdWidget(GlanceAppWidgetManager(context).getAppWidgetId(glanceId))
+            LocalDB.getInstance(AndroidSqliteDriver(Database.Schema, context, "notes.db")).deleteByIdWidget(GlanceAppWidgetManager(context).getAppWidgetId(glanceId))
         }
     }
 
     private fun updateWidgetData(context: Context, noteId: Int): Triple<List<StatusObj>, List<TasksObj>, String>? {
-        val db = LocalDB.getInstance(getSqlDriver(context))
+        val db = LocalDB.getInstance(AndroidSqliteDriver(Database.Schema, context, "notes.db"))
         return db.getNoteById(noteId)?.let {
             Triple(
                 db.getManyByNoteStatuses(noteId),

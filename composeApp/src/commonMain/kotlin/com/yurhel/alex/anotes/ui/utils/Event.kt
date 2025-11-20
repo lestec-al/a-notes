@@ -1,4 +1,4 @@
-package com.yurhel.alex.anotes.ui
+package com.yurhel.alex.anotes.ui.utils
 
 import com.yurhel.alex.anotes.data.StatusObj
 import com.yurhel.alex.anotes.data.TasksObj

@@ -1,17 +1,17 @@
 package com.yurhel.alex.anotes.ui
 
 import androidx.compose.foundation.gestures.scrollBy
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.ListAlt
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -31,42 +31,20 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import anotes.composeapp.generated.resources.Res
-import anotes.composeapp.generated.resources.edit_tasks
 import com.yurhel.alex.anotes.BackHandlerCustom
 import com.yurhel.alex.anotes.keyboardAsState
-import com.yurhel.alex.anotes.ui.components.BottomAppBarNote
+import com.yurhel.alex.anotes.ui.components.CustomScaffold
+import com.yurhel.alex.anotes.ui.components.NoteBottomBar
 import kotlinx.coroutines.launch
-import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun NoteScreen(
     vm: MainViewModel,
-    onBack: (isSaved: Boolean) -> Unit,
-    toTasks: () -> Unit
+    onBack: () -> Unit
 ) {
-    val editText = rememberTextFieldState("")
-
-    LaunchedEffect(Unit) {
-        if (vm.editText.value.isEmpty()) {
-            vm.prepareNote(redirectToNotesScreen = { onBack(true) }, redirectToTasksScreen = toTasks) {
-                editText.edit {
-                    append(vm.editText.value)
-                    try { placeCursorAfterCharAt(0) } catch (_: Exception) {}
-                }
-            }
-        } else {
-            editText.edit {
-                append(vm.editText.value)
-                try { placeCursorAfterCharAt(0) } catch (_: Exception) {}
-            }
-        }
-    }
-
     BackHandlerCustom {
-        // Save text from state to main value
-        vm.changeEditTextValue(editText.text.toString())
-        onBack(vm.saveNote())
+        vm.saveNote()
+        onBack()
     }
 
     // Fixing a bug with BasicTextField2, when keyboard not showed second time
@@ -81,35 +59,27 @@ fun NoteScreen(
     val coroutineScope = rememberCoroutineScope()
     var globalViewHeight by remember { mutableFloatStateOf(0f) }
 
-    Scaffold(
+    CustomScaffold(
         bottomBar = {
-            BottomAppBarNote(
+            NoteBottomBar(
                 vm = vm,
                 coroutineScope = coroutineScope,
                 onBackAfterDelete = {
-                    onBack(true)
+                    onBack()
                 },
                 onBackButtonClick = {
-                    // Save text from state to main value
-                    vm.changeEditTextValue(editText.text.toString())
-                    onBack(vm.saveNote())
-                },
-                onSecondButtonClick = {
-                    // Save text from state to main value
-                    vm.changeEditTextValue(editText.text.toString())
                     vm.saveNote()
-                    toTasks()
+                    onBack()
                 },
-                secondButtonIcon = Icons.AutoMirrored.Outlined.ListAlt,
-                secondButtonText = stringResource(Res.string.edit_tasks),
                 onGetTextButtonClick = {
-                    editText.text.toString()
-                }
+                    vm.editText.text.toString()
+                },
+                additionalButtons = listOf()
             )
         }
-    ) { padding ->
+    ) { bottomPadding, topPadding ->
         BasicTextField(
-            state = editText,
+            state = vm.editText,
             keyboardOptions = KeyboardOptions(
                 capitalization = KeyboardCapitalization.Sentences,
                 keyboardType = KeyboardType.Text,
@@ -122,7 +92,7 @@ fun NoteScreen(
             onTextLayout = {
                 coroutineScope.launch {
                     try {
-                        val cursor = it()?.getCursorRect(editText.selection.end)
+                        val cursor = it()?.getCursorRect(vm.editText.selection.end)
                         if (cursor != null) {
                             val bottomOffset = scroll.value + globalViewHeight
                             if (cursor.top < scroll.value) scroll.scrollTo(cursor.top.toInt())
@@ -132,9 +102,17 @@ fun NoteScreen(
                 }
             },
             cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+            decorator = { innerTextField ->
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    // Status bar spacer
+                    Spacer(Modifier.height(topPadding))
+                    // Text
+                    innerTextField()
+                }
+            },
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
+                .padding(bottom = bottomPadding)
                 .padding(horizontal = 5.dp)
                 .verticalScroll(scroll)
                 .onGloballyPositioned {

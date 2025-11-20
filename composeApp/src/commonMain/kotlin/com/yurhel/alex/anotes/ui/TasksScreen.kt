@@ -1,7 +1,6 @@
 package com.yurhel.alex.anotes.ui
 
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.absoluteOffset
@@ -16,17 +15,11 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.Article
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material.icons.automirrored.outlined.Sort
+import androidx.compose.material.icons.automirrored.outlined.StickyNote2
+import androidx.compose.material.icons.outlined.DriveFileRenameOutline
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -39,17 +32,14 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import anotes.composeapp.generated.resources.Res
-import anotes.composeapp.generated.resources.create
 import anotes.composeapp.generated.resources.edit_note
 import anotes.composeapp.generated.resources.status
 import anotes.composeapp.generated.resources.task
@@ -57,10 +47,17 @@ import com.yurhel.alex.anotes.BackHandlerCustom
 import com.yurhel.alex.anotes.data.StatusObj
 import com.yurhel.alex.anotes.data.TasksObj
 import com.yurhel.alex.anotes.getOrientation
-import com.yurhel.alex.anotes.ui.components.BottomAppBarNote
+import com.yurhel.alex.anotes.ui.components.CustomScaffold
+import com.yurhel.alex.anotes.ui.components.DropFloatingActionButton
 import com.yurhel.alex.anotes.ui.components.EditBottomSheet
+import com.yurhel.alex.anotes.ui.components.NoteBottomBar
+import com.yurhel.alex.anotes.ui.components.SimpleEditBottomSheet
 import com.yurhel.alex.anotes.ui.components.StatusCard
-import com.yurhel.alex.anotes.ui.components.Task
+import com.yurhel.alex.anotes.ui.components.TaskCard
+import com.yurhel.alex.anotes.ui.utils.ActionTypes
+import com.yurhel.alex.anotes.ui.utils.Event
+import com.yurhel.alex.anotes.ui.utils.OrientationObj
+import com.yurhel.alex.anotes.ui.utils.Types
 import org.jetbrains.compose.resources.stringResource
 import kotlin.math.roundToInt
 
@@ -68,8 +65,7 @@ import kotlin.math.roundToInt
 @Composable
 fun TasksScreen(
     vm: MainViewModel,
-    onBack: () -> Unit,
-    toNote: () -> Unit
+    onBack: () -> Unit
 ) {
     BackHandlerCustom {
         vm.selectStatus(0)
@@ -87,79 +83,13 @@ fun TasksScreen(
 
     val onBackgroundColor = MaterialTheme.colorScheme.onBackground
     val lazyListState = rememberLazyListState()
-
     val scrollOffset = if (getOrientation() == OrientationObj.Desktop) 20 else 50
-    var isFloatingActionButtonOpened: Boolean by remember { mutableStateOf(false) }
 
-    Scaffold(
-        floatingActionButton = {
-            if (isFloatingActionButtonOpened) {
-                Column(horizontalAlignment = Alignment.End) {
-                    DropdownMenu(
-                        expanded = true,
-                        onDismissRequest = {
-                            isFloatingActionButtonOpened = false
-                        },
-                        shape = CardDefaults.shape
-                    ) {
-                        // Create new status
-                        val addNewStatusText = stringResource(Res.string.create) + " " + stringResource(Res.string.status)
-                        DropdownMenuItem(
-                            text = {
-                                Text(
-                                    text = addNewStatusText.uppercase(),
-                                    textAlign = TextAlign.End,
-                                    modifier = Modifier.fillMaxWidth()
-                                )
-                            },
-                            onClick = {
-                                isFloatingActionButtonOpened = false
-                                vm.onEvent(Event.ShowEditDialog(Types.Status, ActionTypes.Create))
-                            }
-                        )
-                        // Add new task
-                        val addNewTaskText = stringResource(Res.string.create) + " " + stringResource(Res.string.task)
-                        DropdownMenuItem(
-                            text = {
-                                Text(
-                                    text = addNewTaskText.uppercase(),
-                                    textAlign = TextAlign.End,
-                                    modifier = Modifier.fillMaxWidth()
-                                )
-                            },
-                            onClick = {
-                                isFloatingActionButtonOpened = false
-                                vm.onEvent(Event.ShowEditDialog(Types.Task, ActionTypes.Create))
-                            }
-                        )
-                    }
-                    Spacer(Modifier.height(5.dp))
-                    // Close buttons
-                    FloatingActionButton(
-                        onClick = {
-                            isFloatingActionButtonOpened = false
-                        },
-                        shape = CardDefaults.shape,
-                        content = {
-                            Icon(Icons.Default.Close, null)
-                        }
-                    )
-                }
-            } else {
-                // Open buttons
-                FloatingActionButton(
-                    shape = CardDefaults.shape,
-                    onClick = {
-                        isFloatingActionButtonOpened = true
-                    },
-                    content = {
-                        Icon(Icons.Default.Add, "")
-                    }
-                )
-            }
-        },
+    val isDialogVisible by vm.editDialogVisibility.collectAsState()
+
+    CustomScaffold(
         bottomBar = {
-            BottomAppBarNote(
+            NoteBottomBar(
                 vm = vm,
                 coroutineScope = rememberCoroutineScope(),
                 onBackAfterDelete = onBack,
@@ -168,25 +98,39 @@ fun TasksScreen(
                     vm.clearTasks()
                     onBack()
                 },
-                onSecondButtonClick = {
-                    vm.selectStatus(0)
-                    vm.clearTasks()
-                    toNote()
-                },
-                secondButtonIcon = Icons.AutoMirrored.Outlined.Article,
-                secondButtonText = stringResource(Res.string.edit_note),
-                onGetTextButtonClick = vm::getTaskTextForNote
+                onGetTextButtonClick = vm::getTaskTextForNote,
+                additionalButtons = listOf(
+                    Triple(stringResource(Res.string.edit_note), Icons.Outlined.DriveFileRenameOutline) {
+                        vm.updateIsEditSheetOpen(true)
+                    }
+                )
+            )
+        },
+        floatingActionButton = {
+            DropFloatingActionButton(
+                listOf(
+                    // Create new status button
+                    Triple(stringResource(Res.string.status), Icons.AutoMirrored.Outlined.Sort) {
+                        vm.onEvent(Event.ShowEditDialog(Types.Status, ActionTypes.Create))
+                    },
+                    // Add new task button
+                    Triple(stringResource(Res.string.task), Icons.AutoMirrored.Outlined.StickyNote2) {
+                        vm.onEvent(Event.ShowEditDialog(Types.Task, ActionTypes.Create))
+                    }
+                )
             )
         }
-    ) { paddingValues ->
+    ) { bottomPadding, topPadding ->
         // Need update tasks (ids) after drag drop change position
         key(tasks) {
             LazyColumn(
                 state = lazyListState,
                 modifier = Modifier
-                    .padding(paddingValues)
+                    .padding(bottom = bottomPadding)
                     .fillMaxSize()
             ) {
+                // Status bar spacer
+                item { Spacer(Modifier.height(topPadding)) }
                 // Top bar
                 item {
                     if (selectedNote != null && selectedNote!!.text.isNotEmpty()) {
@@ -238,9 +182,9 @@ fun TasksScreen(
                     var offsetY by remember { mutableFloatStateOf(0f) }
                     var posTop = 0f
                     var posBottom = 0f
-                    val itemIdx = idx + 2 // Add topBar & statuses
+                    val itemIdx = idx + 3 // Add statusBar, topBar, statuses
 
-                    Task(
+                    TaskCard(
                         task = task,
                         cardColor = MaterialTheme.colorScheme.background,
                         onClick = {
@@ -310,14 +254,23 @@ fun TasksScreen(
             }
         }
     }
-    // Sync choose dialog
-    val isDialogVisible by vm.editDialogVisibility.collectAsState()
+    // Bottom sheets
     if (isDialogVisible) EditBottomSheet(vm = vm)
+    if (vm.isEditTextSheetOpen) {
+        SimpleEditBottomSheet(
+            onDismissRequest = vm::updateIsEditSheetOpen,
+            onSave = {
+                vm.updateEditTextValue(it)
+                vm.saveNote()
+            },
+            infoText = stringResource(Res.string.edit_note),
+            initText = vm.editText.text.toString()
+        )
+    }
 }
-
-
-@Composable
-fun Int.pxToDp() = with(LocalDensity.current) { this@pxToDp.toDp() }
 
 private val LazyListItemInfo.offsetEnd: Int
     get() = this.offset + this.size
+
+@Composable
+fun Int.pxToDp() = with(LocalDensity.current) { this@pxToDp.toDp() }

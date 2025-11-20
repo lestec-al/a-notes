@@ -6,11 +6,14 @@ CREATE TABLE settingsTable (
     screenWidth INTEGER,
     screenHeight INTEGER,
     screenPosX INTEGER,
-    screenPosY INTEGER
+    screenPosY INTEGER,
+    dataShowing TEXT,
+    sortType TEXT,
+    sortArrow TEXT
 );
 
-INSERT INTO settingsTable (dataReceivedDate, isNotesEdited, viewMode, screenWidth, screenHeight, screenPosX, screenPosY)
-VALUES ('', 0, "col",600, 600, 20, 20);
+INSERT INTO settingsTable (dataReceivedDate, isNotesEdited, viewMode, screenWidth, screenHeight, screenPosX, screenPosY, dataShowing, sortType, sortArrow)
+VALUES ('', 0, "col",600, 600, 20, 20, "all", "dateUpdate", "ascending");
 
 selectAll:
 SELECT * FROM settingsTable;
@@ -33,3 +36,21 @@ setScreen:
 UPDATE settingsTable
 SET screenWidth = ?, screenHeight = ?, screenPosX = ?, screenPosY = ?
 WHERE id = 1;
+
+getDataShowing:
+SELECT dataShowing FROM settingsTable WHERE id == 1;
+
+getSortType:
+SELECT sortType FROM settingsTable WHERE id == 1;
+
+getSortArrow:
+SELECT sortArrow FROM settingsTable WHERE id == 1;
+
+updateDataShowing:
+UPDATE settingsTable SET dataShowing = ? WHERE id = 1;
+
+updateSortType:
+UPDATE settingsTable SET sortType = ? WHERE id = 1;
+
+updateSortArrow:
+UPDATE settingsTable SET sortArrow = ? WHERE id = 1;

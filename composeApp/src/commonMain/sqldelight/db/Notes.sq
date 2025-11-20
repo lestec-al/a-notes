@@ -1,13 +1,11 @@
 CREATE TABLE notesTable (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     withTasks INTEGER,
+    type TEXT,
     text TEXT,
     dateUpdate TEXT,
     dateCreate TEXT
 );
-
-getByCreated:
-SELECT * FROM notesTable WHERE dateCreate = ?;
 
 getById:
 SELECT * FROM notesTable WHERE id = ?;
@@ -22,15 +20,13 @@ getQuery:
 SELECT * FROM notesTable WHERE LOWER(text) LIKE ('%' || LOWER(:query) || '%')
 OR id IN (SELECT note FROM tasksTable WHERE LOWER(description) LIKE ('%' || LOWER(:query) || '%'));
 
-
 insert:
-INSERT INTO notesTable(withTasks, text, dateUpdate, dateCreate)
-VALUES (?, ?, ?, ?);
-
-insertWithId:
-INSERT INTO notesTable(id, withTasks, text, dateUpdate, dateCreate)
+INSERT INTO notesTable(withTasks, type, text, dateUpdate, dateCreate)
 VALUES (?, ?, ?, ?, ?);
 
+insertWithId:
+INSERT INTO notesTable(id, withTasks, type, text, dateUpdate, dateCreate)
+VALUES (?, ?, ?, ?, ?, ?);
 
 deleteAll:
 DELETE FROM notesTable;
@@ -38,7 +34,6 @@ DELETE FROM notesTable;
 delete:
 DELETE FROM notesTable WHERE id = ?;
 
-
 update:
-UPDATE notesTable SET withTasks = ?, text = ?, dateUpdate = ?
+UPDATE notesTable SET withTasks = ?, type = ?, text = ?, dateUpdate = ?
 WHERE id = ?;

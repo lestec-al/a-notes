@@ -1,6 +1,7 @@
-package com.yurhel.alex.anotes.ui
+package com.yurhel.alex.anotes.ui.utils
 
 import com.yurhel.alex.anotes.Drive
+import com.yurhel.alex.anotes.ui.MainViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job

@@ -6,9 +6,9 @@ data class NoteObj(
     val id: Int = 0,
     val text: String,
     val isArchived: Boolean,
-    // Date
     val dateUpdate: Long,
-    val dateCreate: Long
+    val dateCreate: Long,
+    val type: String,
 )
 
 data class SettingsObj(
@@ -42,7 +42,6 @@ data class WidgetObj(
     val widgetId: Int,
     val noteCreated: String
 )
-
 
 data class WinScreen(
     val width: Dp,

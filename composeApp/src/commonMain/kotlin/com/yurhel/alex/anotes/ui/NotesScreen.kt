@@ -1,5 +1,7 @@
 package com.yurhel.alex.anotes.ui
 
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -9,16 +11,17 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
+import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridItemSpan
 import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.automirrored.outlined.FormatListBulleted
+import androidx.compose.material.icons.outlined.Brush
+import androidx.compose.material.icons.outlined.Swipe
+import androidx.compose.material.icons.outlined.TextFields
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -27,25 +30,33 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import anotes.composeapp.generated.resources.Res
-import anotes.composeapp.generated.resources.create
+import anotes.composeapp.generated.resources.draw
 import anotes.composeapp.generated.resources.empty_text
 import anotes.composeapp.generated.resources.note
+import anotes.composeapp.generated.resources.swipe_notes
+import anotes.composeapp.generated.resources.tasks
 import com.yurhel.alex.anotes.BackHandlerCustom
 import com.yurhel.alex.anotes.data.NoteObj
-import com.yurhel.alex.anotes.ui.components.BottomAppBarMain
+import com.yurhel.alex.anotes.ui.components.CustomScaffold
+import com.yurhel.alex.anotes.ui.components.DropFloatingActionButton
+import com.yurhel.alex.anotes.ui.components.MainBottomBar
 import com.yurhel.alex.anotes.ui.components.SyncDialog
-import com.yurhel.alex.anotes.ui.components.Task
-import com.yurhel.alex.anotes.ui.components.Tooltip
+import com.yurhel.alex.anotes.ui.components.TaskCard
+import com.yurhel.alex.anotes.ui.screen_swipes.components.SwipeNotesCard
+import com.yurhel.alex.anotes.ui.screen_swipes.utils.getSwipesTitle
+import com.yurhel.alex.anotes.ui.screen_swipes.utils.importSwipesFromText
+import com.yurhel.alex.anotes.ui.utils.NoteType
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun NotesScreen(
     vm: MainViewModel,
-    newNoteClicked: () -> Unit,
-    openNoteClicked: () -> Unit,
+    newNoteClicked: (type: String) -> Unit,
+    openNoteClicked: () -> Unit
 ) {
     BackHandlerCustom(onBack = vm.callExit)
 
@@ -72,29 +83,47 @@ fun NotesScreen(
     // Check if no need to choosing widget (possible only on Android)
     val notNeedChooseWidget = vm.widgetIdWhenCreated == 0
 
-    Scaffold(
+    val isSyncDialogOpen by vm.isSyncDialogOpen.collectAsState()
+
+    CustomScaffold(
         floatingActionButton = {
-            // Add new note
-            val newNoteText = stringResource(Res.string.create) + " " + stringResource(Res.string.note)
-            Tooltip(newNoteText) {
-                FloatingActionButton(
-                    shape = CardDefaults.shape,
-                    onClick = {
-                        vm.selectNote(null)
-                        newNoteClicked()
+            DropFloatingActionButton(
+                listOf(
+                    // Add new swipe button
+                    Triple(stringResource(Res.string.swipe_notes), Icons.Outlined.Swipe) {
+                        newNoteClicked(NoteType.Swipe.name)
+                        vm.updateNotesScreenScrollItem(
+                            Pair(scrollState.firstVisibleItemIndex, scrollState.firstVisibleItemScrollOffset)
+                        )
+                    },
+                    // Add new drawing button
+                    Triple(stringResource(Res.string.draw), Icons.Outlined.Brush) {
+                        newNoteClicked(NoteType.Draw.name)
+                        vm.updateNotesScreenScrollItem(
+                            Pair(scrollState.firstVisibleItemIndex, scrollState.firstVisibleItemScrollOffset)
+                        )
+                    },
+                    // Add new tasks button
+                    Triple(stringResource(Res.string.tasks), Icons.AutoMirrored.Outlined.FormatListBulleted) {
+                        newNoteClicked(NoteType.Tasks.name)
+                        vm.updateNotesScreenScrollItem(
+                            Pair(scrollState.firstVisibleItemIndex, scrollState.firstVisibleItemScrollOffset)
+                        )
+                    },
+                    // Add new note button
+                    Triple(stringResource(Res.string.note), Icons.Outlined.TextFields) {
+                        newNoteClicked(NoteType.Note.name)
                         vm.updateNotesScreenScrollItem(
                             Pair(scrollState.firstVisibleItemIndex, scrollState.firstVisibleItemScrollOffset)
                         )
                     }
-                ) {
-                    Icon(Icons.Default.Add, newNoteText)
-                }
-            }
+                )
+            )
         },
         bottomBar = {
-            if (notNeedChooseWidget) BottomAppBarMain(vm, appSettingsView)
+            if (notNeedChooseWidget) MainBottomBar(vm, appSettingsView)
         }
-    ) { paddingValues ->
+    ) { bottomPadding, topPadding ->
         // Empty text
         if (allNotes.isEmpty()) {
             Box(
@@ -110,11 +139,16 @@ fun NotesScreen(
             state = scrollState,
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues)
+                .padding(bottom = bottomPadding)
                 .padding(horizontal = 5.dp)
         ) {
+            // Status bar spacer
+            item(span = StaggeredGridItemSpan.FullLine) {
+                Spacer(Modifier.height(topPadding))
+            }
             // Notes
             items(items = allNotes) { note: NoteObj ->
+                val image = vm.tryGetImage(note.id)
                 Card(
                     onClick = {
                         vm.selectNote(note)
@@ -130,7 +164,7 @@ fun NotesScreen(
                         }
                     },
                     colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant
+                        containerColor = if (image != null) Color.White else MaterialTheme.colorScheme.surfaceVariant
                     ),
                     modifier = Modifier
                         .fillMaxWidth()
@@ -140,19 +174,38 @@ fun NotesScreen(
                         )
                         .padding(5.dp)
                 ) {
-                    // Text
+                    val isSwipes = note.type == NoteType.Swipe.name
+                    // Normal text
                     if (note.text.isNotEmpty()) {
                         Text(
-                            text = note.text,
+                            text = if (isSwipes) getSwipesTitle(note.text) else note.text,
                             overflow = TextOverflow.Ellipsis,
                             maxLines = 10,
+                            color = if (image != null) Color.Black else Color.Unspecified,
                             modifier = Modifier.padding(horizontal = 10.dp, vertical = 2.dp)
                         )
+                    }
+                    if (isSwipes) {
+                        // Swipes
+                        var leftColor = Color.Red
+                        var rightColor = Color.Green
+                        importSwipesFromText(note.text) { _, lColor, _, rColor ->
+                            leftColor = lColor
+                            rightColor = rColor
+                        }.forEach {
+                            SwipeNotesCard(
+                                onClick = null,
+                                onDragStopped = null,
+                                leftColor = leftColor,
+                                rightColor = rightColor,
+                                obj = it
+                            )
+                        }
                     }
                     // Tasks for this note
                     for (task in allTasks) {
                         if (task.note == note.id) {
-                            Task(
+                            TaskCard(
                                 task = task,
                                 cardColor = Color.Transparent,
                                 onClick = null,
@@ -165,14 +218,22 @@ fun NotesScreen(
                             )
                         }
                     }
-
+                    // Try to draw an image
+                    if (image != null) {
+                        Image(
+                            bitmap = image,
+                            contentDescription = stringResource(Res.string.draw),
+                            contentScale = ContentScale.FillHeight,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(Color.White)
+                        )
+                    }
                     Spacer(modifier = Modifier.height(8.dp))
                 }
             }
         }
     }
-    // Sync choose dialog
-    val isSyncDialogOpen by vm.isSyncDialogOpen.collectAsState()
     SyncDialog(
         isVisible = isSyncDialogOpen,
         vm = vm

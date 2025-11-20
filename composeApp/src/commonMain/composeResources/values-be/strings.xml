@@ -12,13 +12,14 @@
     <string name="updated">Абноўлены</string>
     <string name="created">Створаны</string>
     <string name="task">Заданьне</string>
+    <string name="tasks">Заданьнні</string>
     <string name="status">Статус</string>
     <string name="text">Тэкст</string>
     <string name="note">Нататку</string>
     <string name="change_view">Зьмяніць выгляд</string>
     <string name="edit">Рэдагаваць</string>
-    <string name="edit_tasks">Рэдагаваць задачы</string>
-    <string name="edit_note">Рэдагаваць нататку</string>
+    <string name="edit_tasks">Рэдагаваць Задачы</string>
+    <string name="edit_note">Рэдагаваць Нататку</string>
     <string name="delete">Выдаліць</string>
     <string name="create">Стварыць</string>
     <string name="save">Захаваць</string>
@@ -32,10 +33,24 @@
     <string name="sent_note_to_archive">Нататка дададзена ў архіў</string>
     <string name="restore_note_from_archive">Аднавіць нататку з архіву</string>
     <string name="sorting">Сартаваньне</string>
+    <string name="filtering">Фільтраваньне</string>
     <string name="show_main_notes">Асноўныя нататкі</string>
     <string name="show_archive_notes">Архіўныя нататкі</string>
     <string name="date_update">Дата зьмяненьня</string>
     <string name="date_create">Дата стварэньня</string>
     <string name="ascending">Па ўзрастаньню</string>
     <string name="descending">Па ўбываньню</string>
+    <string name="color">Колер RGB</string>
+    <string name="swipe_notes">Свайпы</string>
+    <string name="edit_side">Рэдагаваць бок</string>
+    <string name="left_side">Левы бок</string>
+    <string name="right_side">Правы бок</string>
+    <!-- Board only -->
+    <string name="thickness">Таўшчыня</string>
+    <string name="opacity">Непразрыстасьць</string>
+    <string name="draw">Маляваньне</string>
+    <string name="disable_all_actions">Адключыць усе дзеяньні</string>
+    <string name="enable_draw">Уключыць маляваньне</string>
+    <string name="undo">Адмяніць</string>
+    <string name="checked">Пастаўлена</string>
 </resources>

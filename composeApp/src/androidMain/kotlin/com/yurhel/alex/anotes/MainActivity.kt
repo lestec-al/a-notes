@@ -15,13 +15,15 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.glance.appwidget.state.updateAppWidgetState
 import androidx.lifecycle.lifecycleScope
+import app.cash.sqldelight.driver.android.AndroidSqliteDriver
 import com.yurhel.alex.anotes.data.LocalDB
 import com.yurhel.alex.anotes.data.WidgetObj
-import com.yurhel.alex.anotes.ui.DriveUtils
+import com.yurhel.alex.anotes.ui.utils.DriveUtils
 import com.yurhel.alex.anotes.ui.MainViewModel
 import com.yurhel.alex.anotes.ui.Navigation
-import com.yurhel.alex.anotes.ui.SyncActionTypes
+import com.yurhel.alex.anotes.ui.utils.SyncActionTypes
 import com.yurhel.alex.anotes.ui.theme.ANotesTheme
+import db.Database
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.util.Date
@@ -32,7 +34,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        val db = LocalDB.getInstance(getSqlDriver(applicationContext))
+        val db = LocalDB.getInstance(AndroidSqliteDriver(Database.Schema, applicationContext, "notes.db"))
 
         setContent {
             val vm: MainViewModel by viewModels {
@@ -61,7 +63,6 @@ class MainActivity : ComponentActivity() {
                     },
                     // Widget stuff
                     widgetIdWhenCreated = intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID),
-                    noteCreatedDateFromWidget = intent.getStringExtra("noteCreated") ?: "",
                     callInitUpdateWidget = { isInitAction, widgetId, noteCreated, note ->
                         lifecycleScope.launch(Dispatchers.Default) {
                             // Update widget

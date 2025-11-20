@@ -116,3 +116,17 @@ val lightColorScheme = lightColorScheme(
     onErrorContainer = replyLightOnErrorContainer,
     outline = replyLightOutline
 )
+
+val predefinedColors = listOf(
+    Color.Black,
+    Color.Green,
+    Color.Magenta,
+    Color.Cyan,
+    Color.Yellow,
+    Color.Red,
+    Color.DarkGray,
+    Color.White,
+    Color.Gray,
+    Color.Blue,
+    Color.LightGray
+)

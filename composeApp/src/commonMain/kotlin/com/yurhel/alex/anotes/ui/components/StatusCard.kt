@@ -1,6 +1,5 @@
 package com.yurhel.alex.anotes.ui.components
 
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -16,7 +15,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.yurhel.alex.anotes.data.StatusObj
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun StatusCard(
     selectedStatusId: Int,

@@ -5,9 +5,16 @@ import androidx.compose.animation.ExitTransition
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.yurhel.alex.anotes.ui.screen_board.BoardScreen
+import com.yurhel.alex.anotes.ui.screen_board.BoardViewModel
+import com.yurhel.alex.anotes.ui.screen_swipes.SwipeNotesScreen
+import com.yurhel.alex.anotes.ui.screen_swipes.SwipeNotesViewModel
+import com.yurhel.alex.anotes.ui.utils.NoteType
+import com.yurhel.alex.anotes.ui.utils.ScreenObj
 
 @Composable
 fun Navigation(vm: MainViewModel) {
@@ -15,64 +22,72 @@ fun Navigation(vm: MainViewModel) {
 
     NavHost(
         navController = nav,
-        startDestination = if (vm.noteCreatedDateFromWidget != "") {
-            ScreenObj.Note.name
-        } else {
-            ScreenObj.Main.name
-        },
+        startDestination = ScreenObj.Main.name,
         enterTransition = { EnterTransition.None },
         exitTransition = { ExitTransition.None },
         popEnterTransition = { EnterTransition.None },
         popExitTransition = { ExitTransition.None },
         modifier = Modifier.fillMaxSize()
     ) {
-
         composable(route = ScreenObj.Main.name) {
             NotesScreen(
                 vm = vm,
                 newNoteClicked = {
-                    nav.navigate(ScreenObj.Note.name)
+                    vm.prepareNote(it)
+                    when (it) {
+                        NoteType.Note.name -> nav.navigate(ScreenObj.Note.name)
+                        NoteType.Tasks.name -> {
+                            vm.updateTasksData(false)
+                            nav.navigate(ScreenObj.Tasks.name)
+                        }
+                        NoteType.Draw.name -> nav.navigate(ScreenObj.Draw.name)
+                        NoteType.Swipe.name -> nav.navigate(ScreenObj.Swipe.name)
+                    }
                 },
                 openNoteClicked = {
-                    if (vm.checkIfNoteHaveTasks(vm.selectedNote.value!!)) {
-                        vm.updateTasksData(false)
-                        nav.navigate(ScreenObj.Tasks.name)
-                    } else {
-                        nav.navigate(ScreenObj.Note.name)
+                    vm.prepareNote(null)
+                    when (vm.checkNoteType(vm.selectedNote.value!!)) {
+                        NoteType.Note -> nav.navigate(ScreenObj.Note.name)
+                        NoteType.Tasks -> {
+                            vm.updateTasksData(false)
+                            nav.navigate(ScreenObj.Tasks.name)
+                        }
+                        NoteType.Draw -> nav.navigate(ScreenObj.Draw.name)
+                        NoteType.Swipe -> nav.navigate(ScreenObj.Swipe.name)
                     }
                 }
             )
         }
-
         composable(route = ScreenObj.Note.name) {
             NoteScreen(
                 vm = vm,
                 onBack = {
-                    // When an app in opened from widget (only on Android)
-                    // Enable normal app functionality after returning from note
-                    if (vm.noteCreatedDateFromWidget != "") vm.noteCreatedDateFromWidget = ""
-                    if (it) vm.updateNotesScreenScrollItem(Pair(0,0))
                     nav.navigate(ScreenObj.Main.name)
-                },
-                toTasks = {
-                    vm.updateTasksData(false)
-                    nav.navigate(ScreenObj.Tasks.name)
                 }
             )
         }
-
         composable(route = ScreenObj.Tasks.name) {
             TasksScreen(
                 vm = vm,
                 onBack = {
-                    // When an app in opened from widget
-                    // Enable normal app functionality after returning from note
-                    if (vm.noteCreatedDateFromWidget != "") vm.noteCreatedDateFromWidget = ""
-
                     nav.navigate(ScreenObj.Main.name)
-                },
-                toNote = {
-                    nav.navigate(ScreenObj.Note.name)
+                }
+            )
+        }
+        composable(route = ScreenObj.Draw.name) {
+            BoardScreen(
+                vm = vm,
+                vmBoard = viewModel(factory = BoardViewModel.Factory(vm)),
+                onBack = {
+                    nav.navigate(ScreenObj.Main.name)
+                }
+            )
+        }
+        composable(route = ScreenObj.Swipe.name) {
+            SwipeNotesScreen(
+                vm = viewModel(factory = SwipeNotesViewModel.Factory(vm)),
+                onBack = {
+                    nav.navigate(ScreenObj.Main.name)
                 }
             )
         }

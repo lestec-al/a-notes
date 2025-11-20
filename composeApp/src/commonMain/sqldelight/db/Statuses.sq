@@ -17,7 +17,6 @@ update:
 UPDATE statusesTable SET title = ?, color = ?, note = ?
 WHERE id = ?;
 
-
 delete:
 DELETE FROM statusesTable
 WHERE id = ?;
@@ -28,7 +27,6 @@ DELETE FROM statusesTable;
 deleteManyByNote:
 DELETE FROM statusesTable
 WHERE note = ?;
-
 
 getAll:
 SELECT * FROM statusesTable;
