@@ -76,7 +76,7 @@ class MainActivity : ComponentActivity() {
                             // Initialize widget
                             if (isInitAction) {
                                 // Log widget to DB
-                                db.insertWidget(WidgetObj(widgetId = widgetId, noteCreated = noteCreated))
+                                db.widget.insert(WidgetObj(widgetId = widgetId, noteCreated = noteCreated))
                                 // Create the return intent, set it with the activity result, finish the activity
                                 setResult(RESULT_OK, Intent())
                                 finish()

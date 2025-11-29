@@ -1,4 +1,4 @@
-package com.yurhel.alex.anotes.ui.components
+package com.yurhel.alex.anotes.ui.screen_tasks.components
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
@@ -12,6 +12,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.yurhel.alex.anotes.data.StatusObj
 import com.yurhel.alex.anotes.data.TasksObj
+import com.yurhel.alex.anotes.ui.components.CardOnClick
 
 @Composable
 fun TaskCard(
@@ -38,7 +39,7 @@ fun TaskCard(
                 drawCircle(
                     color = try {
                         Color(statuses.find { it.id == task.status }!!.color)
-                    } catch (e: Exception) {
+                    } catch (_: Exception) {
                         onBackgroundColor
                     }
                 )

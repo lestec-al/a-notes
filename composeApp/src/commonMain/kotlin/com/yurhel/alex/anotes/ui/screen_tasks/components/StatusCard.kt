@@ -1,4 +1,4 @@
-package com.yurhel.alex.anotes.ui.components
+package com.yurhel.alex.anotes.ui.screen_tasks.components
 
 import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
@@ -19,8 +19,8 @@ import com.yurhel.alex.anotes.data.StatusObj
 fun StatusCard(
     selectedStatusId: Int,
     status: StatusObj,
-    onClick: () -> Unit = {},
-    onLongClicked: () -> Unit = {}
+    onClick: (StatusObj) -> Unit = {},
+    onLongClicked: (StatusObj) -> Unit = {}
 ) {
     Card(
         colors = CardDefaults.cardColors(
@@ -31,8 +31,12 @@ fun StatusCard(
             .padding(5.dp)
             .clip(CardDefaults.shape)
             .combinedClickable(
-                onLongClick = onLongClicked,
-                onClick = onClick
+                onLongClick = {
+                    onLongClicked(status)
+                },
+                onClick = {
+                    onClick(status)
+                }
             ).let {
                 // Border for selected status
                 if (status.id == selectedStatusId) {

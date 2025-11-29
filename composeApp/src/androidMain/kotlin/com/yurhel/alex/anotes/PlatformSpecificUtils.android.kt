@@ -83,7 +83,7 @@ actual fun ImageBitmap.toBase64(): String? {
         bitmap.compress(Bitmap.CompressFormat.PNG, 100, byteArrayOutputStream)
         val byteArray = byteArrayOutputStream.toByteArray()
         Base64.encodeToString(byteArray, Base64.DEFAULT)
-    } catch (e: Exception) {
+    } catch (_: Exception) {
         null
     }
 }

@@ -21,7 +21,7 @@ class DriveUtils(
             try {
                 before()
 
-                val appSettings = vm.db.getSettings()
+                val appSettings = vm.db.settings.getSettings()
                 val data = drive.getData()
 
                 if (data.isServiceOK) {
@@ -30,7 +30,7 @@ class DriveUtils(
                         if (data.modifiedTime != null) {
                             // Update local
                             vm.db.importDB(data.data.toString())
-                            vm.db.updateReceived(data.modifiedTime)
+                            vm.db.settings.updateReceived(data.modifiedTime)
                             vm.getDbNotes("")
                             vm.getAllTasks()
                             vm.getAllStatuses()
@@ -72,7 +72,7 @@ class DriveUtils(
         if (isExport) {
             // Send data
             drive.sendData(vm.db.exportDB().toString())
-            vm.db.updateEdit(false)
+            vm.db.settings.updateEdit(false)
         }
         // Get data
         val data = drive.getData()
@@ -83,6 +83,6 @@ class DriveUtils(
             vm.getAllTasks()
             vm.getAllStatuses()
         }
-        vm.db.updateReceived(data.modifiedTime)
+        vm.db.settings.updateReceived(data.modifiedTime)
     }
 }

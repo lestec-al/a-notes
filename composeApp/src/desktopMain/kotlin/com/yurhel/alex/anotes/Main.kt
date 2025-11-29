@@ -32,7 +32,7 @@ fun main() = application {
     try { Database.Schema.create(driver) } catch (_: Exception) {}
     val db = LocalDB.getInstance(driver)
 
-    val screen = db.getScreen()
+    val screen = db.settings.getScreen()
     val screenState = rememberWindowState(
         position = WindowPosition(screen.posX, screen.posY),
         width = screen.width,
@@ -41,7 +41,7 @@ fun main() = application {
 
     Window(
         onCloseRequest = {
-            db.setScreen(
+            db.settings.setScreen(
                 width = screenState.size.width.value.toLong(),
                 height = screenState.size.height.value.toLong(),
                 posX = screenState.position.x.value.toLong(),

@@ -51,7 +51,7 @@ class BoardViewModel(val vm: MainViewModel) : ViewModel() {
     var isLoading by mutableStateOf(false)
         private set
 
-    private var noteId = vm.selectedNote.value!!.id
+    private var noteId = vm.selectedNote!!.id
 
     init {
         launch {
@@ -91,14 +91,14 @@ class BoardViewModel(val vm: MainViewModel) : ViewModel() {
     fun undo() {
         launch {
             // Undo local
-            for (i in 1..10) {
+            (1..10).forEach {
                 try {
                     localDraw.removeLast()
                 } catch (_: Exception) {}
             }
             // Undo in DB
             viewModelScope.launch {
-                for (i in 1..10) {
+                (1..10).forEach {
                     vm.db.board.delLastDraw()
                 }
             }

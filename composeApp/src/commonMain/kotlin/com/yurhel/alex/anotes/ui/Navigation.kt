@@ -13,8 +13,9 @@ import com.yurhel.alex.anotes.ui.screen_board.BoardScreen
 import com.yurhel.alex.anotes.ui.screen_board.BoardViewModel
 import com.yurhel.alex.anotes.ui.screen_swipes.SwipeNotesScreen
 import com.yurhel.alex.anotes.ui.screen_swipes.SwipeNotesViewModel
+import com.yurhel.alex.anotes.ui.screen_tasks.TasksScreen
+import com.yurhel.alex.anotes.ui.screen_tasks.TasksViewModel
 import com.yurhel.alex.anotes.ui.utils.NoteType
-import com.yurhel.alex.anotes.ui.utils.ScreenObj
 
 @Composable
 fun Navigation(vm: MainViewModel) {
@@ -22,73 +23,50 @@ fun Navigation(vm: MainViewModel) {
 
     NavHost(
         navController = nav,
-        startDestination = ScreenObj.Main.name,
+        startDestination = "notes",
         enterTransition = { EnterTransition.None },
         exitTransition = { ExitTransition.None },
         popEnterTransition = { EnterTransition.None },
         popExitTransition = { ExitTransition.None },
         modifier = Modifier.fillMaxSize()
     ) {
-        composable(route = ScreenObj.Main.name) {
+        composable(route = "notes") {
             NotesScreen(
                 vm = vm,
                 newNoteClicked = {
                     vm.prepareNote(it)
-                    when (it) {
-                        NoteType.Note.name -> nav.navigate(ScreenObj.Note.name)
-                        NoteType.Tasks.name -> {
-                            vm.updateTasksData(false)
-                            nav.navigate(ScreenObj.Tasks.name)
-                        }
-                        NoteType.Draw.name -> nav.navigate(ScreenObj.Draw.name)
-                        NoteType.Swipe.name -> nav.navigate(ScreenObj.Swipe.name)
-                    }
+                    nav.navigate(it.name)
                 },
-                openNoteClicked = {
+                openExistingNoteClicked = {
+                    vm.selectNote(it)
                     vm.prepareNote(null)
-                    when (vm.checkNoteType(vm.selectedNote.value!!)) {
-                        NoteType.Note -> nav.navigate(ScreenObj.Note.name)
-                        NoteType.Tasks -> {
-                            vm.updateTasksData(false)
-                            nav.navigate(ScreenObj.Tasks.name)
-                        }
-                        NoteType.Draw -> nav.navigate(ScreenObj.Draw.name)
-                        NoteType.Swipe -> nav.navigate(ScreenObj.Swipe.name)
-                    }
-                }
+                    nav.navigate(vm.checkNoteType(vm.selectedNote!!).name)
+                },
+                onBack = vm.callExit
             )
         }
-        composable(route = ScreenObj.Note.name) {
+        composable(route = NoteType.Note.name) {
             NoteScreen(
                 vm = vm,
-                onBack = {
-                    nav.navigate(ScreenObj.Main.name)
-                }
+                onBack = nav::popBackStack
             )
         }
-        composable(route = ScreenObj.Tasks.name) {
+        composable(route = NoteType.Tasks.name) {
             TasksScreen(
-                vm = vm,
-                onBack = {
-                    nav.navigate(ScreenObj.Main.name)
-                }
+                vm = viewModel(factory = TasksViewModel.Factory(vm)),
+                onBack = nav::popBackStack
             )
         }
-        composable(route = ScreenObj.Draw.name) {
+        composable(route = NoteType.Draw.name) {
             BoardScreen(
-                vm = vm,
-                vmBoard = viewModel(factory = BoardViewModel.Factory(vm)),
-                onBack = {
-                    nav.navigate(ScreenObj.Main.name)
-                }
+                vm = viewModel(factory = BoardViewModel.Factory(vm)),
+                onBack = nav::popBackStack
             )
         }
-        composable(route = ScreenObj.Swipe.name) {
+        composable(route = NoteType.Swipe.name) {
             SwipeNotesScreen(
                 vm = viewModel(factory = SwipeNotesViewModel.Factory(vm)),
-                onBack = {
-                    nav.navigate(ScreenObj.Main.name)
-                }
+                onBack = nav::popBackStack
             )
         }
     }

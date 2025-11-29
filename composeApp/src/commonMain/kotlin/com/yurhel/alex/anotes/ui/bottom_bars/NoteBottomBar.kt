@@ -1,4 +1,4 @@
-package com.yurhel.alex.anotes.ui.components
+package com.yurhel.alex.anotes.ui.bottom_bars
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -44,13 +44,16 @@ import anotes.composeapp.generated.resources.copy
 import anotes.composeapp.generated.resources.created
 import anotes.composeapp.generated.resources.delete
 import anotes.composeapp.generated.resources.delete_info
+import anotes.composeapp.generated.resources.no
 import anotes.composeapp.generated.resources.note_archived
 import anotes.composeapp.generated.resources.note_restored
 import anotes.composeapp.generated.resources.restore_note_from_archive
 import anotes.composeapp.generated.resources.sent_note_to_archive
 import anotes.composeapp.generated.resources.updated
+import anotes.composeapp.generated.resources.yes
 import com.yurhel.alex.anotes.getOrientation
 import com.yurhel.alex.anotes.ui.MainViewModel
+import com.yurhel.alex.anotes.ui.components.BaseBottomBar
 import com.yurhel.alex.anotes.ui.utils.OrientationObj
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -70,6 +73,10 @@ fun NoteBottomBar(
     val clipboardManager = LocalClipboardManager.current
     var isInfoBottomSheetOpen by remember { mutableStateOf(false) }
     var infoBottomSheetText by remember { mutableStateOf("") }
+    var isNoteArchived by remember { mutableStateOf(vm.getIsSelectedNoteArchived()) }
+    val archive2 = stringResource(
+        if (isNoteArchived) Res.string.note_restored else Res.string.note_archived
+    )
     val orientation = getOrientation()
 
     BaseBottomBar {
@@ -80,7 +87,11 @@ fun NoteBottomBar(
             if (orientation == OrientationObj.Desktop) {
                 // Back button
                 IconButton(onClick = onBackButtonClick) {
-                    Icon(Icons.AutoMirrored.Outlined.ArrowBack, stringResource(Res.string.back), Modifier.size(30.dp))
+                    Icon(
+                        Icons.AutoMirrored.Outlined.ArrowBack,
+                        stringResource(Res.string.back),
+                        Modifier.size(30.dp)
+                    )
                 }
             }
             // Delete note
@@ -95,15 +106,13 @@ fun NoteBottomBar(
                 Icon(Icons.Outlined.Delete, stringResource(Res.string.delete), Modifier.size(30.dp))
             }
             // Sent note to archive
-            var isNoteArchived by remember { mutableStateOf(vm.getIsSelectedNoteArchived()) }
-            val archive2 = stringResource(
-                if (isNoteArchived) Res.string.note_restored else Res.string.note_archived
-            )
-            IconButton(onClick = {
-                vm.archiveOrUnarchiveNote(!isNoteArchived)
-                isNoteArchived = !isNoteArchived
-                vm.showToast(archive2)
-            }) {
+            IconButton(
+                onClick = {
+                    vm.archiveOrUnarchiveNote(!isNoteArchived)
+                    isNoteArchived = !isNoteArchived
+                    vm.showToast(archive2)
+                }
+            ) {
                 Icon(
                     imageVector = if (isNoteArchived) Icons.Outlined.Unarchive else Icons.Outlined.Archive,
                     contentDescription = stringResource(
@@ -116,11 +125,14 @@ fun NoteBottomBar(
             if (onGetTextButtonClick != null) {
                 IconButton(
                     onClick = {
-                        val noteStr = onGetTextButtonClick()
-                        clipboardManager.setText(buildAnnotatedString { append(text = noteStr) })
+                        clipboardManager.setText(buildAnnotatedString { append(text = onGetTextButtonClick()) })
                     }
                 ) {
-                    Icon(Icons.Default.CopyAll, stringResource(Res.string.copy), Modifier.size(30.dp))
+                    Icon(
+                        Icons.Default.CopyAll,
+                        stringResource(Res.string.copy),
+                        Modifier.size(30.dp)
+                    )
                 }
             }
             // Additional buttons
@@ -130,7 +142,7 @@ fun NoteBottomBar(
                 }
             }
         }
-        // Note updated text ???
+        // Note updated text
         Column(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.End,
@@ -158,9 +170,9 @@ fun NoteBottomBar(
                             // Open info about note
                             coroutineScope.launch {
                                 infoBottomSheetText = """
-                                        ${getString(Res.string.updated)}: ${vm.formatDate(vm.getNoteDate())}
-                                        ${getString(Res.string.created)}: ${vm.formatDate(vm.getNoteDate(true))}
-                                    """.trimIndent()
+                                    ${getString(Res.string.updated)}: ${vm.formatDate(vm.getNoteDate())}
+                                    ${getString(Res.string.created)}: ${vm.formatDate(vm.getNoteDate(true))}
+                                """.trimIndent()
                                 isInfoBottomSheetOpen = true
                             }
                         }
@@ -177,9 +189,7 @@ fun NoteBottomBar(
     // BottomSheet
     if (isInfoBottomSheetOpen) {
         ModalBottomSheet(
-            onDismissRequest = {
-                isInfoBottomSheetOpen = false
-            },
+            onDismissRequest = { isInfoBottomSheetOpen = false },
             containerColor = MaterialTheme.colorScheme.surfaceVariant
         ) {
             Text(
@@ -197,12 +207,8 @@ fun NoteBottomBar(
                         .fillMaxWidth()
                         .padding(top = 20.dp)
                 ) {
-                    IconButton(
-                        onClick = {
-                            isInfoBottomSheetOpen = false
-                        }
-                    ) {
-                        Icon(Icons.Default.Close, "No", Modifier.size(30.dp))
+                    IconButton(onClick = { isInfoBottomSheetOpen = false }) {
+                        Icon(Icons.Default.Close, stringResource(Res.string.no), Modifier.size(30.dp))
                     }
                     IconButton(
                         onClick = {
@@ -210,7 +216,7 @@ fun NoteBottomBar(
                             onBackAfterDelete()
                         }
                     ) {
-                        Icon(Icons.Default.Check, "Yes", Modifier.size(30.dp))
+                        Icon(Icons.Default.Check, stringResource(Res.string.yes), Modifier.size(30.dp))
                     }
                 }
             }

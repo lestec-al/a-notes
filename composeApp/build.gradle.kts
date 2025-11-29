@@ -6,7 +6,6 @@ plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.jetbrainsCompose)
     alias(libs.plugins.compose.compiler)
-
     alias(libs.plugins.sqlDelight)
     alias(libs.plugins.kotlinSerialization)
 }
@@ -17,12 +16,13 @@ kotlin {
             jvmTarget.set(JvmTarget.JVM_11)
         }
     }
-    
+
     jvm("desktop")
-    
+
     sourceSets {
         val desktopMain by getting
-        
+        val desktopTest by getting
+
         androidMain.dependencies {
             implementation(compose.preview)
             implementation(libs.androidx.activity.compose)
@@ -57,6 +57,13 @@ kotlin {
             // SQL
             implementation(libs.sqldelight.coroutines)
         }
+        commonTest.dependencies {
+            implementation(libs.sqldelight.jvm)
+            implementation(libs.kotlin.test)
+            implementation(kotlin("test-annotations-common"))
+            @OptIn(org.jetbrains.compose.ExperimentalComposeLibrary::class)
+            implementation(compose.uiTest)
+        }
         desktopMain.dependencies {
             implementation(compose.desktop.currentOs)
             implementation(libs.kotlinx.coroutines.swing)
@@ -68,6 +75,9 @@ kotlin {
             implementation(libs.google.api.services.drive)
             // SQL
             implementation(libs.sqldelight.jvm)
+        }
+        desktopTest.dependencies {
+            implementation(compose.desktop.currentOs)
         }
     }
 

@@ -41,7 +41,7 @@ import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SimpleEditBottomSheet(
+fun SimpleEditSheet(
     onDismissRequest: () -> Unit,
     onSave: (String) -> Unit,
     infoText: String = "",

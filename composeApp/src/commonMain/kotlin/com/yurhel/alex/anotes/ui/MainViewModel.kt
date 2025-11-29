@@ -1,7 +1,13 @@
 package com.yurhel.alex.anotes.ui
 
+import androidx.compose.foundation.lazy.staggeredgrid.LazyStaggeredGridState
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.text.input.clearText
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.FormatListBulleted
+import androidx.compose.material.icons.outlined.Brush
+import androidx.compose.material.icons.outlined.Swipe
+import androidx.compose.material.icons.outlined.TextFields
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -9,18 +15,19 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
+import anotes.composeapp.generated.resources.Res
+import anotes.composeapp.generated.resources.draw
+import anotes.composeapp.generated.resources.note
+import anotes.composeapp.generated.resources.swipe_notes
+import anotes.composeapp.generated.resources.tasks
 import com.yurhel.alex.anotes.data.LocalDB
 import com.yurhel.alex.anotes.data.NoteObj
 import com.yurhel.alex.anotes.data.StatusObj
 import com.yurhel.alex.anotes.data.TasksObj
 import com.yurhel.alex.anotes.toImageBitmap
-import com.yurhel.alex.anotes.ui.utils.ActionTypes
-import com.yurhel.alex.anotes.ui.utils.Event
 import com.yurhel.alex.anotes.ui.utils.NoteType
 import com.yurhel.alex.anotes.ui.utils.SyncActionTypes
-import com.yurhel.alex.anotes.ui.utils.Types
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
@@ -28,32 +35,32 @@ import java.util.Date
 import kotlin.reflect.KClass
 
 class MainViewModel(
-    val showToast: (text: String) -> Unit,
     val db: LocalDB,
     val formatDate: (Long) -> String,
     val syncData: (SyncActionTypes, MainViewModel) -> Unit,
     // Next used only in Android
+    val showToast: (text: String) -> Unit,
     val callExit: () -> Unit,
     var widgetIdWhenCreated: Int,
-    val callInitUpdateWidget: (isInitAction: Boolean, widgetId: Int, noteCreated: String, note: NoteObj) -> Unit
+    val callInitUpdateWidget: (Boolean, Int, String, NoteObj) -> Unit
 ) : ViewModel() {
 
     class Factory(
-        private val showToast: (text: String) -> Unit,
         private val db: LocalDB,
         private val formatDate: (Long) -> String,
         private val syncData: (SyncActionTypes, MainViewModel) -> Unit,
+        private val showToast: (text: String) -> Unit,
         private val callExit: () -> Unit,
         private var widgetIdWhenCreated: Int,
-        private val callInitUpdateWidget: (isInitAction: Boolean, widgetId: Int, noteCreated: String, note: NoteObj) -> Unit
+        private val callInitUpdateWidget: (Boolean, Int, String, NoteObj) -> Unit
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: KClass<T>, extras: CreationExtras): T =
             MainViewModel(
-                showToast,
                 db,
                 formatDate,
                 syncData,
+                showToast,
                 callExit,
                 widgetIdWhenCreated,
                 callInitUpdateWidget
@@ -61,11 +68,10 @@ class MainViewModel(
     }
 
 
-    // DRIVE
-    private val _isSyncNow = MutableStateFlow(false)
-    val isSyncNow = _isSyncNow.asStateFlow()
+    var isSyncNow by mutableStateOf(false)
+        private set
     fun changeSyncNow(isSyncNow: Boolean) {
-        _isSyncNow.value = isSyncNow
+        this.isSyncNow = isSyncNow
     }
 
     private val _isSyncDialogOpen = MutableStateFlow(false)
@@ -75,47 +81,102 @@ class MainViewModel(
     }
 
 
-    private val _selectedNote: MutableStateFlow<NoteObj?> = MutableStateFlow(null)
-    val selectedNote = _selectedNote.asStateFlow()
-    fun selectNote(note: NoteObj?) {
-        _selectedNote.value = note
-    }
+    private var origNoteText = ""
 
+    var selectedNote by mutableStateOf<NoteObj?>(null)
+        private set
 
-    // NOTES
-    private val _searchText = MutableStateFlow("")
-    val searchText = _searchText.asStateFlow()
+    private val _allStatuses: MutableStateFlow<List<StatusObj>> = MutableStateFlow(emptyList())
+    val allStatuses = _allStatuses.asStateFlow()
 
     private val _appSettingsView: MutableStateFlow<String> = MutableStateFlow("col")
     val appSettingsView = _appSettingsView.asStateFlow()
 
-    fun getNotesView() {
-        viewModelScope.launch(Dispatchers.Default) {
-            _appSettingsView.value = db.getSettings().viewMode
-        }
+    private val _allNotes: MutableStateFlow<List<NoteObj>> = MutableStateFlow(emptyList())
+    val allNotes = _allNotes.asStateFlow()
+
+    private val _allTasks: MutableStateFlow<List<TasksObj>> = MutableStateFlow(emptyList())
+    val allTasks = _allTasks.asStateFlow()
+
+    var editText by mutableStateOf(TextFieldState(""))
+        private set
+
+    var notesScreenSavedScroll by mutableStateOf(Pair(0,0))
+        private set
+
+
+    var searchText by mutableStateOf("")
+        private set
+
+    var isSearchOn by mutableStateOf(false)
+        private set
+
+    var isNotesMenuExpanded by mutableStateOf(false)
+        private set
+
+    var isShowArchive by mutableStateOf(db.settings.getDataShowing() == "archive")
+        private set
+
+    var sortType by mutableStateOf(db.settings.getSortType())
+        private set
+
+    var sortArrow by mutableStateOf(db.settings.getSortArrow())
+        private set
+
+
+    fun updateSortArrow(it: String) {
+        sortArrow = it
+        db.settings.updateSortArrow(it)
+        getDbNotes("")
+    }
+
+    fun updateSortType(it: String) {
+        sortType = it
+        db.settings.updateSortType(it)
+        getDbNotes("")
+    }
+
+    fun hideArchive() {
+        isShowArchive = false
+        db.settings.updateDataShowing("all")
+        getDbNotes("")
+    }
+    fun showArchive() {
+        isShowArchive = true
+        db.settings.updateDataShowing("archive")
+        getDbNotes("")
+    }
+
+    fun updateIsNotesMenuExpanded(it: Boolean) {
+        isNotesMenuExpanded = it
+    }
+
+    fun updateIsSearchOn(it: Boolean) {
+        isSearchOn = it
+    }
+
+    fun selectNote(note: NoteObj?) {
+        selectedNote = note
     }
 
     fun changeNotesView() {
         viewModelScope.launch(Dispatchers.Default) {
-            val settings = db.getSettings()
+            val settings = db.settings.getSettings()
             val value = if (settings.viewMode == "grid") "col" else "grid"
-            db.updateViewMode(value)
+            db.settings.updateViewMode(value)
             _appSettingsView.value = value
         }
     }
 
-    private val _allNotes: MutableStateFlow<List<NoteObj>> = MutableStateFlow(emptyList())
-    val allNotes = _allNotes.asStateFlow()
-
     fun getDbNotes(query: String) {
         viewModelScope.launch(Dispatchers.Default) {
-            _searchText.value = query.replace("\n", "")
+            searchText = query.replace("\n", "")
 
-            val dataShowing = db.getDataShowing()
-            val sortType = db.getSortType()
-            val sortArrow = db.getSortArrow()
+            val dataShowing = db.settings.getDataShowing()
+            val sortType = db.settings.getSortType()
+            val sortArrow = db.settings.getSortArrow()
 
-            _allNotes.value = db.getNotes(query)
+            _allNotes.value = db.note.getAll(query)
                 .filter {
                     if (dataShowing == "archive") it.isArchived else !it.isArchived
                 }
@@ -128,30 +189,17 @@ class MainViewModel(
         }
     }
 
-    private val _allStatuses: MutableStateFlow<List<StatusObj>> = MutableStateFlow(emptyList())
-    val allStatuses = _allStatuses.asStateFlow()
-
     fun getAllStatuses() {
         viewModelScope.launch(Dispatchers.Default) {
-            _allStatuses.value = db.getAllStatuses()
+            _allStatuses.value = db.status.getAll()
         }
     }
-
-    private val _allTasks: MutableStateFlow<List<TasksObj>> = MutableStateFlow(emptyList())
-    val allTasks = _allTasks.asStateFlow()
 
     fun getAllTasks() {
         viewModelScope.launch(Dispatchers.Default) {
-            _allTasks.value = db.getAllTasks().sortedBy { it.position }
+            _allTasks.value = db.task.getAll().sortedBy { it.position }
         }
     }
-
-
-    // NOTE
-    private var origNoteText = ""
-
-    var editText by mutableStateOf(TextFieldState(""))
-        private set
 
     fun updateEditTextValue(
         text: String?,
@@ -171,17 +219,25 @@ class MainViewModel(
     /**
      * Creates a new note or selects an existing one.
      **/
-    fun prepareNote(newNoteType: String?) {
+    fun prepareNote(newNoteType: NoteType?) {
         val noteText: String = if (newNoteType != null) {
             // New note is opened. Create new note
             val date = Date().time
-            db.createNote(NoteObj(text = "", isArchived = false, dateCreate = date, dateUpdate = date, type = newNoteType))
-            db.updateEdit(true)
-            selectNote(db.getLastNote())
+            db.note.insert(
+                NoteObj(
+                    text = "",
+                    isArchived = false,
+                    dateCreate = date,
+                    dateUpdate = date,
+                    type = newNoteType.name
+                )
+            )
+            db.settings.updateEdit(true)
+            selectNote(db.note.getLast())
             ""
         } else {
             // Existed note open
-            _selectedNote.value!!.text
+            selectedNote!!.text
         }
         updateEditTextValue(noteText, 0)
         origNoteText = noteText
@@ -190,24 +246,24 @@ class MainViewModel(
     fun deleteNote() {
         updateEditTextValue(null)
         viewModelScope.launch(Dispatchers.Default) {
-            val note = _selectedNote.value
+            val note = selectedNote
             if (note != null) {
-                db.deleteNote(note.id)
+                db.note.delete(note.id)
                 selectNote(null)
                 // Delete tasks
-                db.deleteManyByNoteStatuses(note.id)
-                db.deleteManyByNoteTasks(note.id)
+                db.status.deleteManyByNote(note.id)
+                db.task.deleteManyByNote(note.id)
                 // Delete draws
                 db.board.delDraws(note.id)
                 db.board.delImage(note.id)
                 // For sync
-                db.updateEdit(true)
+                db.settings.updateEdit(true)
             }
         }
     }
 
     fun saveNote(isEditDateForcedUpdate: Boolean = false) {
-        val edit = _selectedNote.value
+        val edit = selectedNote
         val editTextStr = editText.text.toString()
         updateEditTextValue(null)
         viewModelScope.launch(Dispatchers.Default) {
@@ -223,200 +279,43 @@ class MainViewModel(
                 // Update selected note
                 selectNote(newEdit)
                 // Update note db
-                db.updateNote(newEdit)
+                db.note.update(newEdit)
                 // For sync
-                db.updateEdit(true)
+                db.settings.updateEdit(true)
                 // Update widget if it exist
-                val widgetId = db.getByCreatedWidget(noteCreated = edit.dateCreate.toString())?.widgetId
-                if (widgetId != null) callInitUpdateWidget(false, widgetId.toInt(), edit.dateCreate.toString(), newEdit)
+                val widgetId = db.widget.getByCreated(noteCreated = edit.dateCreate.toString())?.widgetId
+                if (widgetId != null) {
+                    callInitUpdateWidget(false, widgetId.toInt(), edit.dateCreate.toString(), newEdit)
+                }
             }
         }
     }
 
     fun archiveOrUnarchiveNote(isArchived: Boolean) {
-        val edit = _selectedNote.value
+        val edit = selectedNote
         viewModelScope.launch(Dispatchers.Default) {
             if (edit != null) {
                 val newEdit = edit.copy(isArchived = isArchived)
                 selectNote(newEdit)
-                db.updateNote(newEdit)
+                db.note.update(newEdit)
                 // For sync
-                db.updateEdit(true)
+                db.settings.updateEdit(true)
             }
         }
     }
 
     fun getIsSelectedNoteArchived(): Boolean {
-        return if (_selectedNote.value != null) _selectedNote.value!!.isArchived else false
+        return if (selectedNote != null) selectedNote!!.isArchived else false
     }
 
     fun getNoteDate(isCreatedDate: Boolean = false): Long {
-        return if (_selectedNote.value != null) {
-            if (isCreatedDate) {
-                _selectedNote.value!!.dateCreate
-            } else {
-                _selectedNote.value!!.dateUpdate
-            }
+        return if (selectedNote != null) {
+            if (isCreatedDate) selectedNote!!.dateCreate else selectedNote!!.dateUpdate
         } else {
             Date().time
         }
     }
 
-
-    // TASKS
-    private val _statuses: MutableStateFlow<List<StatusObj>> = MutableStateFlow(emptyList())
-    val statuses = _statuses.asStateFlow()
-
-    private val _selectedStatus: MutableStateFlow<Int> = MutableStateFlow(0)
-    val selectedStatus = _selectedStatus.asStateFlow()
-
-    fun selectStatus(statusId: Int) {
-        _selectedStatus.value = statusId
-    }
-
-    private val _tasks: MutableStateFlow<List<TasksObj>> = MutableStateFlow(emptyList())
-    val tasks = _tasks.asStateFlow()
-
-    fun clearTasks() {
-        _tasks.value = emptyList()
-    }
-
-    private val _editDialogVisibility = MutableStateFlow(false)
-    val editDialogVisibility = _editDialogVisibility.asStateFlow()
-
-    var editDialogDataType = Types.Task
-    var editDialogActionType = ActionTypes.Create
-    var editDialogObj: Any? = null
-
-    fun updateTasksData(isSaveNote: Boolean) {
-        val noteId = _selectedNote.value!!.id
-        // Get statuses
-        viewModelScope.launch(Dispatchers.Default) {
-            _statuses.value = db.getManyByNoteStatuses(noteId)
-        }
-        // Get tasks
-        val statusId = _selectedStatus.value
-        viewModelScope.launch(Dispatchers.Default) {
-            _tasks.value = if (statusId == 0) {
-                db.getManyByNoteTasks(noteId)
-            } else {
-                db.getManyByNoteAndStatusTasks(noteId, statusId)
-            }.sortedBy { it.position }
-        }
-        if (isSaveNote) saveNote(isEditDateForcedUpdate = true)
-    }
-
-    fun onEvent(event: Event) {
-        when (event) {
-            // Status
-            is Event.UpsertStatus -> {
-                viewModelScope.launch(Dispatchers.Default) {
-                    if (event.status.id == 0) db.insertStatus(event.status) else db.updateStatus(event.status)
-                    updateTasksData(true)
-                }
-            }
-            is Event.DeleteStatus -> {
-                viewModelScope.launch(Dispatchers.Default) {
-                    if (_selectedNote.value != null) {
-                        db.deleteStatus(event.status.id)
-                        db.deleteManyByStatusTasks(event.status.id)
-                        updateTasksData(true)
-                    }
-                }
-            }
-            // Task
-            is Event.UpsertTask -> {
-                viewModelScope.launch(Dispatchers.Default) {
-                    if (event.task.id == 0) {
-                        db.insertTask(
-                            event.task.copy(
-                                position = db.getHowManyTasksNoteHas(event.task.note)
-                            )
-                        )
-                    } else {
-                        db.updateTask(event.task)
-                    }
-                    delay(200)
-                    updateTasksData(true)
-                }
-            }
-            is Event.DeleteTask -> {
-                viewModelScope.launch(Dispatchers.Default) {
-                    db.deleteTask(event.task.id)
-                    delay(200)
-                    updateTasksData(true)
-                }
-            }
-            is Event.ChangePos -> {
-                viewModelScope.launch(Dispatchers.Default) {
-                    val newIdx = event.pos - 2
-                    val newPos = when {
-                        newIdx < 0 -> 0
-                        else -> newIdx
-                    }
-                    val oldPos = event.task.position
-                    _tasks.value
-                        .sortedBy { it.position }
-                        .forEach {
-                            if (newPos > oldPos) {
-                                // Next
-                                if (it.position in (oldPos + 1)..newPos) {
-                                    db.updateTask(it.copy(position = it.position - 1))
-                                }
-                            } else {
-                                // Prev
-                                if (it.position in newPos..<oldPos) {
-                                    db.updateTask(it.copy(position = it.position + 1))
-                                }
-                            }
-                        }
-                    db.updateTask(event.task.copy(position = newPos))
-                    updateTasksData(true)
-                    // Prevent of having problems while drag/drop, because of not unique position vars
-                    // Just set them to unique values
-                    launch {
-                        delay(1000)
-                        _tasks.value
-                            .sortedBy { it.position }
-                            .forEachIndexed { idx, it ->
-                                db.updateTask(it.copy(position = idx))
-                            }
-                    }
-                }
-            }
-            // Others
-            is Event.ShowEditDialog -> {
-                editDialogDataType = event.dataType
-                editDialogActionType = event.actionType
-                editDialogObj = event.selectedObj
-                _editDialogVisibility.value = true
-            }
-            Event.HideEditDialog -> {
-                _editDialogVisibility.value = false
-            }
-        }
-    }
-
-    var notesScreenSavedScroll by mutableStateOf(Pair(0,0))
-        private set
-    fun updateNotesScreenScrollItem(value: Pair<Int,Int>) {
-        notesScreenSavedScroll = value
-    }
-
-    fun getTaskTextForNote(): String {
-        return buildString {
-            append(_selectedNote.value?.text ?: "")
-            appendLine()
-            _tasks.value.forEach {
-                append(it.description)
-                appendLine()
-                appendLine()
-            }
-        }
-    }
-
-
-    // OTHERS
     fun checkNoteType(note: NoteObj): NoteType {
         return when(note.type) {
             NoteType.Note.name -> NoteType.Note
@@ -439,9 +338,41 @@ class MainViewModel(
 
     fun tryGetImage(noteId: Int) = db.board.getImage(noteId)?.toImageBitmap()
 
-    var isEditTextSheetOpen by mutableStateOf(false)
-        private set
-    fun updateIsEditSheetOpen(value: Boolean = false) {
-        isEditTextSheetOpen = value
+    fun updateNotesScreenScrollItem(scrollState: LazyStaggeredGridState) {
+        notesScreenSavedScroll = Pair(
+            scrollState.firstVisibleItemIndex,
+            scrollState.firstVisibleItemScrollOffset
+        )
+    }
+
+    fun getNotesScreenDropMenuItems(
+        scrollState: LazyStaggeredGridState,
+        newNoteClicked: (type: NoteType) -> Unit
+    ) = listOf(
+        Triple(Res.string.swipe_notes, Icons.Outlined.Swipe) {
+            newNoteClicked(NoteType.Swipe)
+            updateNotesScreenScrollItem(scrollState)
+        },
+        Triple(Res.string.draw, Icons.Outlined.Brush) {
+            newNoteClicked(NoteType.Draw)
+            updateNotesScreenScrollItem(scrollState)
+        },
+        Triple(Res.string.tasks, Icons.AutoMirrored.Outlined.FormatListBulleted) {
+            newNoteClicked(NoteType.Tasks)
+            updateNotesScreenScrollItem(scrollState)
+        },
+        Triple(Res.string.note, Icons.Outlined.TextFields) {
+            newNoteClicked(NoteType.Note)
+            updateNotesScreenScrollItem(scrollState)
+        }
+    )
+
+    fun initNotesScreen() {
+        getDbNotes("")
+        getAllTasks()
+        getAllStatuses()
+        viewModelScope.launch(Dispatchers.Default) {
+            _appSettingsView.value = db.settings.getSettings().viewMode
+        }
     }
 }

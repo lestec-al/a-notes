@@ -20,12 +20,10 @@ import kotlinx.serialization.json.put
 import kotlin.reflect.KClass
 
 class SwipeNotesViewModel(val vm: MainViewModel): ViewModel() {
-
     class Factory(val vm: MainViewModel) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
-        override fun <T : ViewModel> create(modelClass: KClass<T>, extras: CreationExtras): T = SwipeNotesViewModel(
-            vm = vm
-        ) as T
+        override fun <T : ViewModel> create(modelClass: KClass<T>, extras: CreationExtras): T =
+            SwipeNotesViewModel(vm = vm) as T
     }
 
     var editedSwipeTextId = -1
@@ -42,11 +40,11 @@ class SwipeNotesViewModel(val vm: MainViewModel): ViewModel() {
         private set
     var rightText by mutableStateOf("")
         private set
-    var noteText by mutableStateOf(getSwipesTitle(vm.selectedNote.value?.text ?: ""))
+    var noteText by mutableStateOf(getSwipesTitle(vm.selectedNote?.text ?: ""))
         private set
 
     var data by mutableStateOf(listOf<SwipeTextObj>().let {
-        importSwipesFromText(vm.selectedNote.value?.text ?: "") { leftText, leftColor, rightText, rightColor ->
+        importSwipesFromText(vm.selectedNote?.text ?: "") { leftText, leftColor, rightText, rightColor ->
             this.leftText = leftText
             this.leftColor = leftColor
             this.rightText = rightText

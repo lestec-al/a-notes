@@ -57,16 +57,16 @@ class NoteWidget : GlanceAppWidget() {
         super.onDelete(context, glanceId)
         // Delete widget entry from db
         withContext(Dispatchers.Default) {
-            LocalDB.getInstance(AndroidSqliteDriver(Database.Schema, context, "notes.db")).deleteByIdWidget(GlanceAppWidgetManager(context).getAppWidgetId(glanceId))
+            LocalDB.getInstance(AndroidSqliteDriver(Database.Schema, context, "notes.db")).widget.deleteById(GlanceAppWidgetManager(context).getAppWidgetId(glanceId))
         }
     }
 
     private fun updateWidgetData(context: Context, noteId: Int): Triple<List<StatusObj>, List<TasksObj>, String>? {
         val db = LocalDB.getInstance(AndroidSqliteDriver(Database.Schema, context, "notes.db"))
-        return db.getNoteById(noteId)?.let {
+        return db.note.getById(noteId)?.let {
             Triple(
-                db.getManyByNoteStatuses(noteId),
-                db.getManyByNoteTasks(noteId),
+                db.status.getManyByNote(noteId),
+                db.task.getManyByNote(noteId),
                 it.text
             )
         }
@@ -137,7 +137,7 @@ class NoteWidget : GlanceAppWidget() {
                                         .background(
                                             try {
                                                 Color(statuses.find { it.id == task.status }!!.color)
-                                            } catch (e: Exception) {
+                                            } catch (_: Exception) {
                                                 Color(
                                                     ColorProvider(androidx.glance.R.color.glance_colorOnBackground)
                                                         .getColor(context)
