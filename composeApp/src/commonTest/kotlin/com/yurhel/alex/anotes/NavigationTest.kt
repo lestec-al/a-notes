@@ -1,4 +1,4 @@
-package com.yurhel.alex.anotes.ui
+package com.yurhel.alex.anotes
 
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.test.ExperimentalTestApi
@@ -30,8 +30,11 @@ import anotes.composeapp.generated.resources.swipe_notes
 import anotes.composeapp.generated.resources.task
 import anotes.composeapp.generated.resources.tasks
 import anotes.composeapp.generated.resources.yes
-import app.cash.sqldelight.driver.jdbc.sqlite.JdbcSqliteDriver
+import app.cash.sqldelight.db.SqlDriver
 import com.yurhel.alex.anotes.data.LocalDB
+import com.yurhel.alex.anotes.ui.MainViewModel
+import com.yurhel.alex.anotes.ui.Navigation
+import com.yurhel.alex.anotes.ui.theme.ANotesTheme
 import db.Database
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -39,34 +42,35 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.getString
-import kotlin.test.AfterTest
-import kotlin.test.BeforeTest
-import kotlin.test.Test
+import org.junit.After
+import org.junit.Before
+import org.junit.Test
 
 class NavigationTest {
 
     private lateinit var database: Database
-    private lateinit var driver: JdbcSqliteDriver
+    private lateinit var driver: SqlDriver
 
-    @BeforeTest
+    @Before
     fun setup() {
-        driver = JdbcSqliteDriver(JdbcSqliteDriver.IN_MEMORY)
-        Database.Schema.create(driver)
-        database = Database(driver)
+        driver = getSqlTestDriver()
+        database = Database.Companion(driver)
     }
 
-    @AfterTest
+    @After
     fun tearDown() {
         driver.close()
     }
 
+    /* BEFORE RUNNING ON ANDROID:
+    - add backButton to noteBottomBar
+    - onMain() function make without runBlocking with Dispatchers.Main */
     @OptIn(ExperimentalTestApi::class)
     @Test
     fun testCrudWithUi() = runComposeUiTest {
-        // SETUP UI
         val lifecycleOwner = runBlocking(Dispatchers.Main) { TestLifecycleOwner(Lifecycle.State.RESUMED) }
         val vm = MainViewModel(
-            db = LocalDB.getInstance(driver),
+            db = LocalDB.Companion.getInstance(driver),
             formatDate = { it.toString() },
             syncData = { _, _ -> },
             showToast = {},
@@ -76,36 +80,51 @@ class NavigationTest {
         )
         setContent {
             CompositionLocalProvider(LocalLifecycleOwner provides lifecycleOwner) {
-                Navigation(vm)
+                ANotesTheme {
+                    Navigation(vm)
+                }
             }
         }
+
 
         // SETUP TEST
         val openDropButtons = runBlocking { getString(Res.string.open_drop_buttons) }
         val closeDropButtons = runBlocking { getString(Res.string.close_drop_buttons) }
-        val backButton = runBlocking { getString(Res.string.back) } // Only on desktop. On mobile it's need to find system back click !
+        val backButton = runBlocking { getString(Res.string.back) }
         val saveButton = runBlocking { getString(Res.string.save) }
         val editNoteTitle = runBlocking { getString(Res.string.edit_note) }
         val deleteButton = runBlocking { getString(Res.string.delete) }
         val yes = runBlocking { getString(Res.string.yes) }
 
-        fun onMain(block: suspend CoroutineScope.() -> Unit) {
-            runBlocking(Dispatchers.Main, block)
-        }
         fun delay500() {
             runBlocking { delay(500) }
         }
+
+        // For desktop
+        //fun onMain(block: suspend CoroutineScope.() -> Unit) {
+        //    runBlocking(Dispatchers.Main, block)
+        //}
+        // For android
+        fun onMain(block: () -> Unit) {
+            block()
+            delay500()
+        }
+
         fun clickOnDropButton(target: StringResource) {
-            onNodeWithContentDescription(openDropButtons).performClick()
+            onMain { onNodeWithContentDescription(openDropButtons).performClick() }
             val targetStr = runBlocking { getString(target) }
+            delay500()
             onMain { onNodeWithContentDescription(targetStr).performClick() }
         }
+
         fun editTitle(strForInput: String) {
             onMain { onNodeWithContentDescription(editNoteTitle).performClick() }
             onNodeWithText("").assertExists()
             onNodeWithText("").performTextInput(strForInput)
+            delay500()
             onMain { onNodeWithContentDescription(saveButton).performClick() }
         }
+
         fun openAndDeleteNote(noteText: String, withTextAssert: Boolean = true) {
             onMain { onNodeWithText(noteText).performClick() }
             delay500()
@@ -171,6 +190,7 @@ class NavigationTest {
 
         val createSwipeTask = runBlocking { getString(Res.string.create) + " " + getString(Res.string.task).lowercase() }
         onMain { onNodeWithContentDescription(createSwipeTask).performClick() }
+        delay500()
         onNodeWithText("").assertExists()
         val textForSwipeTask = "Swipe task text..."
         onNodeWithText("").performTextInput(textForSwipeTask)
