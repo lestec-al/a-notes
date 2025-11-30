@@ -110,6 +110,10 @@ class NavigationTest {
             delay500()
         }
 
+        fun onBack() {
+            onMain { onNodeWithContentDescription(backButton).performClick() }
+        }
+
         fun clickOnDropButton(target: StringResource) {
             onMain { onNodeWithContentDescription(openDropButtons).performClick() }
             val targetStr = runBlocking { getString(target) }
@@ -150,7 +154,7 @@ class NavigationTest {
         clickOnDropButton(Res.string.note)
         onNodeWithText("").performTextInput(textForNote)
         onNodeWithText(textForNote).assertExists()
-        onMain { onNodeWithContentDescription(backButton).performClick() }
+        onBack()
         onNodeWithText(textForNote).assertExists()
 
 
@@ -177,7 +181,7 @@ class NavigationTest {
         onNodeWithText(textForStatus).assertExists()
         onNodeWithText(textForTask).assertExists()
 
-        onMain { onNodeWithContentDescription(backButton).performClick() }
+        onBack()
         onNodeWithText(textForTaskTitle).assertExists()
         onNodeWithText(textForTask).assertExists()
 
@@ -200,7 +204,7 @@ class NavigationTest {
         onNodeWithText(swipesTitle).assertExists()
         onNodeWithText(textForSwipeTask).assertExists()
 
-        onMain { onNodeWithContentDescription(backButton).performClick() }
+        onBack()
         onNodeWithText(swipesTitle).assertExists()
         onNodeWithText(textForSwipeTask).assertExists()
 
@@ -226,7 +230,7 @@ class NavigationTest {
 
         delay500()
 
-        onMain { onNodeWithContentDescription(backButton).performClick() }
+        onBack()
         delay500()
         onNodeWithText(drawTitle).assertExists()
 
