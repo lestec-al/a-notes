@@ -34,8 +34,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalClipboardManager
-import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import anotes.composeapp.generated.resources.Res
@@ -55,6 +54,8 @@ import com.yurhel.alex.anotes.getOrientation
 import com.yurhel.alex.anotes.ui.MainViewModel
 import com.yurhel.alex.anotes.ui.components.BaseBottomBar
 import com.yurhel.alex.anotes.ui.utils.OrientationObj
+import com.yurhel.alex.anotes.formatDate
+import com.yurhel.alex.anotes.copyToClipboard
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.getString
@@ -64,13 +65,13 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 fun NoteBottomBar(
     vm: MainViewModel,
-    coroutineScope: CoroutineScope,
+    scope: CoroutineScope,
     onBackAfterDelete: () -> Unit,
     onBackButtonClick: () -> Unit,
     onGetTextButtonClick: (() -> String)?,
     additionalButtons: List<Triple<String, ImageVector, () -> Unit>>
 ) {
-    val clipboardManager = LocalClipboardManager.current
+    val clipboard = LocalClipboard.current
     var isInfoBottomSheetOpen by remember { mutableStateOf(false) }
     var infoBottomSheetText by remember { mutableStateOf("") }
     var isNoteArchived by remember { mutableStateOf(vm.getIsSelectedNoteArchived()) }
@@ -78,13 +79,15 @@ fun NoteBottomBar(
         if (isNoteArchived) Res.string.note_restored else Res.string.note_archived
     )
     val orientation = getOrientation()
+    val dateUpdated = formatDate(vm.getNoteDate())
+    val dateCreated = formatDate(vm.getNoteDate(true))
 
     BaseBottomBar {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
-            if (orientation == OrientationObj.Desktop) {
+            if (orientation == OrientationObj.Desktop || vm.isTest) {
                 // Back button
                 IconButton(onClick = onBackButtonClick) {
                     Icon(
@@ -97,7 +100,7 @@ fun NoteBottomBar(
             // Delete note
             IconButton(
                 onClick = {
-                    coroutineScope.launch {
+                    scope.launch {
                         infoBottomSheetText = getString(Res.string.delete_info)
                         isInfoBottomSheetOpen = true
                     }
@@ -125,7 +128,7 @@ fun NoteBottomBar(
             if (onGetTextButtonClick != null) {
                 IconButton(
                     onClick = {
-                        clipboardManager.setText(buildAnnotatedString { append(text = onGetTextButtonClick()) })
+                        scope.launch { onGetTextButtonClick().copyToClipboard(clipboard) }
                     }
                 ) {
                     Icon(
@@ -153,11 +156,11 @@ fun NoteBottomBar(
             if (orientation == OrientationObj.Desktop) {
                 // Only for desktop
                 Text(
-                    text = "${stringResource(Res.string.updated)}: ${vm.formatDate(vm.getNoteDate())}",
+                    text = "${stringResource(Res.string.updated)}: $dateUpdated",
                     style = MaterialTheme.typography.labelMedium
                 )
                 Text(
-                    text = "${stringResource(Res.string.created)}: ${vm.formatDate(vm.getNoteDate(true))}",
+                    text = "${stringResource(Res.string.created)}: $dateCreated",
                     style = MaterialTheme.typography.labelMedium
                 )
             } else {
@@ -168,17 +171,17 @@ fun NoteBottomBar(
                         .clip(CircleShape)
                         .clickable {
                             // Open info about note
-                            coroutineScope.launch {
+                            scope.launch {
                                 infoBottomSheetText = """
-                                    ${getString(Res.string.updated)}: ${vm.formatDate(vm.getNoteDate())}
-                                    ${getString(Res.string.created)}: ${vm.formatDate(vm.getNoteDate(true))}
+                                    ${getString(Res.string.updated)}: $dateUpdated
+                                    ${getString(Res.string.created)}: $dateCreated
                                 """.trimIndent()
                                 isInfoBottomSheetOpen = true
                             }
                         }
                 ) {
                     Text(
-                        text = vm.formatDate(vm.getNoteDate()),
+                        text = formatDate(vm.getNoteDate()),
                         style = MaterialTheme.typography.labelLarge,
                         modifier = Modifier.padding(5.dp)
                     )

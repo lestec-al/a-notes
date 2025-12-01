@@ -189,11 +189,11 @@ fun NotesScreen(
         isVisible = isSyncDialogOpen,
         infoText = Res.string.sync_collision,
         leftButton = Pair(Res.string.sync_drive) {
-            vm.syncData(SyncActionTypes.ManualImport, vm)
+            vm.syncData(SyncActionTypes.ManualImport)
             vm.openSyncDialog(false)
         },
         rightButton = Pair(Res.string.sync_local) {
-            vm.syncData(SyncActionTypes.ManualExport, vm)
+            vm.syncData(SyncActionTypes.ManualExport)
             vm.openSyncDialog(false)
         }
     )

@@ -1,7 +1,9 @@
 package com.yurhel.alex.anotes
 
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.SemanticsNodeInteractionsProvider
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -15,7 +17,6 @@ import androidx.lifecycle.LifecycleRegistry
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import anotes.composeapp.generated.resources.Res
 import anotes.composeapp.generated.resources.back
-import anotes.composeapp.generated.resources.close_drop_buttons
 import anotes.composeapp.generated.resources.create
 import anotes.composeapp.generated.resources.delete
 import anotes.composeapp.generated.resources.disable_all_actions
@@ -32,188 +33,201 @@ import anotes.composeapp.generated.resources.tasks
 import anotes.composeapp.generated.resources.yes
 import app.cash.sqldelight.db.SqlDriver
 import com.yurhel.alex.anotes.data.LocalDB
+import com.yurhel.alex.anotes.data.SettingsDataStore
 import com.yurhel.alex.anotes.ui.MainViewModel
 import com.yurhel.alex.anotes.ui.Navigation
-import com.yurhel.alex.anotes.ui.theme.ANotesTheme
 import db.Database
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.getString
-import org.junit.After
-import org.junit.Before
-import org.junit.Test
+import org.junit.AfterClass
+import org.junit.BeforeClass
+import java.io.File
+import kotlin.test.Test
 
 class NavigationTest {
 
-    private lateinit var database: Database
-    private lateinit var driver: SqlDriver
+    companion object {
+        private lateinit var database: Database
+        private lateinit var driver: SqlDriver
 
-    @Before
-    fun setup() {
-        driver = getSqlTestDriver()
-        database = Database.Companion(driver)
+        @BeforeClass
+        @JvmStatic
+        fun setup() {
+            driver = getSqlDriver()
+            database = Database.Companion(driver)
+        }
+
+        @AfterClass
+        @JvmStatic
+        fun closeDB() {
+            driver.close()
+            val db = File("notes.db")
+            val dbSets = File("notes.preferences_pb")
+            db.delete()
+            dbSets.delete()
+        }
     }
 
-    @After
-    fun tearDown() {
-        driver.close()
+    val openDropButtons = runBlocking { getString(Res.string.open_drop_buttons) }
+    val backButton = runBlocking { getString(Res.string.back) }
+    val saveButton = runBlocking { getString(Res.string.save) }
+    val editNoteTitle = runBlocking { getString(Res.string.edit_note) }
+    val deleteButton = runBlocking { getString(Res.string.delete) }
+    val yes = runBlocking { getString(Res.string.yes) }
+
+    // BEFORE RUNNING TEST (here are different setups for platforms)
+    fun onMain(
+        block: () -> Unit // Android
+//        block: suspend CoroutineScope.() -> Unit // Desktop
+    ) {
+        // Android
+        runBlocking {
+            delay(2000)
+            block()
+        }
+        // Desktop
+//        runBlocking(Dispatchers.Main) {
+//            block()
+//            delay(1000)
+//        }
+    }
+    fun clickOnDropButton(target: StringResource, semantics: SemanticsNodeInteractionsProvider) {
+        onMain { semantics.onNodeWithContentDescription(openDropButtons).performClick() }
+        val targetStr = runBlocking { getString(target) }
+        onMain { semantics.onNodeWithContentDescription(targetStr).performClick() }
+    }
+    fun openAndDeleteNote(noteText: String, withTextAssert: Boolean = true, semantics: SemanticsNodeInteractionsProvider) {
+        onMain { semantics.onNodeWithText(noteText).performClick() }
+        if (withTextAssert) semantics.onNodeWithText(noteText).assertExists()
+        onMain { semantics.onNodeWithContentDescription(deleteButton).performClick() }
+        onMain { semantics.onNodeWithContentDescription(yes).performClick() }
+        semantics.onNodeWithContentDescription(backButton).assertDoesNotExist()
+        semantics.onNodeWithText(noteText).assertDoesNotExist()
+    }
+    fun editTitle(strForInput: String, semantics: SemanticsNodeInteractionsProvider) {
+        onMain { semantics.onNodeWithContentDescription(editNoteTitle).performClick() }
+        semantics.onNodeWithText("").assertExists()
+        semantics.onNodeWithText("").performTextInput(strForInput)
+        onMain { semantics.onNodeWithContentDescription(saveButton).performClick() }
     }
 
-    /* BEFORE RUNNING ON ANDROID:
-    - add backButton to noteBottomBar
-    - onMain() function make without runBlocking with Dispatchers.Main */
+
+    class TestLifecycleOwner(private val initialState: Lifecycle.State) : LifecycleOwner {
+        private fun getRegistry() : LifecycleRegistry {
+            val registry = LifecycleRegistry(this)
+            registry.currentState = initialState
+            return registry
+        }
+        override val lifecycle: Lifecycle = getRegistry()
+    }
+
     @OptIn(ExperimentalTestApi::class)
-    @Test
-    fun testCrudWithUi() = runComposeUiTest {
+    fun ComposeUiTest.setUpUi() {
         val lifecycleOwner = runBlocking(Dispatchers.Main) { TestLifecycleOwner(Lifecycle.State.RESUMED) }
         val vm = MainViewModel(
             db = LocalDB.Companion.getInstance(driver),
-            formatDate = { it.toString() },
-            syncData = { _, _ -> },
+            settings = SettingsDataStore.getInstance { createDataStorePlatform() },
             showToast = {},
             callExit = {},
             widgetIdWhenCreated = 0,
-            callInitUpdateWidget = { _, _, _, _ -> }
+            callInitUpdateWidget = { _, _, _, _ -> },
+            isTest = true
         )
         setContent {
             CompositionLocalProvider(LocalLifecycleOwner provides lifecycleOwner) {
-                ANotesTheme {
-                    Navigation(vm)
-                }
+                Navigation(vm)
             }
         }
+    }
 
 
-        // SETUP TEST
-        val openDropButtons = runBlocking { getString(Res.string.open_drop_buttons) }
-        val closeDropButtons = runBlocking { getString(Res.string.close_drop_buttons) }
-        val backButton = runBlocking { getString(Res.string.back) }
-        val saveButton = runBlocking { getString(Res.string.save) }
-        val editNoteTitle = runBlocking { getString(Res.string.edit_note) }
-        val deleteButton = runBlocking { getString(Res.string.delete) }
-        val yes = runBlocking { getString(Res.string.yes) }
-
-        fun delay500() {
-            runBlocking { delay(500) }
-        }
-
-        // For desktop
-        //fun onMain(block: suspend CoroutineScope.() -> Unit) {
-        //    runBlocking(Dispatchers.Main, block)
-        //}
-        // For android
-        fun onMain(block: () -> Unit) {
-            block()
-            delay500()
-        }
-
-        fun onBack() {
-            onMain { onNodeWithContentDescription(backButton).performClick() }
-        }
-
-        fun clickOnDropButton(target: StringResource) {
-            onMain { onNodeWithContentDescription(openDropButtons).performClick() }
-            val targetStr = runBlocking { getString(target) }
-            delay500()
-            onMain { onNodeWithContentDescription(targetStr).performClick() }
-        }
-
-        fun editTitle(strForInput: String) {
-            onMain { onNodeWithContentDescription(editNoteTitle).performClick() }
-            onNodeWithText("").assertExists()
-            onNodeWithText("").performTextInput(strForInput)
-            delay500()
-            onMain { onNodeWithContentDescription(saveButton).performClick() }
-        }
-
-        fun openAndDeleteNote(noteText: String, withTextAssert: Boolean = true) {
-            onMain { onNodeWithText(noteText).performClick() }
-            delay500()
-            if (withTextAssert) onNodeWithText(noteText).assertExists()
-            onMain { onNodeWithContentDescription(deleteButton).performClick() }
-            onMain { onNodeWithContentDescription(yes).performClick() }
-            delay500()
-            onNodeWithContentDescription(backButton).assertDoesNotExist()
-            onNodeWithText(noteText).assertDoesNotExist()
-            delay500()
-        }
-
-
-        // DROP MENU
-        onNodeWithContentDescription(openDropButtons).performClick()
-        onNodeWithContentDescription(closeDropButtons).performClick()
-        onNodeWithContentDescription(openDropButtons).assertExists()
-
-
-        // NOTE
+    @OptIn(ExperimentalTestApi::class)
+    @Test
+    fun testNotes() = runComposeUiTest {
+        setUpUi()
         val textForNote = "New text for note..."
         onNodeWithText(textForNote).assertDoesNotExist()
-        clickOnDropButton(Res.string.note)
+        clickOnDropButton(Res.string.note, this)
         onNodeWithText("").performTextInput(textForNote)
         onNodeWithText(textForNote).assertExists()
-        onBack()
+        onMain { onNodeWithContentDescription(backButton).performClick() }
         onNodeWithText(textForNote).assertExists()
+        openAndDeleteNote(textForNote, semantics = this)
+    }
 
+    @OptIn(ExperimentalTestApi::class)
+    @Test
+    fun testTasks() = runComposeUiTest {
+        setUpUi()
 
-        // TASKS
-        clickOnDropButton(Res.string.tasks)
+        clickOnDropButton(Res.string.tasks, this)
 
         val textForTaskTitle = "Task Title"
-        editTitle(textForTaskTitle)
+        editTitle(textForTaskTitle, this)
 
-        clickOnDropButton(Res.string.status)
+        clickOnDropButton(Res.string.status, this)
         onNodeWithText("").assertExists()
         val textForStatus = "Status"
         onNodeWithText("").performTextInput(textForStatus)
         onMain { onNodeWithContentDescription(saveButton).performClick() }
 
-        clickOnDropButton(Res.string.task)
+        clickOnDropButton(Res.string.task, this)
         onNodeWithText("").assertExists()
         val textForTask = "Task text. Do something..."
         onNodeWithText("").performTextInput(textForTask)
         onMain { onNodeWithContentDescription(saveButton).performClick() }
 
-        delay500()
         onNodeWithText(textForTaskTitle).assertExists()
         onNodeWithText(textForStatus).assertExists()
         onNodeWithText(textForTask).assertExists()
 
-        onBack()
+        onMain { onNodeWithContentDescription(backButton).performClick() }
         onNodeWithText(textForTaskTitle).assertExists()
         onNodeWithText(textForTask).assertExists()
 
+        openAndDeleteNote(textForTaskTitle, semantics = this)
+    }
 
-        // SWIPES
-        clickOnDropButton(Res.string.swipe_notes)
+    @OptIn(ExperimentalTestApi::class)
+    @Test
+    fun testSwipes() = runComposeUiTest {
+        setUpUi()
+
+        clickOnDropButton(Res.string.swipe_notes, this)
 
         val swipesTitle = "Swipes Title"
-        editTitle(swipesTitle)
+        editTitle(swipesTitle, this)
 
         val createSwipeTask = runBlocking { getString(Res.string.create) + " " + getString(Res.string.task).lowercase() }
         onMain { onNodeWithContentDescription(createSwipeTask).performClick() }
-        delay500()
+
         onNodeWithText("").assertExists()
         val textForSwipeTask = "Swipe task text..."
         onNodeWithText("").performTextInput(textForSwipeTask)
         onMain { onNodeWithContentDescription(saveButton).performClick() }
 
-        delay500()
         onNodeWithText(swipesTitle).assertExists()
         onNodeWithText(textForSwipeTask).assertExists()
 
-        onBack()
+        onMain { onNodeWithContentDescription(backButton).performClick() }
         onNodeWithText(swipesTitle).assertExists()
         onNodeWithText(textForSwipeTask).assertExists()
 
+        openAndDeleteNote(swipesTitle, semantics = this)
+    }
 
-        // DRAW
-        clickOnDropButton(Res.string.draw)
+    @OptIn(ExperimentalTestApi::class)
+    @Test
+    fun testDraw() = runComposeUiTest {
+        setUpUi()
+
+        clickOnDropButton(Res.string.draw, this)
 
         val drawTitle = "Draw Title"
-        editTitle(drawTitle)
+        editTitle(drawTitle, this)
 
         val enableDraw = runBlocking { getString(Res.string.enable_draw) }
         onMain { onNodeWithContentDescription(enableDraw).performClick() }
@@ -228,26 +242,9 @@ class NavigationTest {
         val disableDraw = runBlocking { getString(Res.string.disable_all_actions) }
         onMain { onNodeWithContentDescription(disableDraw).performClick() }
 
-        delay500()
-
-        onBack()
-        delay500()
+        onMain { onNodeWithContentDescription(backButton).performClick() }
         onNodeWithText(drawTitle).assertExists()
 
-
-        // DELETE OBJs
-        openAndDeleteNote(textForNote)
-        openAndDeleteNote(textForTaskTitle)
-        openAndDeleteNote(swipesTitle)
-        openAndDeleteNote(drawTitle, false)
-    }
-
-    class TestLifecycleOwner(private val initialState: Lifecycle.State) : LifecycleOwner {
-        private fun getRegistry() : LifecycleRegistry {
-            val registry = LifecycleRegistry(this)
-            registry.currentState = initialState
-            return registry
-        }
-        override val lifecycle: Lifecycle = getRegistry()
+        openAndDeleteNote(drawTitle, false, semantics = this)
     }
 }

@@ -21,6 +21,8 @@ kotlin {
         instrumentedTestVariant.sourceSetTree.set(KotlinSourceSetTree.test)
     }
 
+    compilerOptions.freeCompilerArgs.add("-Xexpect-actual-classes")
+
     jvm("desktop")
 
     sourceSets {
@@ -60,6 +62,9 @@ kotlin {
             implementation(compose.materialIconsExtended)
             // SQL
             implementation(libs.sqldelight.coroutines)
+            // DataStore
+            implementation(libs.androidx.datastore)
+            implementation(libs.androidx.datastore.preferences)
         }
         commonTest.dependencies {
             implementation(libs.sqldelight.jvm)
@@ -106,8 +111,8 @@ android {
         applicationId = "com.yurhel.alex.anotes"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
-        versionCode = 3
-        versionName = "3"
+        versionCode = 4
+        versionName = "4.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
     packaging {
@@ -144,7 +149,7 @@ compose.desktop {
             includeAllModules = true
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
             packageName = "Anotes"
-            packageVersion = "3.0.0"
+            packageVersion = "4.0.0"
             description = "Desktop version ANotes app"
             copyright = "© 2025 Aliaksei Yurhel. All rights reserved."
 

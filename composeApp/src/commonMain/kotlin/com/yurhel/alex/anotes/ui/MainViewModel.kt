@@ -20,11 +20,14 @@ import anotes.composeapp.generated.resources.draw
 import anotes.composeapp.generated.resources.note
 import anotes.composeapp.generated.resources.swipe_notes
 import anotes.composeapp.generated.resources.tasks
+import com.yurhel.alex.anotes.Drive
 import com.yurhel.alex.anotes.data.LocalDB
 import com.yurhel.alex.anotes.data.NoteObj
+import com.yurhel.alex.anotes.data.SettingsDataStore
 import com.yurhel.alex.anotes.data.StatusObj
 import com.yurhel.alex.anotes.data.TasksObj
 import com.yurhel.alex.anotes.toImageBitmap
+import com.yurhel.alex.anotes.ui.utils.DriveUtils
 import com.yurhel.alex.anotes.ui.utils.NoteType
 import com.yurhel.alex.anotes.ui.utils.SyncActionTypes
 import kotlinx.coroutines.Dispatchers
@@ -36,8 +39,8 @@ import kotlin.reflect.KClass
 
 class MainViewModel(
     val db: LocalDB,
-    val formatDate: (Long) -> String,
-    val syncData: (SyncActionTypes, MainViewModel) -> Unit,
+    val settings: SettingsDataStore,
+    val isTest: Boolean,
     // Next used only in Android
     val showToast: (text: String) -> Unit,
     val callExit: () -> Unit,
@@ -47,8 +50,8 @@ class MainViewModel(
 
     class Factory(
         private val db: LocalDB,
-        private val formatDate: (Long) -> String,
-        private val syncData: (SyncActionTypes, MainViewModel) -> Unit,
+        private val settings: SettingsDataStore,
+        private val isTest: Boolean = false,
         private val showToast: (text: String) -> Unit,
         private val callExit: () -> Unit,
         private var widgetIdWhenCreated: Int,
@@ -56,21 +59,24 @@ class MainViewModel(
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: KClass<T>, extras: CreationExtras): T =
-            MainViewModel(
-                db,
-                formatDate,
-                syncData,
-                showToast,
-                callExit,
-                widgetIdWhenCreated,
-                callInitUpdateWidget
-            ) as T
+            MainViewModel(db, settings, isTest, showToast, callExit, widgetIdWhenCreated, callInitUpdateWidget) as T
+    }
+
+
+    var darkTheme by mutableStateOf<Boolean?>(null)
+        private set
+    init {
+        viewModelScope.launch { darkTheme = settings.getDarkTheme() }
+    }
+    fun updateDarkTheme(it: Boolean?) = viewModelScope.launch {
+        darkTheme = it
+        settings.setDarkTheme(it)
     }
 
 
     var isSyncNow by mutableStateOf(false)
         private set
-    fun changeSyncNow(isSyncNow: Boolean) {
+    fun updateSyncNow(isSyncNow: Boolean) {
         this.isSyncNow = isSyncNow
     }
 
@@ -78,6 +84,15 @@ class MainViewModel(
     val isSyncDialogOpen = _isSyncDialogOpen.asStateFlow()
     fun openSyncDialog(isOpen: Boolean) {
         _isSyncDialogOpen.value = isOpen
+    }
+
+    fun syncData(syncActionType: SyncActionTypes) {
+        val driveUtils = DriveUtils(this, Drive())
+        when (syncActionType) {
+            SyncActionTypes.Auto -> driveUtils.driveSyncAuto()
+            SyncActionTypes.ManualExport -> driveUtils.driveSyncManualThread(true)
+            SyncActionTypes.ManualImport -> driveUtils.driveSyncManualThread(false)
+        }
     }
 
 
@@ -114,36 +129,45 @@ class MainViewModel(
     var isNotesMenuExpanded by mutableStateOf(false)
         private set
 
-    var isShowArchive by mutableStateOf(db.settings.getDataShowing() == "archive")
+    var isShowArchive by mutableStateOf(false)
         private set
 
-    var sortType by mutableStateOf(db.settings.getSortType())
+    var sortType by mutableStateOf("")
         private set
 
-    var sortArrow by mutableStateOf(db.settings.getSortArrow())
+    var sortArrow by mutableStateOf("")
         private set
 
 
-    fun updateSortArrow(it: String) {
+    init {
+        viewModelScope.launch {
+            isShowArchive = settings.getDataShowing() == "archive"
+            sortType = settings.getSortType()
+            sortArrow = settings.getSortArrow()
+        }
+    }
+
+    fun updateSortArrow(it: String) = viewModelScope.launch {
         sortArrow = it
-        db.settings.updateSortArrow(it)
+        settings.setSortArrow(it)
         getDbNotes("")
     }
 
-    fun updateSortType(it: String) {
+    fun updateSortType(it: String) = viewModelScope.launch {
         sortType = it
-        db.settings.updateSortType(it)
+        settings.setSortType(it)
         getDbNotes("")
     }
 
-    fun hideArchive() {
+    fun hideArchive() = viewModelScope.launch {
         isShowArchive = false
-        db.settings.updateDataShowing("all")
+        settings.setDataShowing("all")
         getDbNotes("")
     }
-    fun showArchive() {
+
+    fun showArchive() = viewModelScope.launch {
         isShowArchive = true
-        db.settings.updateDataShowing("archive")
+        settings.setDataShowing("archive")
         getDbNotes("")
     }
 
@@ -159,46 +183,37 @@ class MainViewModel(
         selectedNote = note
     }
 
-    fun changeNotesView() {
-        viewModelScope.launch(Dispatchers.Default) {
-            val settings = db.settings.getSettings()
-            val value = if (settings.viewMode == "grid") "col" else "grid"
-            db.settings.updateViewMode(value)
-            _appSettingsView.value = value
-        }
+    fun changeNotesView() = viewModelScope.launch(Dispatchers.Default) {
+        val value = if (settings.getViewMode() == "grid") "col" else "grid"
+        settings.setViewMode(value)
+        _appSettingsView.value = value
     }
 
-    fun getDbNotes(query: String) {
-        viewModelScope.launch(Dispatchers.Default) {
-            searchText = query.replace("\n", "")
+    fun getDbNotes(query: String) = viewModelScope.launch(Dispatchers.Default) {
+        searchText = query.replace("\n", "")
 
-            val dataShowing = db.settings.getDataShowing()
-            val sortType = db.settings.getSortType()
-            val sortArrow = db.settings.getSortArrow()
+        val dataShowing = settings.getDataShowing()
+        val sortType = settings.getSortType()
+        val sortArrow = settings.getSortArrow()
 
-            _allNotes.value = db.note.getAll(query)
-                .filter {
-                    if (dataShowing == "archive") it.isArchived else !it.isArchived
-                }
-                .sortedBy {
-                    if (sortType == "dateUpdate") it.dateUpdate else it.dateCreate
-                }
-                .let {
-                    if (sortArrow == "ascending") it.reversed() else it
-                }
-        }
+        _allNotes.value = db.note.getAll(query)
+            .filter {
+                if (dataShowing == "archive") it.isArchived else !it.isArchived
+            }
+            .sortedBy {
+                if (sortType == "dateUpdate") it.dateUpdate else it.dateCreate
+            }
+            .let {
+                if (sortArrow == "ascending") it.reversed() else it
+            }
     }
 
-    fun getAllStatuses() {
-        viewModelScope.launch(Dispatchers.Default) {
-            _allStatuses.value = db.status.getAll()
-        }
+    fun getAllStatuses() = viewModelScope.launch(Dispatchers.Default) {
+        _allStatuses.value = db.status.getAll()
     }
 
-    fun getAllTasks() {
-        viewModelScope.launch(Dispatchers.Default) {
-            _allTasks.value = db.task.getAll().sortedBy { it.position }
-        }
+    fun getAllTasks() = viewModelScope.launch(Dispatchers.Default) {
+        _allTasks.value = db.task.getAll().sortedBy { it.position }
     }
 
     fun updateEditTextValue(
@@ -206,12 +221,11 @@ class MainViewModel(
         cursorIdx: Int? = null
     ) {
         editText.clearText()
-        if (text != null) {
-            editText.edit {
-                append(text)
-                if (cursorIdx != null) {
-                    try { placeCursorAfterCharAt(cursorIdx) } catch (_: Exception) {}
-                }
+        if (text == null) return
+        editText.edit {
+            append(text)
+            if (cursorIdx != null) {
+                try { placeCursorAfterCharAt(cursorIdx) } catch (_: Exception) {}
             }
         }
     }
@@ -232,7 +246,9 @@ class MainViewModel(
                     type = newNoteType.name
                 )
             )
-            db.settings.updateEdit(true)
+            viewModelScope.launch {
+                settings.setIsNotesEdited(true)
+            }
             selectNote(db.note.getLast())
             ""
         } else {
@@ -257,7 +273,7 @@ class MainViewModel(
                 db.board.delDraws(note.id)
                 db.board.delImage(note.id)
                 // For sync
-                db.settings.updateEdit(true)
+                settings.setIsNotesEdited(true)
             }
         }
     }
@@ -281,7 +297,7 @@ class MainViewModel(
                 // Update note db
                 db.note.update(newEdit)
                 // For sync
-                db.settings.updateEdit(true)
+                settings.setIsNotesEdited(true)
                 // Update widget if it exist
                 val widgetId = db.widget.getByCreated(noteCreated = edit.dateCreate.toString())?.widgetId
                 if (widgetId != null) {
@@ -299,7 +315,7 @@ class MainViewModel(
                 selectNote(newEdit)
                 db.note.update(newEdit)
                 // For sync
-                db.settings.updateEdit(true)
+                settings.setIsNotesEdited(true)
             }
         }
     }
@@ -308,9 +324,9 @@ class MainViewModel(
         return if (selectedNote != null) selectedNote!!.isArchived else false
     }
 
-    fun getNoteDate(isCreatedDate: Boolean = false): Long {
+    fun getNoteDate(created: Boolean = false): Long {
         return if (selectedNote != null) {
-            if (isCreatedDate) selectedNote!!.dateCreate else selectedNote!!.dateUpdate
+            if (created) selectedNote!!.dateCreate else selectedNote!!.dateUpdate
         } else {
             Date().time
         }
@@ -371,8 +387,8 @@ class MainViewModel(
         getDbNotes("")
         getAllTasks()
         getAllStatuses()
-        viewModelScope.launch(Dispatchers.Default) {
-            _appSettingsView.value = db.settings.getSettings().viewMode
+        viewModelScope.launch {
+            _appSettingsView.value = settings.getViewMode()
         }
     }
 }

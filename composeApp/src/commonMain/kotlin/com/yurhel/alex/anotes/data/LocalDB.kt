@@ -3,7 +3,6 @@ package com.yurhel.alex.anotes.data
 import app.cash.sqldelight.db.SqlDriver
 import com.yurhel.alex.anotes.data.dao.BoardDao
 import com.yurhel.alex.anotes.data.dao.NotesDao
-import com.yurhel.alex.anotes.data.dao.SettingsDao
 import com.yurhel.alex.anotes.data.dao.StatusesDao
 import com.yurhel.alex.anotes.data.dao.TasksDao
 import com.yurhel.alex.anotes.data.dao.WidgetDao
@@ -35,7 +34,6 @@ class LocalDB private constructor(sqlDriver: SqlDriver) {
     val driver: SqlDriver = sqlDriver
 
     val note = NotesDao(Database(driver).notesQueries)
-    val settings = SettingsDao(Database(driver).settingsQueries)
     val status = StatusesDao(Database(driver).statusesQueries)
     val task = TasksDao(Database(driver).tasksQueries)
     val widget = WidgetDao(Database(driver).widgetsQueries)

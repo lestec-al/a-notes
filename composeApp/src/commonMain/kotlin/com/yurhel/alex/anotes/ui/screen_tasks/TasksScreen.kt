@@ -67,7 +67,7 @@ fun TasksScreen(
         bottomBar = {
             NoteBottomBar(
                 vm = vm.vm,
-                coroutineScope = rememberCoroutineScope(),
+                scope = rememberCoroutineScope(),
                 onBackAfterDelete = onBack,
                 onBackButtonClick = onBack,
                 onGetTextButtonClick = vm::getTaskTextForNote,

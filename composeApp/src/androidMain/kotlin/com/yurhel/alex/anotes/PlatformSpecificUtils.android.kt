@@ -1,10 +1,13 @@
 package com.yurhel.alex.anotes
 
 import android.app.Activity
+import android.content.ClipData
 import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.os.Build
+import android.text.format.DateFormat
+import android.text.format.DateUtils
 import android.util.Base64
 import android.view.ViewTreeObserver
 import androidx.activity.compose.BackHandler
@@ -24,17 +27,25 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.platform.Clipboard
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.LocalWindowInfo
+import androidx.compose.ui.platform.toClipEntry
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
+import app.cash.sqldelight.db.SqlDriver
+import app.cash.sqldelight.driver.android.AndroidSqliteDriver
 import com.yurhel.alex.anotes.ui.utils.OrientationObj
 import com.yurhel.alex.anotes.ui.theme.darkColorScheme
 import com.yurhel.alex.anotes.ui.theme.lightColorScheme
+import db.Database
 import java.io.ByteArrayOutputStream
+import java.util.Date
 
 @Composable
 actual fun BackHandlerCustom(onBack: () -> Unit) {
@@ -76,6 +87,44 @@ actual fun getColorScheme(
     }
 }
 
+@Composable
+actual fun SetStatusBarColor(setIsLight: Boolean?, darkTheme: Boolean?) {
+    val view = LocalView.current
+    val isDark = darkTheme ?: isSystemInDarkTheme()
+    if (setIsLight != null) {
+        SideEffect {
+            val window = (view.context as Activity).window
+            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = setIsLight
+        }
+        DisposableEffect(Unit) {
+            onDispose {
+                val window = (view.context as Activity).window
+                WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !isDark
+            }
+        }
+    } else {
+        SideEffect {
+            val window = (view.context as Activity).window
+            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !isDark
+        }
+    }
+}
+
+@Composable
+actual fun formatDate(date: Long): String {
+    val context = LocalContext.current
+    return if (DateUtils.isToday(date)) {
+        DateFormat.getTimeFormat(context).format(Date(date))
+    } else {
+        DateFormat.getMediumDateFormat(context).format(Date(date))
+    }
+}
+
+actual suspend fun String.copyToClipboard(clipboard: Clipboard) {
+    val clipData = ClipData.newPlainText("", this)
+    clipboard.setClipEntry(clipData.toClipEntry())
+}
+
 actual fun ImageBitmap.toBase64(): String? {
     return try {
         val bitmap = this.asAndroidBitmap()
@@ -93,18 +142,8 @@ actual fun String.toImageBitmap(): ImageBitmap? {
     return BitmapFactory.decodeByteArray(decodedString, 0, decodedString.size).asImageBitmap()
 }
 
-@Composable
-actual fun SetStatusBarColor(setIsLight: Boolean) {
-    val view = LocalView.current
-    val isDark = isSystemInDarkTheme()
-    SideEffect {
-        val window = (view.context as Activity).window
-        WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = setIsLight
-    }
-    DisposableEffect(Unit) {
-        onDispose {
-            val window = (view.context as Activity).window
-            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !isDark
-        }
-    }
-}
+actual fun getSqlDriver(): SqlDriver = AndroidSqliteDriver(Database.Schema, MyApp.appContext, "notes.db")
+
+actual fun createDataStorePlatform(): DataStore<Preferences> = createDataStore(
+    producePath = { MyApp.appContext.filesDir.resolve(dataStoreFileName).absolutePath }
+)

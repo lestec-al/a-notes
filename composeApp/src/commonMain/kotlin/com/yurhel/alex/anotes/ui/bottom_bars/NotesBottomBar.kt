@@ -1,11 +1,13 @@
 package com.yurhel.alex.anotes.ui.bottom_bars
 
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -20,14 +22,19 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.outlined.Contrast
+import androidx.compose.material.icons.outlined.DarkMode
 import androidx.compose.material.icons.outlined.GridView
+import androidx.compose.material.icons.outlined.LightMode
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.ViewAgenda
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextFieldDefaults
@@ -205,7 +212,7 @@ fun NotesBottomBar(
                         strokeWidth = 2.dp
                     )
                 } else {
-                    IconButton(onClick = { vm.syncData(SyncActionTypes.Auto, vm) }) {
+                    IconButton(onClick = { vm.syncData(SyncActionTypes.Auto) }) {
                         Icon(
                             Icons.Default.Refresh,
                             stringResource(Res.string.sync_drive_action),
@@ -273,6 +280,36 @@ fun NotesBottomBar(
                             ),
                             isSelected = vm.sortArrow == i.name
                         )
+                    }
+                    HorizontalDivider(Modifier.padding(vertical = 10.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceEvenly,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        val modifier = Modifier.border(
+                            width = 1.dp,
+                            color = MaterialTheme.colorScheme.primary,
+                            shape = IconButtonDefaults.filledShape
+                        )
+                        IconButton(
+                            onClick = { vm.updateDarkTheme(false) },
+                            modifier = if (vm.darkTheme == false) modifier else Modifier
+                        ) {
+                            Icon(Icons.Outlined.LightMode, "light mode")
+                        }
+                        IconButton(
+                            onClick = { vm.updateDarkTheme(null) },
+                            modifier = if (vm.darkTheme == null) modifier else Modifier
+                        ) {
+                            Icon(Icons.Outlined.Contrast, "auto mode")
+                        }
+                        IconButton(
+                            onClick = { vm.updateDarkTheme(true) },
+                            modifier = if (vm.darkTheme == true) modifier else Modifier
+                        ) {
+                            Icon(Icons.Outlined.DarkMode, "dark mode")
+                        }
                     }
                 }
             }

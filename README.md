@@ -7,18 +7,21 @@ src="https://github.com/lestec-al/a-notes/raw/main/screenshots_android.png"/>
 src="https://github.com/lestec-al/a-notes/raw/main/screenshots_desktop.png"/>
 
 ## Features
-- Manage notes
-- Manage ordered (with statuses) notes (test stage)
+- Notes
+- Ordered (with statuses) notes
+- Drawings
+- Swipe-to-Organize Notes (a two-column view where you can swipe notes left or right to sort them into categories, like "In Process" and "Done." Each side has a distinct color that you can customize for easy visual recognition)
 - Cloud sync of data
 - One note widget (for Android)
 - Light & Dark theme of interface
 - Dynamic, automatically adjusting interface colors to match the device theme (for Android 12+)
 
 ## Tech Stack
-- Android Studio
+- Android SDK
 - Kotlin
 - Kotlin Multiplatform (with Compose Multiplatform UI Framework)
 - SQLite (through SQLDelight)
+- DataStore
 - Google Cloud with Google Drive API
 
 ## Other

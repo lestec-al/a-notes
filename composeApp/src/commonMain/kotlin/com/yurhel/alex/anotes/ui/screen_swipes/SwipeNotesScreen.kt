@@ -62,7 +62,7 @@ fun SwipeNotesScreen(
         bottomBar = {
             NoteBottomBar(
                 vm = vm.vm,
-                coroutineScope = rememberCoroutineScope(),
+                scope = rememberCoroutineScope(),
                 onBackAfterDelete = onBack,
                 onBackButtonClick = {
                     vm.saveNote()

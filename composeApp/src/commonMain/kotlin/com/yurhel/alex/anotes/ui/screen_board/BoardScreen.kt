@@ -53,13 +53,13 @@ fun BoardScreen(
         vm.updateBoardOffsets(offsetChange)
     }
     BackHandlerCustom { vm.saveDrawToDB(graphicsLayer, onBack) }
-    SetStatusBarColor(true)
+    SetStatusBarColor(true, vm.vm.darkTheme)
 
     CustomScaffold(
         bottomBar = {
             NoteBottomBar(
                 vm = vm.vm,
-                coroutineScope = rememberCoroutineScope(),
+                scope = rememberCoroutineScope(),
                 onBackAfterDelete = onBack,
                 onBackButtonClick = {
                     vm.saveDrawToDB(graphicsLayer, onBack)

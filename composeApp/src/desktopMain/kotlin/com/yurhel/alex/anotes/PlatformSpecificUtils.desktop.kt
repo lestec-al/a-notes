@@ -7,12 +7,23 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.toAwtImage
 import androidx.compose.ui.graphics.toComposeImageBitmap
+import androidx.compose.ui.platform.ClipEntry
+import androidx.compose.ui.platform.Clipboard
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
+import app.cash.sqldelight.db.SqlDriver
+import app.cash.sqldelight.driver.jdbc.sqlite.JdbcSqliteDriver
 import com.yurhel.alex.anotes.ui.utils.OrientationObj
 import com.yurhel.alex.anotes.ui.theme.darkColorScheme
 import com.yurhel.alex.anotes.ui.theme.lightColorScheme
+import db.Database
 import org.jetbrains.skia.Image
 import java.io.ByteArrayOutputStream
+import java.io.File
+import java.text.DateFormat
 import java.util.Base64
+import java.util.Calendar
+import java.util.Date
 import javax.imageio.ImageIO
 
 @Composable
@@ -37,6 +48,33 @@ actual fun getColorScheme(
     }
 }
 
+@Composable
+actual fun SetStatusBarColor(setIsLight: Boolean?, darkTheme: Boolean?) {}
+
+@Composable
+actual fun formatDate(date: Long): String {
+    val date = Date(date)
+    // Check if is today
+    val today = Calendar.Builder().build()
+    today.time = Date()
+    val check = Calendar.Builder().build()
+    check.time = date
+    return if (
+        today.get(Calendar.DAY_OF_YEAR) == check.get(Calendar.DAY_OF_YEAR) &&
+        today.get(Calendar.YEAR) == check.get(Calendar.YEAR)
+    ) {
+        DateFormat.getTimeInstance().format(date)
+    } else {
+        DateFormat.getDateInstance().format(date)
+    }
+}
+
+actual suspend fun String.copyToClipboard(clipboard: Clipboard) {
+    clipboard.setClipEntry(
+        ClipEntry(java.awt.datatransfer.StringSelection(this))
+    )
+}
+
 actual fun ImageBitmap.toBase64(): String? {
     val bufferedImage = this.toAwtImage()
     val outputStream = ByteArrayOutputStream()
@@ -49,5 +87,13 @@ actual fun String.toImageBitmap(): ImageBitmap? {
     return Image.makeFromEncoded(byteArray).toComposeImageBitmap()
 }
 
-@Composable
-actual fun SetStatusBarColor(setIsLight: Boolean) {}
+actual fun getSqlDriver(): SqlDriver = JdbcSqliteDriver("jdbc:sqlite:notes.db").also {
+    try { Database.Schema.create(it) } catch (_: Exception) {}
+}
+
+actual fun createDataStorePlatform(): DataStore<Preferences> = createDataStore(
+    producePath = {
+        val file = File(dataStoreFileName)
+        file.absolutePath
+    }
+)

@@ -63,7 +63,7 @@ fun NoteScreen(
         bottomBar = {
             NoteBottomBar(
                 vm = vm,
-                coroutineScope = coroutineScope,
+                scope = coroutineScope,
                 onBackAfterDelete = {
                     onBack()
                 },

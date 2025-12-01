@@ -36,13 +36,13 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.text.TextRange
-import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewModelScope
 import anotes.composeapp.generated.resources.Res
 import anotes.composeapp.generated.resources.copy
 import anotes.composeapp.generated.resources.create
@@ -56,17 +56,20 @@ import anotes.composeapp.generated.resources.text
 import anotes.composeapp.generated.resources.updated
 import com.yurhel.alex.anotes.data.StatusObj
 import com.yurhel.alex.anotes.data.TasksObj
+import com.yurhel.alex.anotes.formatDate
 import com.yurhel.alex.anotes.ui.screen_tasks.utils.ActionTypes
 import com.yurhel.alex.anotes.ui.screen_tasks.utils.Event
 import com.yurhel.alex.anotes.ui.components.ColorPicker
 import com.yurhel.alex.anotes.ui.screen_tasks.TasksViewModel
 import com.yurhel.alex.anotes.ui.screen_tasks.utils.Types
+import com.yurhel.alex.anotes.copyToClipboard
+import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditTasksSheet(vm: TasksViewModel) {
-    val clipboardManager = LocalClipboardManager.current
+    val clipboard = LocalClipboard.current
     val primaryColor = MaterialTheme.colorScheme.primary
     val sheetState = rememberModalBottomSheetState(
         skipPartiallyExpanded = true
@@ -220,7 +223,7 @@ fun EditTasksSheet(vm: TasksViewModel) {
             if (editDialogObj.actionType == ActionTypes.Update && editDialogObj.dataType == Types.Task) {
                 IconButton(
                     onClick = {
-                        clipboardManager.setText(buildAnnotatedString { append(text = edit.value) })
+                        vm.viewModelScope.launch { edit.value.copyToClipboard(clipboard) }
                     }
                 ) {
                     Icon(Icons.Default.CopyAll, stringResource(Res.string.copy))
@@ -250,11 +253,14 @@ fun EditTasksSheet(vm: TasksViewModel) {
             // Info about task
             if (editDialogObj.actionType == ActionTypes.Update) {
                 val task = editDialogObj.obj as TasksObj
+                val dateUpdated = formatDate(vm.vm.getNoteDate())
+                val dateCreated = formatDate(vm.vm.getNoteDate(true))
+                val dateStatusUpdated = formatDate(task.dateUpdateStatus)
                 Text(
                     text = """
-                            ${stringResource(Res.string.created)}: ${vm.vm.formatDate(task.dateCreate)}
-                            ${stringResource(Res.string.updated)}: ${vm.vm.formatDate(task.dateUpdate)}
-                            ${stringResource(Res.string.status)} ${stringResource(Res.string.updated)}: ${vm.vm.formatDate(task.dateUpdateStatus)}
+                            ${stringResource(Res.string.created)}: $dateCreated
+                            ${stringResource(Res.string.updated)}: $dateUpdated
+                            ${stringResource(Res.string.status)} ${stringResource(Res.string.updated)}: $dateStatusUpdated
                         """.trimIndent(),
                     style = MaterialTheme.typography.bodySmall,
                     modifier = Modifier.padding(10.dp)
