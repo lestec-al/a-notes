@@ -1,0 +1,1 @@
+ALTER TABLE notesTable ADD COLUMN type TEXT;
