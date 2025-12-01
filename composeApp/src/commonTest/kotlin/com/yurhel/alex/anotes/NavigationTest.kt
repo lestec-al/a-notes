@@ -52,6 +52,8 @@ class NavigationTest {
     companion object {
         private lateinit var database: Database
         private lateinit var driver: SqlDriver
+        private lateinit var lifecycleOwner: TestLifecycleOwner
+        private lateinit var vm: MainViewModel
 
         @BeforeClass
         @JvmStatic
@@ -126,8 +128,8 @@ class NavigationTest {
 
     @OptIn(ExperimentalTestApi::class)
     fun ComposeUiTest.setUpUi() {
-        val lifecycleOwner = runBlocking(Dispatchers.Main) { TestLifecycleOwner(Lifecycle.State.RESUMED) }
-        val vm = MainViewModel(
+        lifecycleOwner = runBlocking(Dispatchers.Main) { TestLifecycleOwner(Lifecycle.State.RESUMED) }
+        vm = MainViewModel(
             db = LocalDB.Companion.getInstance(driver),
             settings = SettingsDataStore.getInstance { createDataStorePlatform() },
             showToast = {},
