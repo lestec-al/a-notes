@@ -12,48 +12,38 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
-import anotes.composeapp.generated.resources.Res
-import anotes.composeapp.generated.resources.sync_collision
-import anotes.composeapp.generated.resources.sync_drive
-import anotes.composeapp.generated.resources.sync_local
-import com.yurhel.alex.anotes.ui.MainViewModel
-import com.yurhel.alex.anotes.ui.utils.SyncActionTypes
+import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
-fun SyncDialog(
+fun AskDialog(
+    onDismissRequest: () -> Unit,
     isVisible: Boolean,
-    vm: MainViewModel
+    infoText: StringResource,
+    leftButton: Pair<StringResource, () -> Unit>,
+    rightButton: Pair<StringResource, () -> Unit>
 ) {
     if (isVisible) {
-        Dialog(onDismissRequest = { vm.openSyncDialog(false) }) {
+        Dialog(onDismissRequest = onDismissRequest) {
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
+                shape = RoundedCornerShape(16.dp)
             ) {
-                // Title
                 Text(
-                    text = stringResource(Res.string.sync_collision),
+                    text = stringResource(infoText),
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(16.dp)
                 )
-                // Buttons
                 Row(
                     horizontalArrangement = Arrangement.Center,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    TextButton(onClick = {
-                        vm.syncData(SyncActionTypes.ManualImport, vm)
-                        vm.openSyncDialog(false)
-                    }) {
-                        Text(text = stringResource(Res.string.sync_drive))
+                    TextButton(onClick = leftButton.second) {
+                        Text(text = stringResource(leftButton.first))
                     }
-                    TextButton(onClick = {
-                        vm.syncData(SyncActionTypes.ManualExport, vm)
-                        vm.openSyncDialog(false)
-                    }) {
-                        Text(text = stringResource(Res.string.sync_local))
+                    TextButton(onClick = rightButton.second) {
+                        Text(text = stringResource(rightButton.first))
                     }
                 }
             }

@@ -1,12 +1,13 @@
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
+import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSetTree
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.jetbrainsCompose)
     alias(libs.plugins.compose.compiler)
-
     alias(libs.plugins.sqlDelight)
     alias(libs.plugins.kotlinSerialization)
 }
@@ -16,13 +17,18 @@ kotlin {
         compilerOptions {
             jvmTarget.set(JvmTarget.JVM_11)
         }
+        @OptIn(ExperimentalKotlinGradlePluginApi::class)
+        instrumentedTestVariant.sourceSetTree.set(KotlinSourceSetTree.test)
     }
-    
+
+    compilerOptions.freeCompilerArgs.add("-Xexpect-actual-classes")
+
     jvm("desktop")
-    
+
     sourceSets {
         val desktopMain by getting
-        
+        val desktopTest by getting
+
         androidMain.dependencies {
             implementation(compose.preview)
             implementation(libs.androidx.activity.compose)
@@ -56,6 +62,16 @@ kotlin {
             implementation(compose.materialIconsExtended)
             // SQL
             implementation(libs.sqldelight.coroutines)
+            // DataStore
+            implementation(libs.androidx.datastore)
+            implementation(libs.androidx.datastore.preferences)
+        }
+        commonTest.dependencies {
+            implementation(libs.sqldelight.jvm)
+            implementation(libs.kotlin.test)
+            implementation(kotlin("test-annotations-common"))
+            @OptIn(org.jetbrains.compose.ExperimentalComposeLibrary::class)
+            implementation(compose.uiTest)
         }
         desktopMain.dependencies {
             implementation(compose.desktop.currentOs)
@@ -68,6 +84,9 @@ kotlin {
             implementation(libs.google.api.services.drive)
             // SQL
             implementation(libs.sqldelight.jvm)
+        }
+        desktopTest.dependencies {
+            implementation(compose.desktop.currentOs)
         }
     }
 
@@ -92,8 +111,9 @@ android {
         applicationId = "com.yurhel.alex.anotes"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
-        versionCode = 3
-        versionName = "3"
+        versionCode = 4
+        versionName = "4.0"
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
     packaging {
         resources {
@@ -116,6 +136,8 @@ android {
     }
     dependencies {
         debugImplementation(compose.uiTooling)
+        androidTestImplementation(libs.androidx.ui.test.junit4.android)
+        debugImplementation(libs.androidx.ui.test.manifest)
     }
 }
 
@@ -127,7 +149,7 @@ compose.desktop {
             includeAllModules = true
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
             packageName = "Anotes"
-            packageVersion = "3.0.0"
+            packageVersion = "4.0.0"
             description = "Desktop version ANotes app"
             copyright = "© 2025 Aliaksei Yurhel. All rights reserved."
 

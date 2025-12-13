@@ -91,7 +91,7 @@ actual class Drive {
             } else {
                 false
             }
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             false
         }
         return DriveObj(data, modifiedTime, isServiceOK)

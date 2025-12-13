@@ -3,8 +3,6 @@ package com.yurhel.alex.anotes
 import android.appwidget.AppWidgetManager
 import android.content.Intent
 import android.os.Bundle
-import android.text.format.DateFormat
-import android.text.format.DateUtils
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -15,18 +13,13 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.glance.appwidget.state.updateAppWidgetState
 import androidx.lifecycle.lifecycleScope
-import app.cash.sqldelight.driver.android.AndroidSqliteDriver
 import com.yurhel.alex.anotes.data.LocalDB
+import com.yurhel.alex.anotes.data.SettingsDataStore
 import com.yurhel.alex.anotes.data.WidgetObj
-import com.yurhel.alex.anotes.ui.utils.DriveUtils
 import com.yurhel.alex.anotes.ui.MainViewModel
 import com.yurhel.alex.anotes.ui.Navigation
-import com.yurhel.alex.anotes.ui.utils.SyncActionTypes
-import com.yurhel.alex.anotes.ui.theme.ANotesTheme
-import db.Database
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import java.util.Date
 
 class MainActivity : ComponentActivity() {
 
@@ -34,34 +27,17 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        val db = LocalDB.getInstance(AndroidSqliteDriver(Database.Schema, applicationContext, "notes.db"))
+        val db = LocalDB.getInstance(getSqlDriver())
 
         setContent {
             val vm: MainViewModel by viewModels {
                 MainViewModel.Factory(
+                    db = db,
+                    settings = SettingsDataStore.getInstance { createDataStorePlatform() },
                     showToast = {
                         Toast.makeText(this, it, Toast.LENGTH_SHORT).show()
                     },
-                    db = db,
-                    formatDate = { dateLong ->
-                        if (DateUtils.isToday(dateLong)) {
-                            DateFormat.getTimeFormat(applicationContext).format(Date(dateLong))
-                        } else {
-                            DateFormat.getMediumDateFormat(applicationContext).format(Date(dateLong))
-                        }
-                    },
-                    syncData = { syncActionType, vm ->
-                        val driveUtils = DriveUtils(vm, Drive(this))
-                        when (syncActionType) {
-                            SyncActionTypes.Auto -> driveUtils.driveSyncAuto()
-                            SyncActionTypes.ManualExport -> driveUtils.driveSyncManualThread(true)
-                            SyncActionTypes.ManualImport -> driveUtils.driveSyncManualThread(false)
-                        }
-                    },
-                    callExit = {
-                        finishAffinity()
-                    },
-                    // Widget stuff
+                    callExit = ::finishAffinity,
                     widgetIdWhenCreated = intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID),
                     callInitUpdateWidget = { isInitAction, widgetId, noteCreated, note ->
                         lifecycleScope.launch(Dispatchers.Default) {
@@ -76,7 +52,7 @@ class MainActivity : ComponentActivity() {
                             // Initialize widget
                             if (isInitAction) {
                                 // Log widget to DB
-                                db.insertWidget(WidgetObj(widgetId = widgetId, noteCreated = noteCreated))
+                                db.widget.insert(WidgetObj(widgetId = widgetId, noteCreated = noteCreated))
                                 // Create the return intent, set it with the activity result, finish the activity
                                 setResult(RESULT_OK, Intent())
                                 finish()
@@ -85,10 +61,7 @@ class MainActivity : ComponentActivity() {
                     }
                 )
             }
-
-            ANotesTheme {
-                Navigation(vm = vm)
-            }
+            Navigation(vm)
         }
     }
 }

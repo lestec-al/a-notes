@@ -23,8 +23,9 @@ import kotlinx.serialization.json.JsonArray
 import java.io.ByteArrayOutputStream
 import java.util.Collections
 
-actual class Drive(private val context: Context) {
+actual class Drive {
 
+    private val context: Context = MyApp.appContext
     private var service: Drive? = null
 
     private suspend fun tryConnectToDrive() {
@@ -118,7 +119,7 @@ actual class Drive(private val context: Context) {
             } else {
                 false
             }
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             false
         }
         return DriveObj(data, modifiedTime, isServiceOK)

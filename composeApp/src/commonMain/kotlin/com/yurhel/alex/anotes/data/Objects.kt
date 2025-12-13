@@ -1,5 +1,7 @@
 package com.yurhel.alex.anotes.data
 
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 
 data class NoteObj(
@@ -43,9 +45,17 @@ data class WidgetObj(
     val noteCreated: String
 )
 
-data class WinScreen(
+data class WinScreenSettingsObj(
     val width: Dp,
     val height: Dp,
     val posX: Dp,
     val posY: Dp
+)
+
+data class BoardLineObj(
+    val noteId: Int,
+    val start: Offset,
+    val end: Offset,
+    val color: Color,
+    val strokeWidth: Float
 )

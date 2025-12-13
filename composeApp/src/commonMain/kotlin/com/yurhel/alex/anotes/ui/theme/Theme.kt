@@ -7,13 +7,13 @@ import com.yurhel.alex.anotes.getColorScheme
 
 @Composable
 fun ANotesTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
+    darkTheme: Boolean? = null,
     // Dynamic color is available on Android 12+
     dynamicColor: Boolean = true,
     content: @Composable () -> Unit
 ) {
     MaterialTheme(
-        colorScheme = getColorScheme(dynamicColor, darkTheme),
+        colorScheme = getColorScheme(dynamicColor, darkTheme ?: isSystemInDarkTheme()),
         typography = Typography,
         content = content
     )

@@ -16,10 +16,10 @@
     <string name="status">Status</string>
     <string name="text">Text</string>
     <string name="note">Note</string>
-    <string name="change_view">Change View</string>
+    <string name="change_view">Change view</string>
     <string name="edit">Edit</string>
-    <string name="edit_tasks">Edit Tasks</string>
-    <string name="edit_note">Edit Note</string>
+    <string name="edit_tasks">Edit tasks</string>
+    <string name="edit_note">Edit note</string>
     <string name="delete">Delete</string>
     <string name="create">Create</string>
     <string name="save">Save</string>
@@ -42,9 +42,9 @@
     <string name="descending">Descending</string>
     <string name="color">Color RGB</string>
     <string name="swipe_notes">Swipes</string>
-    <string name="edit_side">Edit Side</string>
-    <string name="left_side">Left Side</string>
-    <string name="right_side">Right Side</string>
+    <string name="edit_side">Edit side</string>
+    <string name="left_side">Left side</string>
+    <string name="right_side">Right side</string>
     <!-- Board only -->
     <string name="thickness">Thickness</string>
     <string name="opacity">Opacity</string>
@@ -53,4 +53,9 @@
     <string name="enable_draw">Enable draw</string>
     <string name="undo">Undo</string>
     <string name="checked">Checked</string>
+    <!-- Content descriptions -->
+    <string name="open_drop_buttons">Open drop buttons</string>
+    <string name="close_drop_buttons">Close drop buttons</string>
+    <string name="no">No</string>
+    <string name="yes">Yes</string>
 </resources>

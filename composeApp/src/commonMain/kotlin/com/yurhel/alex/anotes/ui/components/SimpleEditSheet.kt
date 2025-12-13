@@ -22,14 +22,14 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalClipboardManager
-import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -37,20 +37,23 @@ import anotes.composeapp.generated.resources.Res
 import anotes.composeapp.generated.resources.copy
 import anotes.composeapp.generated.resources.save
 import anotes.composeapp.generated.resources.text
+import com.yurhel.alex.anotes.copyToClipboard
+import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SimpleEditBottomSheet(
+fun SimpleEditSheet(
     onDismissRequest: () -> Unit,
     onSave: (String) -> Unit,
     infoText: String = "",
     initText: String = ""
 ) {
-    val clipboardManager = LocalClipboardManager.current
+    val clipboard = LocalClipboard.current
     val sheetState = rememberModalBottomSheetState()
     val focusRequester = remember { FocusRequester() }
     var edit by remember { mutableStateOf(initText) }
+    val scope = rememberCoroutineScope()
 
     ModalBottomSheet(
         onDismissRequest = onDismissRequest,
@@ -73,7 +76,7 @@ fun SimpleEditBottomSheet(
             // Copy content button
             IconButton(
                 onClick = {
-                    clipboardManager.setText(buildAnnotatedString { append(text = edit) })
+                    scope.launch { edit.copyToClipboard(clipboard) }
                 }
             ) {
                 Icon(

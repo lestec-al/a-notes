@@ -23,24 +23,30 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import anotes.composeapp.generated.resources.Res
+import anotes.composeapp.generated.resources.close_drop_buttons
+import anotes.composeapp.generated.resources.open_drop_buttons
+import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
-fun DropFloatingActionButton(dropDownMenuItems: List<Triple<String, ImageVector, () -> Unit>>) {
+fun DropFloatingActionButton(
+    dropDownMenuItems: List<Triple<StringResource, ImageVector, () -> Unit>>
+) {
     var isOpened: Boolean by remember { mutableStateOf(false) }
-    if (isOpened) {
-        Column(horizontalAlignment = Alignment.End) {
+    Column(horizontalAlignment = Alignment.End) {
+        if (isOpened) {
             DropdownMenu(
                 expanded = true,
-                onDismissRequest = {
-                    isOpened = false
-                },
+                onDismissRequest = { isOpened = false },
                 shape = CardDefaults.shape
             ) {
                 dropDownMenuItems.forEach {
+                    val text = stringResource(it.first)
                     DropdownMenuItem(
                         text = {
                             Text(
-                                text = it.first,
+                                text = text,
                                 textAlign = TextAlign.End,
                                 modifier = Modifier.fillMaxWidth()
                             )
@@ -52,32 +58,24 @@ fun DropFloatingActionButton(dropDownMenuItems: List<Triple<String, ImageVector,
                         trailingIcon = {
                             Icon(
                                 imageVector = it.second,
-                                contentDescription = it.first
+                                contentDescription = text
                             )
                         }
                     )
                 }
             }
             Spacer(Modifier.height(5.dp))
-            // Close buttons
-            FloatingActionButton(
-                onClick = {
-                    isOpened = false
-                },
-                shape = CardDefaults.shape,
-                content = {
-                    Icon(Icons.Default.Close, null)
-                }
-            )
         }
-    } else {
         FloatingActionButton(
+            onClick = { isOpened = !isOpened },
             shape = CardDefaults.shape,
-            onClick = {
-                isOpened = true
-            },
             content = {
-                Icon(Icons.Default.Add, "")
+                Icon(
+                    imageVector = if (isOpened) Icons.Default.Close else Icons.Default.Add,
+                    contentDescription = stringResource(
+                        if (isOpened) Res.string.close_drop_buttons else Res.string.open_drop_buttons
+                    )
+                )
             }
         )
     }

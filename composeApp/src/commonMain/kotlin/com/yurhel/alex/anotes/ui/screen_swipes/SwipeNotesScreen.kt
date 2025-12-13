@@ -28,6 +28,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import anotes.composeapp.generated.resources.Res
+import anotes.composeapp.generated.resources.create
 import anotes.composeapp.generated.resources.edit
 import anotes.composeapp.generated.resources.edit_note
 import anotes.composeapp.generated.resources.edit_side
@@ -36,7 +37,7 @@ import anotes.composeapp.generated.resources.right_side
 import anotes.composeapp.generated.resources.task
 import com.yurhel.alex.anotes.BackHandlerCustom
 import com.yurhel.alex.anotes.ui.components.CustomScaffold
-import com.yurhel.alex.anotes.ui.components.NoteBottomBar
+import com.yurhel.alex.anotes.ui.bottom_bars.NoteBottomBar
 import com.yurhel.alex.anotes.ui.screen_swipes.components.SwipeNotesCard
 import com.yurhel.alex.anotes.ui.screen_swipes.components.SwipeNotesSheet
 import com.yurhel.alex.anotes.ui.screen_swipes.utils.Edit
@@ -49,6 +50,8 @@ fun SwipeNotesScreen(
     vm: SwipeNotesViewModel,
     onBack: () -> Unit
 ) {
+    val createTaskStr = stringResource(Res.string.create) + " " + stringResource(Res.string.task).lowercase()
+    val editTaskStr = stringResource(Res.string.edit) + " " + stringResource(Res.string.task).lowercase()
     //val haptic = LocalHapticFeedback.current
     BackHandlerCustom {
         vm.saveNote()
@@ -59,7 +62,7 @@ fun SwipeNotesScreen(
         bottomBar = {
             NoteBottomBar(
                 vm = vm.vm,
-                coroutineScope = rememberCoroutineScope(),
+                scope = rememberCoroutineScope(),
                 onBackAfterDelete = onBack,
                 onBackButtonClick = {
                     vm.saveNote()
@@ -80,7 +83,7 @@ fun SwipeNotesScreen(
                 },
                 shape = CardDefaults.shape,
                 content = {
-                    Icon(Icons.Default.Add, null)
+                    Icon(Icons.Default.Add, createTaskStr)
                 }
             )
         }
@@ -168,7 +171,7 @@ fun SwipeNotesScreen(
                 onDeleteSwipeText = vm::deleteSwipeText,
                 infoText = when (vm.edit) {
                     Edit.NoteText -> stringResource(Res.string.edit_note)
-                    Edit.SwipeText -> stringResource(Res.string.edit) + " " + stringResource(Res.string.task)
+                    Edit.SwipeText -> if (vm.editedText.isEmpty()) createTaskStr else editTaskStr
                     else -> stringResource(Res.string.edit_side)
                 },
                 initText = vm.editedText,

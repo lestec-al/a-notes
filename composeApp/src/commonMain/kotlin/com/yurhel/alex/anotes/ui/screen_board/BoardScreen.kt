@@ -27,6 +27,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.layer.drawLayer
 import androidx.compose.ui.graphics.rememberGraphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import anotes.composeapp.generated.resources.Res
 import anotes.composeapp.generated.resources.disable_all_actions
@@ -37,40 +38,38 @@ import com.yurhel.alex.anotes.BackHandlerCustom
 import com.yurhel.alex.anotes.ui.screen_board.components.ActionButton
 import com.yurhel.alex.anotes.ui.screen_board.components.EditBoardBottomSheet
 import com.yurhel.alex.anotes.SetStatusBarColor
-import com.yurhel.alex.anotes.ui.components.SimpleEditBottomSheet
-import com.yurhel.alex.anotes.ui.MainViewModel
+import com.yurhel.alex.anotes.ui.components.SimpleEditSheet
 import com.yurhel.alex.anotes.ui.components.CustomScaffold
-import com.yurhel.alex.anotes.ui.components.NoteBottomBar
+import com.yurhel.alex.anotes.ui.bottom_bars.NoteBottomBar
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun BoardScreen(
-    vm: MainViewModel,
-    vmBoard: BoardViewModel,
+    vm: BoardViewModel,
     onBack: () -> Unit
 ) {
     val graphicsLayer = rememberGraphicsLayer()
     val boardState = rememberTransformableState { _, offsetChange, _ ->
-        vmBoard.updateBoardOffsets(offsetChange)
+        vm.updateBoardOffsets(offsetChange)
     }
-    BackHandlerCustom { vmBoard.saveDrawToDB(graphicsLayer, onBack) }
-    SetStatusBarColor(true)
+    BackHandlerCustom { vm.saveDrawToDB(graphicsLayer, onBack) }
+    SetStatusBarColor(true, vm.vm.darkTheme)
 
     CustomScaffold(
         bottomBar = {
             NoteBottomBar(
-                vm = vm,
-                coroutineScope = rememberCoroutineScope(),
+                vm = vm.vm,
+                scope = rememberCoroutineScope(),
                 onBackAfterDelete = onBack,
                 onBackButtonClick = {
-                    vmBoard.saveDrawToDB(graphicsLayer, onBack)
+                    vm.saveDrawToDB(graphicsLayer, onBack)
                 },
                 onGetTextButtonClick = null,
                 additionalButtons = listOf(
                     Triple(stringResource(Res.string.edit_note), Icons.Outlined.DriveFileRenameOutline) {
-                        vmBoard.updateIsEditSheetOpen(true)
+                        vm.updateIsEditSheetOpen(true)
                     },
-                    Triple(stringResource(Res.string.undo), Icons.AutoMirrored.Filled.Undo, vmBoard::undo)
+                    Triple(stringResource(Res.string.undo), Icons.AutoMirrored.Filled.Undo, vm::undo)
                 )
             )
         },
@@ -80,27 +79,27 @@ fun BoardScreen(
                 horizontalAlignment = Alignment.End
             ) {
                 // Open draw settings
-                if (vmBoard.isDraw) {
-                    SmallFloatingActionButton(onClick = vmBoard::updateIsEditBoardSheetOpen) {
+                if (vm.isDraw) {
+                    SmallFloatingActionButton(onClick = vm::updateIsEditBoardSheetOpen) {
                         Canvas(Modifier) {
                             drawCircle(
-                                color = vmBoard.drawColor.copy(alpha = vmBoard.drawColorAlpha),
-                                radius = if (vmBoard.strokeWidth > 14.dp.toPx()) 14.dp.toPx() else vmBoard.strokeWidth
+                                color = vm.drawColor.copy(alpha = vm.drawColorAlpha),
+                                radius = if (vm.strokeWidth > 14.dp.toPx()) 14.dp.toPx() else vm.strokeWidth
                             )
                         }
                     }
                 }
                 // Enable draw
                 ActionButton(
-                    onClick = { vmBoard.enableDisableDraw(true) },
-                    isActive = vmBoard.isDraw,
+                    onClick = { vm.enableDisableDraw(true) },
+                    isActive = vm.isDraw,
                     icon = Icons.Outlined.Brush,
                     contentDescription = stringResource(Res.string.enable_draw)
                 )
                 // Disable all actions
                 ActionButton(
-                    onClick = { vmBoard.enableDisableDraw(false) },
-                    isActive = !vmBoard.isDraw,
+                    onClick = { vm.enableDisableDraw(false) },
+                    isActive = !vm.isDraw,
                     icon = Icons.Outlined.BackHand,
                     contentDescription = stringResource(Res.string.disable_all_actions)
                 )
@@ -117,9 +116,9 @@ fun BoardScreen(
                 // Move board (making board look infinite)
                 .transformable(state = boardState)
                 // Drawing
-                .pointerInput(vmBoard.isDraw) {
-                    if (vmBoard.isDraw) {
-                        detectDragGestures(onDrag = vmBoard::onDrawDrag)
+                .pointerInput(vm.isDraw) {
+                    if (vm.isDraw) {
+                        detectDragGestures(onDrag = vm::onDrawDrag)
                     }
                 }
                 // For saving as image (bitmap)
@@ -132,19 +131,20 @@ fun BoardScreen(
                     // Draw the graphics layer on the visible canvas
                     drawLayer(graphicsLayer)
                 }
+                .testTag("draw_canvas")
         ) {
-            vmBoard.localDraw.forEach {
+            vm.localDraw.forEach {
                 drawLine(
                     color = it.color,
-                    start = it.start + vmBoard.boardOffset,
-                    end = it.end + vmBoard.boardOffset,
+                    start = it.start + vm.boardOffset,
+                    end = it.end + vm.boardOffset,
                     strokeWidth = it.strokeWidth,
                     cap = StrokeCap.Round
                 )
             }
         }
         // Loading indicator
-        if (vmBoard.isLoading) {
+        if (vm.isLoading) {
             Box(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
@@ -153,16 +153,16 @@ fun BoardScreen(
             }
         }
         // Bottom sheets
-        if (vmBoard.isEditTextSheetOpen) {
-            SimpleEditBottomSheet(
-                onDismissRequest = vmBoard::updateIsEditSheetOpen,
-                onSave = vmBoard::updateNoteName,
+        if (vm.isEditTextSheetOpen) {
+            SimpleEditSheet(
+                onDismissRequest = vm::updateIsEditSheetOpen,
+                onSave = vm::updateNoteName,
                 infoText = stringResource(Res.string.edit_note),
-                initText = vmBoard.noteName
+                initText = vm.noteName
             )
         }
-        if (vmBoard.isEditBoardSheetOpen) {
-            EditBoardBottomSheet(vmBoard)
+        if (vm.isEditBoardSheetOpen) {
+            EditBoardBottomSheet(vm)
         }
     }
 }

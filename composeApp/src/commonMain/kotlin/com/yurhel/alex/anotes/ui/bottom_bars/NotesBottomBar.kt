@@ -1,11 +1,13 @@
-package com.yurhel.alex.anotes.ui.components
+package com.yurhel.alex.anotes.ui.bottom_bars
 
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -20,23 +22,24 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.outlined.Contrast
+import androidx.compose.material.icons.outlined.DarkMode
 import androidx.compose.material.icons.outlined.GridView
+import androidx.compose.material.icons.outlined.LightMode
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.ViewAgenda
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -69,41 +72,46 @@ import anotes.composeapp.generated.resources.sorting
 import anotes.composeapp.generated.resources.sync_drive_action
 import com.yurhel.alex.anotes.getOrientation
 import com.yurhel.alex.anotes.ui.MainViewModel
+import com.yurhel.alex.anotes.ui.components.BaseBottomBar
+import com.yurhel.alex.anotes.ui.components.RadioDropdownMenuItem
 import com.yurhel.alex.anotes.ui.utils.OrientationObj
+import com.yurhel.alex.anotes.ui.utils.Sort
+import com.yurhel.alex.anotes.ui.utils.SortArrow
 import com.yurhel.alex.anotes.ui.utils.SyncActionTypes
 import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainBottomBar(
+fun NotesBottomBar(
     vm: MainViewModel,
     appSettingsView: String
 ) {
-    val searchText by vm.searchText.collectAsState()
-    val isSyncNow by vm.isSyncNow.collectAsState()
-
     val keyboard = LocalSoftwareKeyboardController.current
-    var isSearchOn by remember { mutableStateOf(false) }
     val focusManager = LocalFocusManager.current
     val textFocusRequester = remember { FocusRequester() }
-    val orientation = getOrientation()
-    val isSearchOnMobile = isSearchOn && orientation != OrientationObj.Desktop
+    val textInteractionSource = remember { MutableInteractionSource() }
+    val surfaceColor = MaterialTheme.colorScheme.background
+
+    val isSearchOnMobile = vm.isSearchOn && getOrientation() != OrientationObj.Desktop
+    val searchIsEmpty = vm.searchText.isEmpty()
 
     BaseBottomBar {
         if (isSearchOnMobile) {
-            // Search OFF button
+            // Search off button
             IconButton(
                 onClick = {
-                    isSearchOn = false
+                    vm.updateIsSearchOn(false)
                     focusManager.clearFocus()
                 }
             ) {
-                Icon(Icons.AutoMirrored.Default.ArrowBack, stringResource(Res.string.back), Modifier.size(30.dp))
+                Icon(
+                    Icons.AutoMirrored.Default.ArrowBack,
+                    stringResource(Res.string.back),
+                    Modifier.size(30.dp)
+                )
             }
         }
         // Search text field
-        val interactionSource = remember { MutableInteractionSource() }
-        val surfaceColor = MaterialTheme.colorScheme.background
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
@@ -114,10 +122,9 @@ fun MainBottomBar(
         ) {
             // Additional in search field (clear text button or search icon)
             if (!isSearchOnMobile) {
-                val searchIsEmpty = searchText.isEmpty()
                 Icon(
                     imageVector = if (searchIsEmpty) Icons.Outlined.Search else Icons.Default.Close,
-                    contentDescription = if (searchIsEmpty) "search" else "delete",
+                    contentDescription = if (searchIsEmpty) stringResource(Res.string.search_text_hint) else stringResource(Res.string.delete),
                     tint = MaterialTheme.colorScheme.outline,
                     modifier = Modifier
                         .padding(horizontal = 4.dp)
@@ -125,7 +132,7 @@ fun MainBottomBar(
                         .clickable(
                             enabled = !searchIsEmpty,
                             onClick = {
-                                isSearchOn = false
+                                vm.updateIsSearchOn(false)
                                 focusManager.clearFocus()
                                 vm.getDbNotes("")
                             }
@@ -134,13 +141,13 @@ fun MainBottomBar(
             }
             // Text field
             BasicTextField(
-                value = searchText,
-                onValueChange = { vm.getDbNotes(it) },
+                value = vm.searchText,
+                onValueChange = vm::getDbNotes,
                 modifier = Modifier
                     .weight(1f)
                     .focusRequester(textFocusRequester)
                     .onFocusChanged {
-                        if (it.isFocused) isSearchOn = true
+                        if (it.isFocused) vm.updateIsSearchOn(true)
                     },
                 textStyle = TextStyle(
                     color = MaterialTheme.colorScheme.onBackground,
@@ -152,11 +159,11 @@ fun MainBottomBar(
                     imeAction = ImeAction.Search
                 ),
                 keyboardActions = KeyboardActions { keyboard?.hide() },
-                interactionSource = interactionSource,
+                interactionSource = textInteractionSource,
                 singleLine = true
             ) { innerTextField ->
                 TextFieldDefaults.DecorationBox(
-                    value = searchText,
+                    value = vm.searchText,
                     visualTransformation = VisualTransformation.None,
                     innerTextField = innerTextField,
                     placeholder = {
@@ -165,7 +172,7 @@ fun MainBottomBar(
                     singleLine = true,
                     enabled = true,
                     isError = false,
-                    interactionSource = interactionSource,
+                    interactionSource = textInteractionSource,
                     colors = TextFieldDefaults.colors(
                         focusedContainerColor = Color.Transparent,
                         unfocusedContainerColor = Color.Transparent,
@@ -180,10 +187,10 @@ fun MainBottomBar(
             }
         }
         if (isSearchOnMobile) {
-            // Search OFF + Clear text button ???
+            // Search off + clear text button
             IconButton(
                 onClick = {
-                    isSearchOn = false
+                    vm.updateIsSearchOn(false)
                     focusManager.clearFocus()
                     vm.getDbNotes("")
                 }
@@ -196,7 +203,7 @@ fun MainBottomBar(
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
                 // Sync indicator / button
-                if (isSyncNow) {
+                if (vm.isSyncNow) {
                     CircularProgressIndicator(
                         modifier = Modifier
                             .padding(12.dp, 0.dp)
@@ -205,12 +212,12 @@ fun MainBottomBar(
                         strokeWidth = 2.dp
                     )
                 } else {
-                    IconButton(
-                        onClick = {
-                            vm.syncData(SyncActionTypes.Auto, vm)
-                        }
-                    ) {
-                        Icon(Icons.Default.Refresh, stringResource(Res.string.sync_drive_action), Modifier.size(30.dp))
+                    IconButton(onClick = { vm.syncData(SyncActionTypes.Auto) }) {
+                        Icon(
+                            Icons.Default.Refresh,
+                            stringResource(Res.string.sync_drive_action),
+                            Modifier.size(30.dp)
+                        )
                     }
                 }
                 // Change notes view button
@@ -222,18 +229,12 @@ fun MainBottomBar(
                     )
                 }
                 // More button
-                var expandedMenu by remember { mutableStateOf(false) }
-                val sorting = stringResource(Res.string.sorting)
-                IconButton(onClick = { expandedMenu = true }) {
-                    Icon(
-                        Icons.Default.MoreVert,
-                        sorting,
-                        Modifier.size(30.dp)
-                    )
+                IconButton(onClick = { vm.updateIsNotesMenuExpanded(true) }) {
+                    Icon(Icons.Default.MoreVert, "more", Modifier.size(30.dp))
                 }
                 DropdownMenu(
-                    expanded = expandedMenu,
-                    onDismissRequest = { expandedMenu = false },
+                    expanded = vm.isNotesMenuExpanded,
+                    onDismissRequest = { vm.updateIsNotesMenuExpanded(false) },
                     modifier = Modifier
                         .wrapContentSize()
                         .width(IntrinsicSize.Max)
@@ -242,62 +243,73 @@ fun MainBottomBar(
                         text = stringResource(Res.string.filtering),
                         modifier = Modifier.padding(horizontal = 20.dp)
                     )
-                    var isShowArchive by remember { mutableStateOf(vm.db.getDataShowing() == "archive") }
                     RadioDropdownMenuItem(
-                        onClick = {
-                            isShowArchive = false
-                            vm.db.updateDataShowing("all")
-                            vm.getDbNotes("")
-                        },
+                        onClick = vm::hideArchive,
                         text = stringResource(Res.string.show_main_notes),
-                        isSelected = !isShowArchive
+                        isSelected = !vm.isShowArchive
                     )
                     RadioDropdownMenuItem(
-                        onClick = {
-                            isShowArchive = true
-                            vm.db.updateDataShowing("archive")
-                            vm.getDbNotes("")
-                        },
+                        onClick = vm::showArchive,
                         text = stringResource(Res.string.show_archive_notes),
-                        isSelected = isShowArchive
+                        isSelected = vm.isShowArchive
                     )
                     Text(
-                        text = sorting,
+                        text = stringResource(Res.string.sorting),
                         modifier = Modifier.padding(horizontal = 20.dp)
                     )
-                    var sortType by remember { mutableStateOf(vm.db.getSortType()) }
-                    var sortArrow by remember { mutableStateOf(vm.db.getSortArrow()) }
-                    for (i in listOf("dateUpdate","dateCreate")) {
+                    for (i in listOf(Sort.dateUpdate, Sort.dateCreate)) {
                         RadioDropdownMenuItem(
-                            onClick = {
-                                sortType = i
-                                vm.db.updateSortType(i)
-                                vm.getDbNotes("")
-                            },
+                            onClick = { vm.updateSortType(i.name) },
                             text = stringResource(
-                                when(i) {
-                                    "dateUpdate" -> Res.string.date_update
-                                    else -> Res.string.date_create
+                                when (i) {
+                                    Sort.dateUpdate -> Res.string.date_update
+                                    Sort.dateCreate -> Res.string.date_create
                                 }
                             ),
-                            isSelected = sortType == i
+                            isSelected = vm.sortType == i.name
                         )
                     }
-                    for (i in listOf("ascending","descending")) {
+                    for (i in listOf(SortArrow.ascending, SortArrow.descending)) {
                         RadioDropdownMenuItem(
-                            onClick = {
-                                sortArrow = i
-                                vm.db.updateSortArrow(i)
-                                vm.getDbNotes("")
-                            },
+                            onClick = { vm.updateSortArrow(i.name) },
                             text = stringResource(
-                                when(i) {
-                                    "ascending" -> Res.string.ascending
-                                    else -> Res.string.descending
+                                when (i) {
+                                    SortArrow.ascending -> Res.string.ascending
+                                    SortArrow.descending -> Res.string.descending
                                 }
                             ),
-                            isSelected = sortArrow == i
+                            isSelected = vm.sortArrow == i.name
                         )
+                    }
+                    HorizontalDivider(Modifier.padding(vertical = 10.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceEvenly,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        val modifier = Modifier.border(
+                            width = 1.dp,
+                            color = MaterialTheme.colorScheme.primary,
+                            shape = IconButtonDefaults.filledShape
+                        )
+                        IconButton(
+                            onClick = { vm.updateDarkTheme(false) },
+                            modifier = if (vm.darkTheme == false) modifier else Modifier
+                        ) {
+                            Icon(Icons.Outlined.LightMode, "light mode")
+                        }
+                        IconButton(
+                            onClick = { vm.updateDarkTheme(null) },
+                            modifier = if (vm.darkTheme == null) modifier else Modifier
+                        ) {
+                            Icon(Icons.Outlined.Contrast, "auto mode")
+                        }
+                        IconButton(
+                            onClick = { vm.updateDarkTheme(true) },
+                            modifier = if (vm.darkTheme == true) modifier else Modifier
+                        ) {
+                            Icon(Icons.Outlined.DarkMode, "dark mode")
+                        }
                     }
                 }
             }

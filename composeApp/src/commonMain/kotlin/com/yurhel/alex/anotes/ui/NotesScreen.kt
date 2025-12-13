@@ -14,11 +14,6 @@ import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridItemSpan
 import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.FormatListBulleted
-import androidx.compose.material.icons.outlined.Brush
-import androidx.compose.material.icons.outlined.Swipe
-import androidx.compose.material.icons.outlined.TextFields
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
@@ -36,92 +31,53 @@ import androidx.compose.ui.unit.dp
 import anotes.composeapp.generated.resources.Res
 import anotes.composeapp.generated.resources.draw
 import anotes.composeapp.generated.resources.empty_text
-import anotes.composeapp.generated.resources.note
-import anotes.composeapp.generated.resources.swipe_notes
-import anotes.composeapp.generated.resources.tasks
+import anotes.composeapp.generated.resources.sync_collision
+import anotes.composeapp.generated.resources.sync_drive
+import anotes.composeapp.generated.resources.sync_local
 import com.yurhel.alex.anotes.BackHandlerCustom
 import com.yurhel.alex.anotes.data.NoteObj
 import com.yurhel.alex.anotes.ui.components.CustomScaffold
 import com.yurhel.alex.anotes.ui.components.DropFloatingActionButton
-import com.yurhel.alex.anotes.ui.components.MainBottomBar
-import com.yurhel.alex.anotes.ui.components.SyncDialog
-import com.yurhel.alex.anotes.ui.components.TaskCard
+import com.yurhel.alex.anotes.ui.bottom_bars.NotesBottomBar
+import com.yurhel.alex.anotes.ui.components.AskDialog
+import com.yurhel.alex.anotes.ui.screen_tasks.components.TaskCard
 import com.yurhel.alex.anotes.ui.screen_swipes.components.SwipeNotesCard
 import com.yurhel.alex.anotes.ui.screen_swipes.utils.getSwipesTitle
 import com.yurhel.alex.anotes.ui.screen_swipes.utils.importSwipesFromText
 import com.yurhel.alex.anotes.ui.utils.NoteType
+import com.yurhel.alex.anotes.ui.utils.SyncActionTypes
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun NotesScreen(
     vm: MainViewModel,
-    newNoteClicked: (type: String) -> Unit,
-    openNoteClicked: () -> Unit
+    newNoteClicked: (type: NoteType) -> Unit,
+    openExistingNoteClicked: (note: NoteObj) -> Unit,
+    onBack: () -> Unit
 ) {
-    BackHandlerCustom(onBack = vm.callExit)
-
     val scrollState = rememberLazyStaggeredGridState()
-
     LaunchedEffect(Unit) {
-        vm.getDbNotes("")
-        vm.getNotesView()
-        vm.getAllTasks()
-        vm.getAllStatuses()
+        vm.initNotesScreen()
         scrollState.scrollToItem(
             index = vm.notesScreenSavedScroll.first,
             scrollOffset = vm.notesScreenSavedScroll.second
         )
     }
+    BackHandlerCustom(onBack = onBack)
 
     val appSettingsView by vm.appSettingsView.collectAsState()
     val allNotes: List<NoteObj> by vm.allNotes.collectAsState()
     val allTasks by vm.allTasks.collectAsState()
     val allStatuses by vm.allStatuses.collectAsState()
-
-    val onBackgroundColor = MaterialTheme.colorScheme.onBackground
-
-    // Check if no need to choosing widget (possible only on Android)
-    val notNeedChooseWidget = vm.widgetIdWhenCreated == 0
-
     val isSyncDialogOpen by vm.isSyncDialogOpen.collectAsState()
+    val notNeedChooseWidget = vm.widgetIdWhenCreated == 0
 
     CustomScaffold(
         floatingActionButton = {
-            DropFloatingActionButton(
-                listOf(
-                    // Add new swipe button
-                    Triple(stringResource(Res.string.swipe_notes), Icons.Outlined.Swipe) {
-                        newNoteClicked(NoteType.Swipe.name)
-                        vm.updateNotesScreenScrollItem(
-                            Pair(scrollState.firstVisibleItemIndex, scrollState.firstVisibleItemScrollOffset)
-                        )
-                    },
-                    // Add new drawing button
-                    Triple(stringResource(Res.string.draw), Icons.Outlined.Brush) {
-                        newNoteClicked(NoteType.Draw.name)
-                        vm.updateNotesScreenScrollItem(
-                            Pair(scrollState.firstVisibleItemIndex, scrollState.firstVisibleItemScrollOffset)
-                        )
-                    },
-                    // Add new tasks button
-                    Triple(stringResource(Res.string.tasks), Icons.AutoMirrored.Outlined.FormatListBulleted) {
-                        newNoteClicked(NoteType.Tasks.name)
-                        vm.updateNotesScreenScrollItem(
-                            Pair(scrollState.firstVisibleItemIndex, scrollState.firstVisibleItemScrollOffset)
-                        )
-                    },
-                    // Add new note button
-                    Triple(stringResource(Res.string.note), Icons.Outlined.TextFields) {
-                        newNoteClicked(NoteType.Note.name)
-                        vm.updateNotesScreenScrollItem(
-                            Pair(scrollState.firstVisibleItemIndex, scrollState.firstVisibleItemScrollOffset)
-                        )
-                    }
-                )
-            )
+            DropFloatingActionButton(vm.getNotesScreenDropMenuItems(scrollState, newNoteClicked))
         },
         bottomBar = {
-            if (notNeedChooseWidget) MainBottomBar(vm, appSettingsView)
+            if (notNeedChooseWidget) NotesBottomBar(vm, appSettingsView)
         }
     ) { bottomPadding, topPadding ->
         // Empty text
@@ -148,45 +104,39 @@ fun NotesScreen(
             }
             // Notes
             items(items = allNotes) { note: NoteObj ->
-                val image = vm.tryGetImage(note.id)
+                val img = vm.tryGetImage(note.id)
+                val isSwipes = note.type == NoteType.Swipe.name
+                val title = if (isSwipes) getSwipesTitle(note.text) else note.text
+
                 Card(
                     onClick = {
-                        vm.selectNote(note)
                         if (notNeedChooseWidget) {
-                            // Open existing note
-                            openNoteClicked()
-                            vm.updateNotesScreenScrollItem(
-                                Pair(scrollState.firstVisibleItemIndex, scrollState.firstVisibleItemScrollOffset)
-                            )
+                            openExistingNoteClicked(note)
+                            vm.updateNotesScreenScrollItem(scrollState)
                         } else {
-                            // Init widget
                             vm.callInitUpdateWidget(true, vm.widgetIdWhenCreated, note.dateCreate.toString(), note)
                         }
                     },
                     colors = CardDefaults.cardColors(
-                        containerColor = if (image != null) Color.White else MaterialTheme.colorScheme.surfaceVariant
+                        containerColor = if (img != null) Color.White else MaterialTheme.colorScheme.surfaceVariant
                     ),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .heightIn(
-                            min = 60.dp,
-                            max = 350.dp
-                        )
+                        .heightIn(min = 60.dp, max = 350.dp)
                         .padding(5.dp)
                 ) {
-                    val isSwipes = note.type == NoteType.Swipe.name
                     // Normal text
-                    if (note.text.isNotEmpty()) {
+                    if (title.isNotEmpty()) {
                         Text(
-                            text = if (isSwipes) getSwipesTitle(note.text) else note.text,
+                            text = title,
                             overflow = TextOverflow.Ellipsis,
                             maxLines = 10,
-                            color = if (image != null) Color.Black else Color.Unspecified,
+                            color = if (img != null) Color.Black else Color.Unspecified,
                             modifier = Modifier.padding(horizontal = 10.dp, vertical = 2.dp)
                         )
                     }
+                    // Swipes
                     if (isSwipes) {
-                        // Swipes
                         var leftColor = Color.Red
                         var rightColor = Color.Green
                         importSwipesFromText(note.text) { _, lColor, _, rColor ->
@@ -203,7 +153,7 @@ fun NotesScreen(
                         }
                     }
                     // Tasks for this note
-                    for (task in allTasks) {
+                    allTasks.forEach { task ->
                         if (task.note == note.id) {
                             TaskCard(
                                 task = task,
@@ -214,14 +164,14 @@ fun NotesScreen(
                                     .padding(horizontal = 5.dp),
                                 tasksTextPadding = 2,
                                 statuses = allStatuses,
-                                onBackgroundColor = onBackgroundColor
+                                onBackgroundColor = MaterialTheme.colorScheme.onBackground
                             )
                         }
                     }
                     // Try to draw an image
-                    if (image != null) {
+                    if (img != null) {
                         Image(
-                            bitmap = image,
+                            bitmap = img,
                             contentDescription = stringResource(Res.string.draw),
                             contentScale = ContentScale.FillHeight,
                             modifier = Modifier
@@ -234,8 +184,17 @@ fun NotesScreen(
             }
         }
     }
-    SyncDialog(
+    AskDialog(
+        onDismissRequest = { vm.openSyncDialog(false) },
         isVisible = isSyncDialogOpen,
-        vm = vm
+        infoText = Res.string.sync_collision,
+        leftButton = Pair(Res.string.sync_drive) {
+            vm.syncData(SyncActionTypes.ManualImport)
+            vm.openSyncDialog(false)
+        },
+        rightButton = Pair(Res.string.sync_local) {
+            vm.syncData(SyncActionTypes.ManualExport)
+            vm.openSyncDialog(false)
+        }
     )
 }

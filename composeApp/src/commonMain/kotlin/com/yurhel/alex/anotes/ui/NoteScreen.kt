@@ -34,7 +34,7 @@ import androidx.compose.ui.unit.dp
 import com.yurhel.alex.anotes.BackHandlerCustom
 import com.yurhel.alex.anotes.keyboardAsState
 import com.yurhel.alex.anotes.ui.components.CustomScaffold
-import com.yurhel.alex.anotes.ui.components.NoteBottomBar
+import com.yurhel.alex.anotes.ui.bottom_bars.NoteBottomBar
 import kotlinx.coroutines.launch
 
 @Composable
@@ -63,7 +63,7 @@ fun NoteScreen(
         bottomBar = {
             NoteBottomBar(
                 vm = vm,
-                coroutineScope = coroutineScope,
+                scope = coroutineScope,
                 onBackAfterDelete = {
                     onBack()
                 },

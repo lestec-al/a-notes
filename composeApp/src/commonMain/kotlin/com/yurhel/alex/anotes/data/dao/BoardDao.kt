@@ -1,8 +1,9 @@
-package com.yurhel.alex.anotes.data
+package com.yurhel.alex.anotes.data.dao
 
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import com.yurhel.alex.anotes.data.BoardLineObj
 import db.DrawingsQueries
 
 class BoardDao(private val db: DrawingsQueries) {

@@ -22,12 +22,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalClipboardManager
-import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -37,7 +37,9 @@ import anotes.composeapp.generated.resources.copy
 import anotes.composeapp.generated.resources.delete
 import anotes.composeapp.generated.resources.save
 import anotes.composeapp.generated.resources.text
+import com.yurhel.alex.anotes.copyToClipboard
 import com.yurhel.alex.anotes.ui.components.ColorPicker
+import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -53,10 +55,11 @@ fun SwipeNotesSheet(
     isColorPickerShow: Boolean,
     isDeleteButtonOn: Boolean
 ) {
-    val clipboardManager = LocalClipboardManager.current
+    val clipboard = LocalClipboard.current
     val sheetState = rememberModalBottomSheetState()
     var editText by remember { mutableStateOf(initText) }
     var editColor by remember { mutableStateOf(initColor) }
+    val scope = rememberCoroutineScope()
 
     ModalBottomSheet(
         onDismissRequest = onDismissRequest,
@@ -79,7 +82,7 @@ fun SwipeNotesSheet(
             // Copy content button
             IconButton(
                 onClick = {
-                    clipboardManager.setText(buildAnnotatedString { append(text = editText) })
+                    scope.launch { editText.copyToClipboard(clipboard) }
                 }
             ) {
                 Icon(

@@ -14,23 +14,24 @@ class DriveUtils(
     private val scope = CoroutineScope(Job())
 
     fun driveSyncAuto(
-        before: () -> Unit = { vm.changeSyncNow(true) },
-        after: () -> Unit = { vm.changeSyncNow(false) }
+        before: () -> Unit = { vm.updateSyncNow(true) },
+        after: () -> Unit = { vm.updateSyncNow(false) }
     ) {
         scope.launch(Dispatchers.Default) {
             try {
                 before()
 
-                val appSettings = vm.db.getSettings()
+                val isNotesEdited = vm.settings.getIsNotesEdited()
+                val dataReceivedDate = vm.settings.getDataReceivedDate()
                 val data = drive.getData()
 
                 if (data.isServiceOK) {
-                    if (!appSettings.isNotesEdited) {
+                    if (!isNotesEdited) {
                         // Data not edited
                         if (data.modifiedTime != null) {
                             // Update local
                             vm.db.importDB(data.data.toString())
-                            vm.db.updateReceived(data.modifiedTime)
+                            vm.settings.setDataReceivedDate(data.modifiedTime)
                             vm.getDbNotes("")
                             vm.getAllTasks()
                             vm.getAllStatuses()
@@ -40,7 +41,7 @@ class DriveUtils(
                         }
                     } else {
                         // Data edited
-                        if (data.modifiedTime == appSettings.dataReceivedDate || data.modifiedTime == null) {
+                        if (data.modifiedTime == dataReceivedDate || data.modifiedTime == null) {
                             // Send data
                             driveSyncManual(true)
                         } else {
@@ -58,8 +59,8 @@ class DriveUtils(
 
     fun driveSyncManualThread(
         isExport: Boolean,
-        before: () -> Unit = { vm.changeSyncNow(true) },
-        after: () -> Unit = { vm.changeSyncNow(false) }
+        before: () -> Unit = { vm.updateSyncNow(true) },
+        after: () -> Unit = { vm.updateSyncNow(false) }
     ) {
         scope.launch(Dispatchers.Default) {
             before()
@@ -72,7 +73,7 @@ class DriveUtils(
         if (isExport) {
             // Send data
             drive.sendData(vm.db.exportDB().toString())
-            vm.db.updateEdit(false)
+            vm.settings.setIsNotesEdited(false)
         }
         // Get data
         val data = drive.getData()
@@ -83,6 +84,6 @@ class DriveUtils(
             vm.getAllTasks()
             vm.getAllStatuses()
         }
-        vm.db.updateReceived(data.modifiedTime)
+        vm.settings.setDataReceivedDate(data.modifiedTime)
     }
 }
