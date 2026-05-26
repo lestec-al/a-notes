@@ -38,7 +38,6 @@ import com.yurhel.alex.anotes.BackHandlerCustom
 import com.yurhel.alex.anotes.data.NoteObj
 import com.yurhel.alex.anotes.ui.components.CustomScaffold
 import com.yurhel.alex.anotes.ui.components.DropFloatingActionButton
-import com.yurhel.alex.anotes.ui.bottom_bars.NotesBottomBar
 import com.yurhel.alex.anotes.ui.components.AskDialog
 import com.yurhel.alex.anotes.ui.screen_tasks.components.TaskCard
 import com.yurhel.alex.anotes.ui.screen_swipes.components.SwipeNotesCard

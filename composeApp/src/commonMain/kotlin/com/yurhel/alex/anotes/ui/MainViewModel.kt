@@ -42,7 +42,6 @@ class MainViewModel(
     val settings: SettingsDataStore,
     val isTest: Boolean,
     // Next used only in Android
-    val showToast: (text: String) -> Unit,
     val callExit: () -> Unit,
     var widgetIdWhenCreated: Int,
     val callInitUpdateWidget: (Boolean, Int, String, NoteObj) -> Unit
@@ -52,14 +51,13 @@ class MainViewModel(
         private val db: LocalDB,
         private val settings: SettingsDataStore,
         private val isTest: Boolean = false,
-        private val showToast: (text: String) -> Unit,
         private val callExit: () -> Unit,
         private var widgetIdWhenCreated: Int,
         private val callInitUpdateWidget: (Boolean, Int, String, NoteObj) -> Unit
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: KClass<T>, extras: CreationExtras): T =
-            MainViewModel(db, settings, isTest, showToast, callExit, widgetIdWhenCreated, callInitUpdateWidget) as T
+            MainViewModel(db, settings, isTest, callExit, widgetIdWhenCreated, callInitUpdateWidget) as T
     }
 
 

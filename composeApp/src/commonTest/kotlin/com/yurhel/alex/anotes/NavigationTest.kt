@@ -132,7 +132,6 @@ class NavigationTest {
         vm = MainViewModel(
             db = LocalDB.Companion.getInstance(driver),
             settings = SettingsDataStore.getInstance { createDataStorePlatform() },
-            showToast = {},
             callExit = {},
             widgetIdWhenCreated = 0,
             callInitUpdateWidget = { _, _, _, _ -> },

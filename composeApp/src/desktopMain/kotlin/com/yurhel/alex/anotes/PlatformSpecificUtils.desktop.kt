@@ -18,8 +18,10 @@ import com.yurhel.alex.anotes.ui.theme.darkColorScheme
 import com.yurhel.alex.anotes.ui.theme.lightColorScheme
 import db.Database
 import org.jetbrains.skia.Image
+import java.awt.Desktop
 import java.io.ByteArrayOutputStream
 import java.io.File
+import java.net.URI
 import java.text.DateFormat
 import java.util.Base64
 import java.util.Calendar
@@ -97,3 +99,17 @@ actual fun createDataStorePlatform(): DataStore<Preferences> = createDataStore(
         file.absolutePath
     }
 )
+
+actual fun openLink(link: String) {
+    val uri = URI.create(link)
+    if (Desktop.isDesktopSupported()) {
+        val desktop = Desktop.getDesktop()
+        if (desktop.isSupported(Desktop.Action.BROWSE)) {
+            desktop.browse(uri)
+        }
+    }
+}
+
+actual fun showToast(msg: String) {}
+
+actual fun getAppVersion() = System.getProperty("jpackage.app-version") ?: ""

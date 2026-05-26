@@ -1,4 +1,4 @@
-package com.yurhel.alex.anotes.ui.bottom_bars
+package com.yurhel.alex.anotes.ui
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -51,7 +51,7 @@ import anotes.composeapp.generated.resources.sent_note_to_archive
 import anotes.composeapp.generated.resources.updated
 import anotes.composeapp.generated.resources.yes
 import com.yurhel.alex.anotes.getOrientation
-import com.yurhel.alex.anotes.ui.MainViewModel
+import com.yurhel.alex.anotes.showToast
 import com.yurhel.alex.anotes.ui.components.BaseBottomBar
 import com.yurhel.alex.anotes.ui.utils.OrientationObj
 import com.yurhel.alex.anotes.formatDate
@@ -113,7 +113,7 @@ fun NoteBottomBar(
                 onClick = {
                     vm.archiveOrUnarchiveNote(!isNoteArchived)
                     isNoteArchived = !isNoteArchived
-                    vm.showToast(archive2)
+                    showToast(archive2)
                 }
             ) {
                 Icon(

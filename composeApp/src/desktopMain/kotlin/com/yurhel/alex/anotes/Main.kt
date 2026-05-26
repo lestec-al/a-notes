@@ -59,7 +59,6 @@ fun main() = application {
                 db = db,
                 settings = settings,
                 // Next used only in Android
-                showToast = {},
                 callExit = {},
                 widgetIdWhenCreated = 0,
                 callInitUpdateWidget = { _, _, _, _ -> }

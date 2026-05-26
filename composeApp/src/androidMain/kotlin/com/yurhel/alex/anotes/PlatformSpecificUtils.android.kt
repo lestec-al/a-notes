@@ -2,6 +2,7 @@ package com.yurhel.alex.anotes
 
 import android.app.Activity
 import android.content.ClipData
+import android.content.Intent
 import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -10,6 +11,7 @@ import android.text.format.DateFormat
 import android.text.format.DateUtils
 import android.util.Base64
 import android.view.ViewTreeObserver
+import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.ColorScheme
@@ -33,6 +35,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.platform.toClipEntry
+import androidx.core.net.toUri
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
@@ -147,3 +150,21 @@ actual fun getSqlDriver(): SqlDriver = AndroidSqliteDriver(Database.Schema, MyAp
 actual fun createDataStorePlatform(): DataStore<Preferences> = createDataStore(
     producePath = { MyApp.appContext.filesDir.resolve(dataStoreFileName).absolutePath }
 )
+
+actual fun openLink(link: String) {
+    val intent = Intent(Intent.ACTION_VIEW)
+    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+    MyApp.appContext.startActivity(intent.setData(link.toUri()))
+}
+
+actual fun showToast(msg: String) {
+    Toast.makeText(MyApp.appContext, msg, Toast.LENGTH_SHORT).show()
+}
+
+actual fun getAppVersion() = try {
+    val context = MyApp.appContext
+    val pInfo = context.packageManager.getPackageInfo(context.packageName, 0)
+    pInfo.versionName ?: ""
+} catch (_: Exception) {
+    ""
+}
