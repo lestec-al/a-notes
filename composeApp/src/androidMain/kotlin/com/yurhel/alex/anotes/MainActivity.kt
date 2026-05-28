@@ -3,7 +3,6 @@ package com.yurhel.alex.anotes
 import android.appwidget.AppWidgetManager
 import android.content.Intent
 import android.os.Bundle
-import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -34,9 +33,6 @@ class MainActivity : ComponentActivity() {
                 MainViewModel.Factory(
                     db = db,
                     settings = SettingsDataStore.getInstance { createDataStorePlatform() },
-                    showToast = {
-                        Toast.makeText(this, it, Toast.LENGTH_SHORT).show()
-                    },
                     callExit = ::finishAffinity,
                     widgetIdWhenCreated = intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID),
                     callInitUpdateWidget = { isInitAction, widgetId, noteCreated, note ->

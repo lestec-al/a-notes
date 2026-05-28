@@ -111,8 +111,8 @@ android {
         applicationId = "com.yurhel.alex.anotes"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
-        versionCode = 4
-        versionName = "4.0"
+        versionCode = 6
+        versionName = "5.1"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
     packaging {
@@ -125,6 +125,9 @@ android {
     buildTypes {
         release {
             isMinifyEnabled = false
+            ndk {
+                debugSymbolLevel = "FULL"
+            }
         }
     }
     compileOptions {
@@ -149,9 +152,9 @@ compose.desktop {
             includeAllModules = true
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
             packageName = "Anotes"
-            packageVersion = "4.0.0"
+            packageVersion = "5.1.0"
             description = "Desktop version ANotes app"
-            copyright = "© 2025 Aliaksei Yurhel. All rights reserved."
+            copyright = "© 2026 Aliaksei Yurhel. All rights reserved."
 
             windows {
                 iconFile.set(project.file("icon.ico"))

@@ -37,7 +37,7 @@ import anotes.composeapp.generated.resources.right_side
 import anotes.composeapp.generated.resources.task
 import com.yurhel.alex.anotes.BackHandlerCustom
 import com.yurhel.alex.anotes.ui.components.CustomScaffold
-import com.yurhel.alex.anotes.ui.bottom_bars.NoteBottomBar
+import com.yurhel.alex.anotes.ui.NoteBottomBar
 import com.yurhel.alex.anotes.ui.screen_swipes.components.SwipeNotesCard
 import com.yurhel.alex.anotes.ui.screen_swipes.components.SwipeNotesSheet
 import com.yurhel.alex.anotes.ui.screen_swipes.utils.Edit

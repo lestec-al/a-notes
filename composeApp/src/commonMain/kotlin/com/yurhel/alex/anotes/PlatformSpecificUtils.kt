@@ -15,6 +15,7 @@ import okio.Path.Companion.toPath
 
 expect class Drive() {
     suspend fun getData(): DriveObj
+    @Suppress("unused")
     suspend fun sendData(localData: String)
 }
 
@@ -54,3 +55,9 @@ fun createDataStore(producePath: () -> String): DataStore<Preferences> =
         produceFile = { producePath().toPath() }
     )
 internal const val dataStoreFileName = "notes.preferences_pb"
+
+expect fun openLink(link: String)
+
+expect fun showToast(msg: String)
+
+expect fun getAppVersion(): String

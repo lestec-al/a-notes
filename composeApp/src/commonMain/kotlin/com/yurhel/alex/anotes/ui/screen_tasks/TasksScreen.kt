@@ -40,7 +40,7 @@ import com.yurhel.alex.anotes.data.TasksObj
 import com.yurhel.alex.anotes.getOrientation
 import com.yurhel.alex.anotes.ui.components.CustomScaffold
 import com.yurhel.alex.anotes.ui.components.DropFloatingActionButton
-import com.yurhel.alex.anotes.ui.bottom_bars.NoteBottomBar
+import com.yurhel.alex.anotes.ui.NoteBottomBar
 import com.yurhel.alex.anotes.ui.components.SimpleEditSheet
 import com.yurhel.alex.anotes.ui.screen_tasks.components.TaskCard
 import com.yurhel.alex.anotes.ui.screen_tasks.components.EditTasksSheet

@@ -40,7 +40,7 @@ import com.yurhel.alex.anotes.ui.screen_board.components.EditBoardBottomSheet
 import com.yurhel.alex.anotes.SetStatusBarColor
 import com.yurhel.alex.anotes.ui.components.SimpleEditSheet
 import com.yurhel.alex.anotes.ui.components.CustomScaffold
-import com.yurhel.alex.anotes.ui.bottom_bars.NoteBottomBar
+import com.yurhel.alex.anotes.ui.NoteBottomBar
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
