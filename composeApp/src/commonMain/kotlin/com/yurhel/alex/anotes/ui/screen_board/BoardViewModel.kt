@@ -93,7 +93,7 @@ class BoardViewModel(val vm: MainViewModel) : ViewModel() {
             // Undo local
             (1..10).forEach {
                 try {
-                    localDraw.removeLast()
+                    localDraw.removeAt(localDraw.lastIndex)
                 } catch (_: Exception) {}
             }
             // Undo in DB
