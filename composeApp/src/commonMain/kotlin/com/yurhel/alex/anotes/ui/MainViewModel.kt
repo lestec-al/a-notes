@@ -301,6 +301,8 @@ class MainViewModel(
                 if (widgetId != null) {
                     callInitUpdateWidget(false, widgetId.toInt(), edit.dateCreate.toString(), newEdit)
                 }
+                // Set new note text (required when saved not on the exit)
+                updateEditTextValue(text, 0)
             }
         }
     }

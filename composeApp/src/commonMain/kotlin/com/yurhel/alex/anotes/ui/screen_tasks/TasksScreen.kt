@@ -1,7 +1,7 @@
 package com.yurhel.alex.anotes.ui.screen_tasks
 
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
-import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.absoluteOffset
 import androidx.compose.foundation.layout.fillMaxSize
@@ -84,107 +84,104 @@ fun TasksScreen(
     ) { bottomPadding, topPadding ->
         // Need update tasks (ids) after drag drop change position
         key(vm.tasks) {
-            LazyColumn(
-                state = lazyListState,
+            Column(
                 modifier = Modifier
-                    .padding(bottom = bottomPadding)
+                    .padding(bottom = bottomPadding, top = topPadding)
                     .fillMaxSize()
             ) {
-                // Status bar spacer
-                item { Spacer(Modifier.height(topPadding)) }
                 // Top bar
-                item {
-                    if (vm.vm.selectedNote != null && vm.vm.selectedNote!!.text.isNotEmpty()) {
-                        TopAppBar(
-                            colors = TopAppBarDefaults.topAppBarColors(
-                                scrolledContainerColor = MaterialTheme.colorScheme.background,
-                                containerColor = MaterialTheme.colorScheme.background,
-                            ),
-                            windowInsets = WindowInsets(0,0,0,0),
-                            title = {
-                                Text(
-                                    text = vm.vm.selectedNote!!.text,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                    modifier = Modifier.padding(0.dp, 0.dp, 10.dp, 0.dp)
-                                )
-                            }
-                        )
-                    }
+                if (vm.vm.selectedNote != null && vm.vm.selectedNote!!.text.isNotEmpty()) {
+                    TopAppBar(
+                        colors = TopAppBarDefaults.topAppBarColors(
+                            scrolledContainerColor = MaterialTheme.colorScheme.background,
+                            containerColor = MaterialTheme.colorScheme.background,
+                        ),
+                        windowInsets = WindowInsets(0,0,0,0),
+                        title = {
+                            Text(
+                                text = vm.vm.selectedNote!!.text,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.padding(0.dp, 0.dp, 10.dp, 0.dp)
+                            )
+                        }
+                    )
                 }
                 // Statuses
-                item {
-                    if (vm.statuses.isNotEmpty()) {
-                        LazyRow(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(50.dp)
-                        ) {
-                            items(items = vm.statuses) {
-                                StatusCard(
-                                    selectedStatusId = vm.selectedStatus,
-                                    status = it,
-                                    onClick = vm::changeStatus,
-                                    onLongClicked = vm::editStatus
-                                )
-                            }
+                if (vm.statuses.isNotEmpty()) {
+                    LazyRow(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(50.dp)
+                    ) {
+                        items(items = vm.statuses) {
+                            StatusCard(
+                                selectedStatusId = vm.selectedStatus,
+                                status = it,
+                                onClick = vm::changeStatus,
+                                onLongClicked = vm::editStatus
+                            )
                         }
                     }
                 }
                 // Tasks
-                itemsIndexed(items = vm.tasks) { idx: Int, task: TasksObj ->
-                    // For drag & drop
-                    var offsetY by remember { mutableFloatStateOf(0f) }
-                    var posTop = 0f
-                    var posBottom = 0f
-                    val itemIdx = idx + 3 // + statusBar, topBar, statuses
+                LazyColumn(state = lazyListState) {
+                    itemsIndexed(items = vm.tasks) { idx: Int, task: TasksObj ->
+                        // For drag & drop
+                        var offsetY by remember { mutableFloatStateOf(0f) }
+                        var posTop = 0f
+                        var posBottom = 0f
 
-                    TaskCard(
-                        task = task,
-                        cardColor = MaterialTheme.colorScheme.background,
-                        onClick = {
-                            vm.onEvent(Event.ShowEditDialog(Types.Task, ActionTypes.Update, task))
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(5.dp)
-                            // For drag & drop
-                            .onGloballyPositioned {
-                                posTop = it.positionInParent().y
-                                posBottom = it.positionInParent().y + it.size.height
-                            }
-                            .absoluteOffset(
-                                y = offsetY
-                                    .roundToInt()
-                                    .pxToDp()
-                            )
-                            .pointerInput(vm.selectedStatus) {
-                                // If status is not selected (all tasks shown)
-                                if (vm.selectedStatus == 0) {
-                                    detectDragGesturesAfterLongPress(
-                                        onDragStart = {
-                                            vm.onDragStart(idx)
-                                        },
-                                        onDragEnd = {
-                                            offsetY = 0f
-                                            vm.onDragEnd(idx, task)
-                                        },
-                                        onDragCancel = {
-                                            offsetY = 0f
-                                            vm.onDragEnd(idx, task)
-                                        },
-                                        onDrag = { _, dragAmount ->
-                                            if (vm.draggingObj != idx) return@detectDragGesturesAfterLongPress
-                                            offsetY += dragAmount.y
-                                            vm.onDrag(offsetY, posTop, posBottom, itemIdx, scrollOffset, lazyListState.layoutInfo.visibleItemsInfo)
-                                        }
-                                    )
-                                }
+                        TaskCard(
+                            task = task,
+                            cardColor = MaterialTheme.colorScheme.background,
+                            onClick = {
+                                vm.onEvent(Event.ShowEditDialog(Types.Task, ActionTypes.Update, task))
                             },
-                        tasksTextPadding = 10,
-                        statuses = vm.statuses,
-                        onBackgroundColor = MaterialTheme.colorScheme.onBackground
-                    )
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(5.dp)
+                                // For drag & drop
+                                .onGloballyPositioned {
+                                    posTop = it.positionInParent().y
+                                    posBottom = it.positionInParent().y + it.size.height
+                                }
+                                .absoluteOffset(
+                                    y = offsetY
+                                        .roundToInt()
+                                        .pxToDp()
+                                )
+                                .pointerInput(vm.selectedStatus) {
+                                    // If status is not selected (all tasks shown)
+                                    if (vm.selectedStatus == 0) {
+                                        detectDragGesturesAfterLongPress(
+                                            onDragStart = {
+                                                vm.onDragStart(idx)
+                                            },
+                                            onDragEnd = {
+                                                offsetY = 0f
+                                                vm.onDragEnd(idx, task)
+                                            },
+                                            onDragCancel = {
+                                                offsetY = 0f
+                                                vm.onDragEnd(idx, task)
+                                            },
+                                            onDrag = { _, dragAmount ->
+                                                if (vm.draggingObj != idx) return@detectDragGesturesAfterLongPress
+                                                offsetY += dragAmount.y
+                                                vm.onDrag(
+                                                    offsetY, posTop, posBottom, idx, scrollOffset,
+                                                    lazyListState.layoutInfo.visibleItemsInfo
+                                                )
+                                            }
+                                        )
+                                    }
+                                },
+                            tasksTextPadding = 10,
+                            statuses = vm.statuses,
+                            onBackgroundColor = MaterialTheme.colorScheme.onBackground
+                        )
+                    }
                 }
             }
         }

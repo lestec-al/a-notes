@@ -121,7 +121,10 @@ class TasksViewModel(val vm: MainViewModel): ViewModel() {
         }
     }
 
-    private fun updateTasksData(isSaveNote: Boolean) {
+    private fun updateTasksData(
+        isSaveNote: Boolean,
+        afterGettingTasks: () -> Unit = {}
+    ) {
         val noteId = vm.selectedNote!!.id
         // Get statuses
         viewModelScope.launch(Dispatchers.Default) {
@@ -135,6 +138,7 @@ class TasksViewModel(val vm: MainViewModel): ViewModel() {
             } else {
                 db.task.getManyByNoteAndStatus(noteId, statusId)
             }.sortedBy { it.position }
+            afterGettingTasks()
         }
         if (isSaveNote) vm.saveNote(isEditDateForcedUpdate = true)
     }
@@ -174,38 +178,31 @@ class TasksViewModel(val vm: MainViewModel): ViewModel() {
                     updateTasksData(true)
                 }
                 is Event.ChangePos -> {
-                    val newIdx = event.pos - 2
-                    val newPos = when {
-                        newIdx < 0 -> 0
-                        else -> newIdx
-                    }
+                    val newPos = if (event.pos < 0) 0 else event.pos
                     val oldPos = event.task.position
+                    // Change target task position
+                    db.task.update(event.task.copy(position = newPos))
+                    // Change positions of the tasks that in between
+                    val isAfter = newPos > oldPos
+                    val range = if (isAfter) (oldPos + 1)..newPos else newPos..<oldPos
                     tasks
                         .sortedBy { it.position }
                         .forEach {
-                            if (newPos > oldPos) {
-                                // Next
-                                if (it.position in (oldPos + 1)..newPos) {
-                                    db.task.update(it.copy(position = it.position - 1))
-                                }
-                            } else {
-                                // Prev
-                                if (it.position in newPos..<oldPos) {
-                                    db.task.update(it.copy(position = it.position + 1))
-                                }
+                            if (it.position in range) {
+                                db.task.update(it.copy(
+                                    // Move objects up or down
+                                    position = if (isAfter) it.position - 1 else it.position + 1
+                                ))
                             }
                         }
-                    db.task.update(event.task.copy(position = newPos))
-                    updateTasksData(true)
-                    // Prevent of having problems while drag/drop, because of not unique position vars
-                    // Just set them to unique values
-                    launch {
-                        delay(1000)
-                        tasks
-                            .sortedBy { it.position }
-                            .forEachIndexed { idx, it ->
-                                db.task.update(it.copy(position = idx))
-                            }
+                    updateTasksData(true) {
+                        // Prevent of having problems while drag/drop, because of not unique position vars
+                        // Just set them to unique values
+                        val sortedTasks = tasks.sortedBy { it.position }
+                        sortedTasks.forEachIndexed { idx, it ->
+                            db.task.update(it.copy(position = idx))
+                        }
+                        tasks = sortedTasks
                     }
                 }
                 // Others
