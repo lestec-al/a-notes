@@ -111,8 +111,8 @@ android {
         applicationId = "com.yurhel.alex.anotes"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
-        versionCode = 6
-        versionName = "5.1"
+        versionCode = 7
+        versionName = "5.2"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
     packaging {
@@ -152,7 +152,7 @@ compose.desktop {
             includeAllModules = true
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
             packageName = "Anotes"
-            packageVersion = "5.1.0"
+            packageVersion = "5.2.0"
             description = "Desktop version ANotes app"
             copyright = "© 2026 Aliaksei Yurhel. All rights reserved."
 
