@@ -1,0 +1,57 @@
+package com.yurhel.alex.anotes.ui.screen_tasks.components
+
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
+import com.yurhel.alex.anotes.data.Status
+import com.yurhel.alex.anotes.data.Tasks
+import com.yurhel.alex.anotes.ui.components.CardOnClick
+
+@Composable
+fun TaskCard(
+    task: Tasks,
+    onClick: (() -> Unit)?,
+    modifier: Modifier,
+    tasksTextPadding: Int,
+    statuses: List<Status>,
+    onBackgroundColor: Color,
+    cardColor: Color
+) {
+    CardOnClick(
+        onClick = onClick,
+        cardColor = cardColor,
+        modifier = modifier
+    ) {
+        Row(horizontalArrangement = Arrangement.Center) {
+            // Color indicator
+            Canvas(
+                modifier = Modifier
+                    .padding(top = (tasksTextPadding + 8).dp) // 8 - text native padding?
+                    .size(10.dp)
+            ) {
+                drawCircle(
+                    color = try {
+                        Color(statuses.find { it.id == task.status }!!.color)
+                    } catch (_: Exception) {
+                        onBackgroundColor
+                    }
+                )
+            }
+            // Description
+            Text(
+                text = task.description,
+                modifier = Modifier.padding(
+                    horizontal = 5.dp,
+                    vertical = tasksTextPadding.dp
+                )
+            )
+        }
+    }
+}
