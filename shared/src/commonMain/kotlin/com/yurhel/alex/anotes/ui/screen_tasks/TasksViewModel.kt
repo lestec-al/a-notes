@@ -5,6 +5,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.Sort
 import androidx.compose.material.icons.automirrored.outlined.StickyNote2
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
@@ -26,6 +27,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.reflect.KClass
+import kotlin.time.Duration.Companion.milliseconds
 
 class TasksViewModel(val vm: MainViewModel): ViewModel() {
     class Factory(val vm: MainViewModel) : ViewModelProvider.Factory {
@@ -48,7 +50,7 @@ class TasksViewModel(val vm: MainViewModel): ViewModel() {
         private set
     var tasks by mutableStateOf<List<Tasks>>(listOf())
         private set
-    var selectedStatus by mutableStateOf(0)
+    var selectedStatus by mutableIntStateOf(0)
         private set
     var draggingObj by mutableStateOf<Int?>(null)
         private set
@@ -158,12 +160,12 @@ class TasksViewModel(val vm: MainViewModel): ViewModel() {
                     } else {
                         db.task.update(event.task)
                     }
-                    delay(200)
+                    delay(200.milliseconds)
                     updateTasksData(true)
                 }
                 is Event.DeleteTask -> {
                     db.task.delete(event.task.id)
-                    delay(200)
+                    delay(200.milliseconds)
                     updateTasksData(true)
                 }
                 is Event.ChangePos -> {

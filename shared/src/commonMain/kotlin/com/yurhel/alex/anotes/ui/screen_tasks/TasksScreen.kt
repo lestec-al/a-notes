@@ -3,10 +3,10 @@ package com.yurhel.alex.anotes.ui.screen_tasks
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.absoluteOffset
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -30,6 +30,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.yurhel.alex.anotes.shared.Res
 import com.yurhel.alex.anotes.shared.edit_note
@@ -45,7 +46,6 @@ import com.yurhel.alex.anotes.ui.screen_tasks.components.StatusCard
 import com.yurhel.alex.anotes.ui.screen_tasks.utils.ActionTypes
 import com.yurhel.alex.anotes.ui.screen_tasks.utils.Event
 import com.yurhel.alex.anotes.ui.screen_tasks.utils.Types
-import com.yurhel.alex.anotes.ui.screen_tasks.utils.pxToDp
 import com.yurhel.alex.anotes.ui.utils.Orientation
 import org.jetbrains.compose.resources.stringResource
 import kotlin.math.roundToInt
@@ -139,11 +139,12 @@ fun TasksScreen(
                                     posTop = it.positionInParent().y
                                     posBottom = it.positionInParent().y + it.size.height
                                 }
-                                .absoluteOffset(
-                                    y = offsetY
-                                        .roundToInt()
-                                        .pxToDp()
-                                )
+                                .offset {
+                                    IntOffset(
+                                        x = 0,
+                                        y = offsetY.roundToInt()
+                                    )
+                                }
                                 .pointerInput(vm.selectedStatus) {
                                     // If status is not selected (all tasks shown)
                                     if (vm.selectedStatus == 0) {

@@ -19,6 +19,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.reflect.KClass
+import kotlin.time.Duration.Companion.milliseconds
 
 class BoardViewModel(val vm: MainViewModel) : ViewModel() {
 
@@ -61,7 +62,7 @@ class BoardViewModel(val vm: MainViewModel) : ViewModel() {
         launch {
             if (isDraw) {
                 enableDisableDraw(false)
-                delay(500)
+                delay(500.milliseconds)
             }
             val base64img = vm.platform.toBase64(graphicsLayer.toImageBitmap())
             if (base64img != null) {

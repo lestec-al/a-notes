@@ -22,6 +22,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import java.io.ByteArrayOutputStream
 import java.util.Collections
+import kotlin.time.Duration.Companion.milliseconds
 
 actual class PlatformDrive(private val context: Context) {
     private var service: Drive? = null
@@ -52,7 +53,7 @@ actual class PlatformDrive(private val context: Context) {
                     isComplete = true
                 }
             while (!isComplete) {
-                delay(500)
+                delay(500.milliseconds)
             }
             if (needAuth) {
                 // Google auth
