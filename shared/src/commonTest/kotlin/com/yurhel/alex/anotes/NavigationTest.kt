@@ -29,8 +29,8 @@ import com.yurhel.alex.anotes.shared.swipe_notes
 import com.yurhel.alex.anotes.shared.task
 import com.yurhel.alex.anotes.shared.tasks
 import com.yurhel.alex.anotes.shared.yes
+import com.yurhel.alex.anotes.ui.App
 import com.yurhel.alex.anotes.ui.MainViewModel
-import com.yurhel.alex.anotes.ui.Navigation
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
@@ -108,13 +108,9 @@ class NavigationTest {
     @OptIn(ExperimentalTestApi::class)
     fun ComposeUiTest.setUpUi() {
         setContent {
-            val vm: MainViewModel = viewModel(
-                factory = MainViewModel.Factory(
-                    platform = getPlatform(),
-                    showBackButton = true
-                )
-            )
-            Navigation(vm)
+            val platform = getPlatform()
+            platform.showBackButtonTest = true
+            App(vm = viewModel(factory = MainViewModel.Factory(platform = platform)))
         }
     }
 

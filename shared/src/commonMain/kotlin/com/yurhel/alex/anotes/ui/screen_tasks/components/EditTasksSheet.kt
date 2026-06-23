@@ -55,7 +55,7 @@ import com.yurhel.alex.anotes.shared.task
 import com.yurhel.alex.anotes.shared.text
 import com.yurhel.alex.anotes.shared.updated
 import com.yurhel.alex.anotes.data.Status
-import com.yurhel.alex.anotes.data.Tasks
+import com.yurhel.alex.anotes.data.Task
 import com.yurhel.alex.anotes.ui.screen_tasks.utils.ActionTypes
 import com.yurhel.alex.anotes.ui.screen_tasks.utils.Event
 import com.yurhel.alex.anotes.ui.components.ColorPicker
@@ -80,7 +80,7 @@ fun EditTasksSheet(vm: TasksViewModel) {
             if (editDialogObj.obj == null) "" else {
                 when (editDialogObj.dataType) {
                     Types.Status -> (editDialogObj.obj as Status).title
-                    Types.Task -> (editDialogObj.obj as Tasks).description
+                    Types.Task -> (editDialogObj.obj as Task).description
                 }
             }
         )
@@ -90,7 +90,7 @@ fun EditTasksSheet(vm: TasksViewModel) {
             if (editDialogObj.dataType != Types.Task) 0 else {
                 when (editDialogObj.actionType) {
                     ActionTypes.Create -> vm.selectedStatus
-                    ActionTypes.Update -> (editDialogObj.obj as Tasks).status
+                    ActionTypes.Update -> (editDialogObj.obj as Task).status
                 }
             }
         )
@@ -132,7 +132,7 @@ fun EditTasksSheet(vm: TasksViewModel) {
                         val dateNow = System.currentTimeMillis()
                         vm.onEvent(
                             Event.UpsertTask(
-                                Tasks(
+                                Task(
                                     description = edit.value,
                                     status = selectedStatus.intValue,
                                     note = vm.vm.selectedNote!!.id,
@@ -158,7 +158,7 @@ fun EditTasksSheet(vm: TasksViewModel) {
                         )
                     }
                     Types.Task -> {
-                        val oldTask = editDialogObj.obj as Tasks
+                        val oldTask = editDialogObj.obj as Task
                         val dateNow = System.currentTimeMillis()
                         vm.onEvent(
                             Event.UpsertTask(
@@ -233,7 +233,7 @@ fun EditTasksSheet(vm: TasksViewModel) {
                     onClick = {
                         when (editDialogObj.dataType) {
                             Types.Status -> vm.onEvent(Event.DeleteStatus(editDialogObj.obj as Status))
-                            Types.Task -> vm.onEvent(Event.DeleteTask(editDialogObj.obj as Tasks))
+                            Types.Task -> vm.onEvent(Event.DeleteTask(editDialogObj.obj as Task))
                         }
                         vm.onEvent(Event.HideEditDialog)
                     }
@@ -250,9 +250,9 @@ fun EditTasksSheet(vm: TasksViewModel) {
         if (editDialogObj.dataType == Types.Task) {
             // Info about task
             if (editDialogObj.actionType == ActionTypes.Update) {
-                val task = editDialogObj.obj as Tasks
-                val dateUpdated = vm.vm.platform.formatDate(vm.vm.getNoteDate())
-                val dateCreated = vm.vm.platform.formatDate(vm.vm.getNoteDate(true))
+                val task = editDialogObj.obj as Task
+                val dateUpdated = vm.vm.getNoteDate()
+                val dateCreated = vm.vm.getNoteDate(true)
                 val dateStatusUpdated = vm.vm.platform.formatDate(task.dateUpdateStatus)
                 Text(
                     text = """

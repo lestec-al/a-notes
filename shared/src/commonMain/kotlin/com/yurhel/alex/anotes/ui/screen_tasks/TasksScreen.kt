@@ -35,11 +35,11 @@ import androidx.compose.ui.unit.dp
 import com.yurhel.alex.anotes.shared.Res
 import com.yurhel.alex.anotes.shared.edit_note
 import com.yurhel.alex.anotes.BackHandlerCustom
-import com.yurhel.alex.anotes.data.Tasks
+import com.yurhel.alex.anotes.data.Task
 import com.yurhel.alex.anotes.getOrientation
 import com.yurhel.alex.anotes.ui.components.CustomScaffold
 import com.yurhel.alex.anotes.ui.components.DropFloatingActionButton
-import com.yurhel.alex.anotes.ui.NoteBottomBar
+import com.yurhel.alex.anotes.ui.components.NoteBottomBar
 import com.yurhel.alex.anotes.ui.screen_tasks.components.TaskCard
 import com.yurhel.alex.anotes.ui.screen_tasks.components.EditTasksSheet
 import com.yurhel.alex.anotes.ui.screen_tasks.components.StatusCard
@@ -119,7 +119,7 @@ fun TasksScreen(
                 }
                 // Tasks
                 LazyColumn(state = lazyListState) {
-                    itemsIndexed(items = vm.tasks) { idx: Int, task: Tasks ->
+                    itemsIndexed(items = vm.tasks) { idx: Int, task: Task ->
                         // For drag & drop
                         var offsetY by remember { mutableFloatStateOf(0f) }
                         var posTop = 0f

@@ -1,11 +1,11 @@
 package com.yurhel.alex.anotes.data
 
 import app.cash.sqldelight.db.SqlDriver
-import com.yurhel.alex.anotes.data.dao.BoardDao
-import com.yurhel.alex.anotes.data.dao.NotesDao
-import com.yurhel.alex.anotes.data.dao.StatusesDao
-import com.yurhel.alex.anotes.data.dao.TasksDao
-import com.yurhel.alex.anotes.data.dao.WidgetDao
+import com.yurhel.alex.anotes.data.local_db_dao.BoardDao
+import com.yurhel.alex.anotes.data.local_db_dao.NotesDao
+import com.yurhel.alex.anotes.data.local_db_dao.StatusesDao
+import com.yurhel.alex.anotes.data.local_db_dao.TasksDao
+import com.yurhel.alex.anotes.data.local_db_dao.WidgetDao
 import db.Database
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray

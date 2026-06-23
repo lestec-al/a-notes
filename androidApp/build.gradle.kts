@@ -43,6 +43,9 @@ android {
     buildTypes {
         release {
             isMinifyEnabled = false
+            ndk {
+                debugSymbolLevel = "FULL"
+            }
         }
     }
     compileOptions {

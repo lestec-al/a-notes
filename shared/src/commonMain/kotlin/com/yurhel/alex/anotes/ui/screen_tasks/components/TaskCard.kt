@@ -11,12 +11,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.yurhel.alex.anotes.data.Status
-import com.yurhel.alex.anotes.data.Tasks
+import com.yurhel.alex.anotes.data.Task
 import com.yurhel.alex.anotes.ui.components.CardOnClick
 
 @Composable
 fun TaskCard(
-    task: Tasks,
+    task: Task,
     onClick: (() -> Unit)?,
     modifier: Modifier,
     tasksTextPadding: Int,

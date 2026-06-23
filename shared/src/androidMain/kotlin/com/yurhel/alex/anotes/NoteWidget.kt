@@ -44,7 +44,7 @@ import androidx.glance.unit.ColorProvider
 import app.cash.sqldelight.driver.android.AndroidSqliteDriver
 import com.yurhel.alex.anotes.data.LocalDB
 import com.yurhel.alex.anotes.data.Status
-import com.yurhel.alex.anotes.data.Tasks
+import com.yurhel.alex.anotes.data.Task
 import db.Database
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -62,7 +62,7 @@ class NoteWidget : GlanceAppWidget() {
         }
     }
 
-    private fun updateWidgetData(context: Context, noteId: Int): Triple<List<Status>, List<Tasks>, String>? {
+    private fun updateWidgetData(context: Context, noteId: Int): Triple<List<Status>, List<Task>, String>? {
         val db = LocalDB.getInstance(AndroidSqliteDriver(Database.Schema, context, "notes.db"))
         return db.note.getById(noteId)?.let {
             Triple(
@@ -83,7 +83,7 @@ class NoteWidget : GlanceAppWidget() {
             val noteId = currentState<Preferences>()[intPreferencesKey("noteId")] ?: 0
 
             var statuses: List<Status> by remember { mutableStateOf(emptyList()) }
-            var tasks: List<Tasks> by remember { mutableStateOf(emptyList()) }
+            var tasks: List<Task> by remember { mutableStateOf(emptyList()) }
             var text: String by remember { mutableStateOf("") }
 
             LaunchedEffect(key1 = noteId) {

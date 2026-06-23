@@ -1,4 +1,4 @@
-package com.yurhel.alex.anotes.ui
+package com.yurhel.alex.anotes.ui.components
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -36,7 +36,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -54,9 +53,9 @@ import com.yurhel.alex.anotes.shared.sent_note_to_archive
 import com.yurhel.alex.anotes.shared.updated
 import com.yurhel.alex.anotes.shared.yes
 import com.yurhel.alex.anotes.getOrientation
-import com.yurhel.alex.anotes.ui.components.BaseBottomBar
+import com.yurhel.alex.anotes.ui.MainViewModel
 import com.yurhel.alex.anotes.ui.utils.Orientation
-import com.yurhel.alex.anotes.ui.components.SimpleEditSheet
+import com.yurhel.alex.anotes.ui.utils.BottomBarButton
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.getString
@@ -71,9 +70,7 @@ fun NoteBottomBar(
     onBackButtonClick: () -> Unit,
     onGetTextButtonClick: (() -> String)?,
     editNoteStr: String? = null,
-    additionalButtons: List<Triple<String, ImageVector, () -> Unit>> = listOf(),
-    toggleButtonEnabled: Boolean = false,
-    toggleButton: Triple<String, ImageVector, () -> Unit>? = null
+    additionalButtons: List<BottomBarButton> = listOf()
 ) {
     val clipboard = LocalClipboard.current
     var isInfoBottomSheetOpen by remember { mutableStateOf(false) }
@@ -83,15 +80,16 @@ fun NoteBottomBar(
         if (isNoteArchived) Res.string.note_restored else Res.string.note_archived
     )
     val orientation = getOrientation()
-    val dateUpdated = vm.platform.formatDate(vm.getNoteDate())
-    val dateCreated = vm.platform.formatDate(vm.getNoteDate(true))
+    val dateUpdated = vm.getNoteDate()
+    val dateCreated = vm.getNoteDate(true)
+    val showBackBtn = orientation == Orientation.Desktop || orientation == Orientation.Landscape || vm.platform.showBackButtonTest
 
     BaseBottomBar {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
-            if (orientation == Orientation.Desktop || vm.showBackButton) {
+            if (showBackBtn) {
                 // Back button
                 IconButton(onClick = onBackButtonClick) {
                     Icon(
@@ -150,23 +148,17 @@ fun NoteBottomBar(
             }
             // Additional buttons
             additionalButtons.forEach {
-                IconButton(onClick = it.third) {
-                    Icon(it.second, it.first, Modifier.size(30.dp))
-                }
-            }
-            // Toggle button (with ON and OFF stages)
-            if (toggleButton != null) {
                 IconButton(
-                    onClick = toggleButton.third,
+                    onClick = it.onClick,
                     colors = IconButtonDefaults.iconButtonColors(
-                        contentColor = if (toggleButtonEnabled) {
+                        contentColor = if (it.enabled) {
                             MaterialTheme.colorScheme.primary
                         } else {
                             LocalContentColor.current
                         }
                     )
                 ) {
-                    Icon(toggleButton.second, toggleButton.first, Modifier.size(30.dp))
+                    Icon(it.icon, it.contentDescription, Modifier.size(30.dp))
                 }
             }
         }
@@ -206,7 +198,7 @@ fun NoteBottomBar(
                         }
                 ) {
                     Text(
-                        text = vm.platform.formatDate(vm.getNoteDate()),
+                        text = vm.getNoteDate(),
                         style = MaterialTheme.typography.labelLarge,
                         modifier = Modifier.padding(5.dp)
                     )
@@ -256,7 +248,7 @@ fun NoteBottomBar(
         SimpleEditSheet(
             onDismissRequest = vm::updateNoteEditSheet,
             onSave = vm::onSaveNoteText,
-            copyToClipboard = vm.platform::copyToClipboard,
+            copyToClipboard = { vm.platform.copyToClipboard(it, clipboard) },
             infoText = editNoteStr,
             initText = vm.editText.text.toString()
         )

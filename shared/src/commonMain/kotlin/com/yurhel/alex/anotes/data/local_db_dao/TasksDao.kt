@@ -1,30 +1,30 @@
-package com.yurhel.alex.anotes.data.dao
+package com.yurhel.alex.anotes.data.local_db_dao
 
-import com.yurhel.alex.anotes.data.Tasks
+import com.yurhel.alex.anotes.data.Task
 import db.TasksQueries
 
 class TasksDao(private val db: TasksQueries) {
 
-    fun insert(tasks: Tasks) {
+    fun insert(task: Task) {
         db.insert(
-            tasks.position.toLong(),
-            tasks.description,
-            tasks.status.toLong(),
-            tasks.note.toLong(),
-            tasks.dateCreate.toString(),
-            tasks.dateUpdate.toString(),
-            tasks.dateUpdateStatus.toString()
+            task.position.toLong(),
+            task.description,
+            task.status.toLong(),
+            task.note.toLong(),
+            task.dateCreate.toString(),
+            task.dateUpdate.toString(),
+            task.dateUpdateStatus.toString()
         )
     }
 
-    fun update(tasks: Tasks) {
+    fun update(task: Task) {
         db.update(
-            tasks.position.toLong(),
-            tasks.description,
-            tasks.status.toLong(),
-            tasks.dateUpdate.toString(),
-            tasks.dateUpdateStatus.toString(),
-            tasks.id.toLong()
+            task.position.toLong(),
+            task.description,
+            task.status.toLong(),
+            task.dateUpdate.toString(),
+            task.dateUpdateStatus.toString(),
+            task.id.toLong()
         )
     }
 
@@ -40,15 +40,15 @@ class TasksDao(private val db: TasksQueries) {
         db.deleteManyByNote(note.toLong())
     }
 
-    fun getManyByNoteAndStatus(note: Int, status: Int): List<Tasks> {
-        val list = mutableListOf<Tasks>()
+    fun getManyByNoteAndStatus(note: Int, status: Int): List<Task> {
+        val list = mutableListOf<Task>()
         val result = db.getManyByNoteAndStatus(
             note.toLong(),
             status.toLong()
         ).executeAsList()
         for (i in result) {
             list.add(
-                Tasks(
+                Task(
                     id = i.id.toInt(),
                     position = i.position?.toInt() ?: 0,
                     description = i.description ?: "",
@@ -63,12 +63,12 @@ class TasksDao(private val db: TasksQueries) {
         return list
     }
 
-    fun getManyByNote(note: Int): List<Tasks> {
-        val list = mutableListOf<Tasks>()
+    fun getManyByNote(note: Int): List<Task> {
+        val list = mutableListOf<Task>()
         val result = db.getManyByNote(note.toLong()).executeAsList()
         for (i in result) {
             list.add(
-                Tasks(
+                Task(
                     id = i.id.toInt(),
                     position = i.position?.toInt() ?: 0,
                     description = i.description ?: "",
@@ -83,16 +83,21 @@ class TasksDao(private val db: TasksQueries) {
         return list
     }
 
-    fun getHowManyTasksNoteHas(note: Int): Int {
-        return db.getManyByNoteCount(note.toLong()).executeAsOne().toInt()
+    fun getNextPosition(note: Int): Int {
+        val result = try {
+            db.getNextPosition(note.toLong()).executeAsOne().position?.toInt()
+        } catch (_: Exception) {
+            null
+        }
+        return if (result != null) result + 1 else 0
     }
 
-    fun getAll(): List<Tasks> {
-        val list = mutableListOf<Tasks>()
+    fun getAll(): List<Task> {
+        val list = mutableListOf<Task>()
         val result = db.getAll().executeAsList()
         for (i in result) {
             list.add(
-                Tasks(
+                Task(
                     id = i.id.toInt(),
                     position = i.position?.toInt() ?: 0,
                     description = i.description ?: "",

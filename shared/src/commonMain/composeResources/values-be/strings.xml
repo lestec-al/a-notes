@@ -57,4 +57,6 @@
     <string name="yes">Так</string>
     <string name="privacy_policy">Палітыка прыватнасьці</string>
     <string name="app_ver">Вэрсыя дадатка</string>
+    <string name="add_img">Дадаць выяву</string>
+    <string name="del_img">Выдаліць выяву</string>
 </resources>

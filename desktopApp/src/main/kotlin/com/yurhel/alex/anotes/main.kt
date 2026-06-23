@@ -7,8 +7,9 @@ import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.yurhel.alex.anotes.data.SettingsDataStore
+import com.yurhel.alex.anotes.ui.App
 import com.yurhel.alex.anotes.ui.MainViewModel
-import com.yurhel.alex.anotes.ui.Navigation
+import com.yurhel.alex.anotes.ui.utils.getAppName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -44,7 +45,7 @@ fun main() = application {
             }
         },
         state = screenState,
-        title = "Notes",
+        title = getAppName(),
         icon = painterResource("icon.png")
     ) {
         this.window.minimumSize = Dimension(600, 600)
@@ -52,6 +53,6 @@ fun main() = application {
         val vm: MainViewModel = viewModel(
             factory = MainViewModel.Factory(platform = platform, settings = settings)
         )
-        Navigation(vm)
+        App(vm)
     }
 }

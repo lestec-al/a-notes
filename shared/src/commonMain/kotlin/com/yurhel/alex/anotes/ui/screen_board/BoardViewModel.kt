@@ -64,7 +64,7 @@ class BoardViewModel(val vm: MainViewModel) : ViewModel() {
                 enableDisableDraw(false)
                 delay(500.milliseconds)
             }
-            val base64img = vm.platform.toBase64(graphicsLayer.toImageBitmap())
+            val base64img = vm.platform.toBase64(graphicsLayer.toImageBitmap(), "PNG")
             if (base64img != null) {
                 vm.db.board.addUpdateImage(noteId, base64img)
             }

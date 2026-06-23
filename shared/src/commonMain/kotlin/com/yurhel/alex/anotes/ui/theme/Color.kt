@@ -118,15 +118,13 @@ val lightColorScheme = lightColorScheme(
 )
 
 val predefinedColors = listOf(
-    Color.Black,
-    Color.Green,
-    Color.Magenta,
-    Color.Cyan,
-    Color.Yellow,
     Color.Red,
-    Color.DarkGray,
-    Color.White,
-    Color.Gray,
+    Color.Green.copy(green = 0.8f),
     Color.Blue,
+    Color.Magenta,
+    Color.Cyan.copy(green = 0.8f, blue = 0.8f),
+    Color.Yellow.copy(red = 0.8f, green = 0.8f),
+    Color.DarkGray,
+    Color.Gray,
     Color.LightGray
 )

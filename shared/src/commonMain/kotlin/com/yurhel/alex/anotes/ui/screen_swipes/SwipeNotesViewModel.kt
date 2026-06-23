@@ -14,6 +14,7 @@ import com.yurhel.alex.anotes.ui.screen_swipes.utils.SwipeTextObj
 import com.yurhel.alex.anotes.ui.screen_swipes.utils.SwipeTextPos
 import com.yurhel.alex.anotes.ui.screen_swipes.utils.importSwipesFromText
 import com.yurhel.alex.anotes.ui.screen_swipes.utils.getSwipesTitle
+import com.yurhel.alex.anotes.ui.theme.predefinedColors
 import kotlinx.serialization.json.addJsonObject
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.put
@@ -28,9 +29,9 @@ class SwipeNotesViewModel(val vm: MainViewModel): ViewModel() {
 
     var editedSwipeTextId = -1
 
-    var leftColor by mutableStateOf(Color.Red)
+    var leftColor by mutableStateOf(predefinedColors[0])
         private set
-    var rightColor by mutableStateOf(Color.Green)
+    var rightColor by mutableStateOf(predefinedColors[1])
         private set
     var edit by mutableStateOf(Edit.None)
         private set

@@ -11,6 +11,7 @@ import androidx.compose.material.icons.outlined.TextFields
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -20,7 +21,7 @@ import com.yurhel.alex.anotes.data.LocalDB
 import com.yurhel.alex.anotes.data.Note
 import com.yurhel.alex.anotes.data.SettingsDataStore
 import com.yurhel.alex.anotes.data.Status
-import com.yurhel.alex.anotes.data.Tasks
+import com.yurhel.alex.anotes.data.Task
 import com.yurhel.alex.anotes.shared.Res
 import com.yurhel.alex.anotes.shared.draw
 import com.yurhel.alex.anotes.shared.note
@@ -39,18 +40,16 @@ import kotlin.reflect.KClass
 class MainViewModel(
     val db: LocalDB,
     val settings: SettingsDataStore,
-    val platform: Platform,
-    val showBackButton: Boolean
+    val platform: Platform
 ) : ViewModel() {
     class Factory(
         private val platform: Platform,
         private val db: LocalDB = LocalDB.getInstance(platform.getSqlDriver()),
-        private val settings: SettingsDataStore = SettingsDataStore.getInstance { platform.createDataStorePlatform() },
-        private val showBackButton: Boolean = false
+        private val settings: SettingsDataStore = SettingsDataStore.getInstance { platform.createDataStorePlatform() }
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: KClass<T>, extras: CreationExtras): T =
-            MainViewModel(db, settings, platform, showBackButton) as T
+            MainViewModel(db, settings, platform) as T
     }
 
 
@@ -101,7 +100,7 @@ class MainViewModel(
     private val _allNotes: MutableStateFlow<List<Note>> = MutableStateFlow(emptyList())
     val allNotes = _allNotes.asStateFlow()
 
-    private val _allTasks: MutableStateFlow<List<Tasks>> = MutableStateFlow(emptyList())
+    private val _allTasks: MutableStateFlow<List<Task>> = MutableStateFlow(emptyList())
     val allTasks = _allTasks.asStateFlow()
 
     var editText by mutableStateOf(TextFieldState(""))
@@ -162,8 +161,11 @@ class MainViewModel(
         getDbNotes("")
     }
 
-    fun updateIsNotesMenuExpanded(it: Boolean) {
-        isNotesMenuExpanded = it
+    fun openMenu() {
+        isNotesMenuExpanded = true
+    }
+    fun closeMenu() {
+        isNotesMenuExpanded = false
     }
 
     fun updateIsSearchOn(it: Boolean) {
@@ -323,13 +325,13 @@ class MainViewModel(
         return if (selectedNote != null) selectedNote!!.isArchived else false
     }
 
-    fun getNoteDate(created: Boolean = false): Long {
-        return if (selectedNote != null) {
+    fun getNoteDate(created: Boolean = false) = platform.formatDate(
+        if (selectedNote != null) {
             if (created) selectedNote!!.dateCreate else selectedNote!!.dateUpdate
         } else {
             Date().time
         }
-    }
+    )
 
     fun checkNoteType(note: Note): NoteType {
         return when(note.type) {
@@ -351,7 +353,7 @@ class MainViewModel(
         }
     }
 
-    fun tryGetImage(noteId: Int) = platform.toImageBitmap(db.board.getImage(noteId))
+    fun tryGetImage(noteId: Int) = platform.toImageBitmap(db.board.getImage(noteId), true)
 
     fun updateNotesScreenScrollItem(scrollState: LazyStaggeredGridState) {
         notesScreenSavedScroll = Pair(
@@ -401,5 +403,38 @@ class MainViewModel(
     fun onSaveNoteText(it: String) {
         updateEditTextValue(it)
         saveNote()
+    }
+
+
+    // PICTURE (note screen)
+    var noteImage by mutableStateOf<ImageBitmap?>(null)
+        private set
+    var isAddImage by mutableStateOf(true)
+        private set
+
+    fun addImage() = viewModelScope.launch {
+        platform.importImage { base64Str ->
+            val noteId = selectedNote?.id
+            if (noteId != null) {
+                db.board.addUpdateImage(noteId, base64Str)
+                updateImageData()
+            }
+        }
+    }
+
+    fun delImage() {
+        selectedNote?.id?.let { db.board.delImage(it) }
+        updateImageData()
+    }
+
+    fun updateImageData() {
+        noteImage = selectedNote?.id?.let {
+            val imgStr = db.board.getImage(it)
+            if (imgStr == null) null else {
+                val img = platform.toImageBitmap(db.board.getImage(it), false)
+                img ?: ImageBitmap(50, 50)
+            }
+        }
+        isAddImage = noteImage == null
     }
 }

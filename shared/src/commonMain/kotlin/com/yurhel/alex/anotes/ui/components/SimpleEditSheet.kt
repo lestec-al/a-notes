@@ -29,8 +29,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.Clipboard
-import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -46,11 +44,10 @@ import org.jetbrains.compose.resources.stringResource
 fun SimpleEditSheet(
     onDismissRequest: () -> Unit,
     onSave: (String) -> Unit,
-    copyToClipboard: suspend (str: String, clipboard: Clipboard) -> Unit,
+    copyToClipboard: suspend (str: String) -> Unit,
     infoText: String = "",
     initText: String = ""
 ) {
-    val clipboard = LocalClipboard.current
     val sheetState = rememberModalBottomSheetState()
     val focusRequester = remember { FocusRequester() }
     var edit by remember { mutableStateOf(initText) }
@@ -77,7 +74,7 @@ fun SimpleEditSheet(
             // Copy content button
             IconButton(
                 onClick = {
-                    scope.launch { copyToClipboard(edit, clipboard) }
+                    scope.launch { copyToClipboard(edit) }
                 }
             ) {
                 Icon(

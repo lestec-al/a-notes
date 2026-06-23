@@ -38,7 +38,8 @@ import com.yurhel.alex.anotes.ui.screen_board.components.ActionButton
 import com.yurhel.alex.anotes.ui.screen_board.components.EditBoardBottomSheet
 import com.yurhel.alex.anotes.SetStatusBarColor
 import com.yurhel.alex.anotes.ui.components.CustomScaffold
-import com.yurhel.alex.anotes.ui.NoteBottomBar
+import com.yurhel.alex.anotes.ui.components.NoteBottomBar
+import com.yurhel.alex.anotes.ui.utils.BottomBarButton
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -65,7 +66,11 @@ fun BoardScreen(
                 onGetTextButtonClick = null,
                 editNoteStr = stringResource(Res.string.edit_note),
                 additionalButtons = listOf(
-                    Triple(stringResource(Res.string.undo), Icons.AutoMirrored.Filled.Undo, vm::undo)
+                    BottomBarButton(
+                        onClick = vm::undo,
+                        icon = Icons.AutoMirrored.Filled.Undo,
+                        contentDescription = stringResource(Res.string.undo)
+                    )
                 )
             )
         },

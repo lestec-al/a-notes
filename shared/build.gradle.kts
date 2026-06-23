@@ -12,6 +12,8 @@ plugins {
 kotlin {
     jvm()
 
+    compilerOptions.freeCompilerArgs.add("-Xexpect-actual-classes")
+
     android {
         namespace = "com.yurhel.alex.anotes.shared"
         compileSdk = libs.versions.android.compileSdk.get().toInt()

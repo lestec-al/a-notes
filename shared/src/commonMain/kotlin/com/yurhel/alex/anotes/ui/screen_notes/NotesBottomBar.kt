@@ -1,4 +1,4 @@
-package com.yurhel.alex.anotes.ui
+package com.yurhel.alex.anotes.ui.screen_notes
 
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -11,8 +11,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
@@ -32,7 +30,6 @@ import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.ViewAgenda
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -63,6 +60,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.PopupProperties
 import com.yurhel.alex.anotes.shared.Res
 import com.yurhel.alex.anotes.shared.app_ver
 import com.yurhel.alex.anotes.shared.ascending
@@ -81,6 +79,7 @@ import com.yurhel.alex.anotes.shared.show_main_notes
 import com.yurhel.alex.anotes.shared.sorting
 import com.yurhel.alex.anotes.shared.sync_drive_action
 import com.yurhel.alex.anotes.getOrientation
+import com.yurhel.alex.anotes.ui.MainViewModel
 import com.yurhel.alex.anotes.ui.components.BaseBottomBar
 import com.yurhel.alex.anotes.ui.components.RadioDropdownMenuItem
 import com.yurhel.alex.anotes.ui.utils.Orientation
@@ -89,7 +88,6 @@ import com.yurhel.alex.anotes.ui.utils.SortArrow
 import com.yurhel.alex.anotes.ui.utils.SyncActionTypes
 import org.jetbrains.compose.resources.stringResource
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NotesBottomBar(
     vm: MainViewModel,
@@ -247,15 +245,16 @@ fun NotesBottomBar(
                     )
                 }
                 // More button
-                IconButton(onClick = { vm.updateIsNotesMenuExpanded(true) }) {
+                IconButton(onClick = vm::openMenu) {
                     Icon(Icons.Default.MoreVert, "more", Modifier.size(30.dp))
                 }
                 DropdownMenu(
                     expanded = vm.isNotesMenuExpanded,
-                    onDismissRequest = { vm.updateIsNotesMenuExpanded(false) },
-                    modifier = Modifier
-                        .wrapContentSize()
-                        .width(IntrinsicSize.Max)
+                    onDismissRequest = vm::closeMenu,
+                    properties = PopupProperties(
+                        focusable = true,
+                        clippingEnabled = false
+                    )
                 ) {
                     Text(
                         text = stringResource(Res.string.filtering),

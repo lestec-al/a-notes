@@ -60,4 +60,6 @@
     <string name="yes">Yes</string>
     <string name="privacy_policy">Privacy policy</string>
     <string name="app_ver">App version</string>
+    <string name="add_img">Add image</string>
+    <string name="del_img">Delete image</string>
 </resources>

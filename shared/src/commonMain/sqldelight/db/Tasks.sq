@@ -39,8 +39,8 @@ SELECT * FROM tasksTable WHERE note = ? AND status = ? ORDER BY position ASC;
 getManyByNote:
 SELECT * FROM tasksTable WHERE note = ? ORDER BY position ASC;
 
-getManyByNoteCount:
-SELECT COUNT(*) FROM tasksTable WHERE note = ?;
+getNextPosition:
+SELECT position FROM tasksTable WHERE note = ? ORDER BY position DESC LIMIT 1;
 
 getAll:
 SELECT * FROM tasksTable ORDER BY position ASC;

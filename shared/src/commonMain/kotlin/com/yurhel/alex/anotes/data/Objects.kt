@@ -20,7 +20,7 @@ data class Status(
     val note: Int
 )
 
-data class Tasks(
+data class Task(
     val id: Int = 0,
     var position: Int = 0,
     val description: String,

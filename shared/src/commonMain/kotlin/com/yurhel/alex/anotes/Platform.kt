@@ -9,6 +9,10 @@ import com.yurhel.alex.anotes.data.LocalDB
 import com.yurhel.alex.anotes.data.Note
 
 expect class Platform {
+    var showBackButtonTest: Boolean
+
+    suspend fun importImage(after: (String) -> Unit)
+
     fun getDrive(): PlatformDrive
 
     fun getWidgetIdWhenCreated(): Int
@@ -20,14 +24,24 @@ expect class Platform {
         note: Note,
         db: LocalDB
     )
+
     fun callExit()
+
     fun formatDate(date: Long): String
+
     suspend fun copyToClipboard(str: String, clipboard: Clipboard)
-    fun toBase64(img: ImageBitmap): String?
-    fun toImageBitmap(str: String?): ImageBitmap?
+
+    fun toBase64(img: ImageBitmap, format: String, maxSizeKB: Int = 900): String?
+
+    fun toImageBitmap(str: String?, compress: Boolean): ImageBitmap?
+
     fun getSqlDriver(): SqlDriver
+
     fun createDataStorePlatform(): DataStore<Preferences>
+
     fun openLink(link: String)
+
     fun showToast(msg: String)
+
     fun getAppVersion(): String
 }

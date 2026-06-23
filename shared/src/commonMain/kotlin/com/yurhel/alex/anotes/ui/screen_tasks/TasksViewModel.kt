@@ -16,13 +16,12 @@ import com.yurhel.alex.anotes.shared.Res
 import com.yurhel.alex.anotes.shared.status
 import com.yurhel.alex.anotes.shared.task
 import com.yurhel.alex.anotes.data.Status
-import com.yurhel.alex.anotes.data.Tasks
+import com.yurhel.alex.anotes.data.Task
 import com.yurhel.alex.anotes.ui.MainViewModel
 import com.yurhel.alex.anotes.ui.screen_tasks.utils.ActionTypes
 import com.yurhel.alex.anotes.ui.screen_tasks.utils.EditDialogObj
 import com.yurhel.alex.anotes.ui.screen_tasks.utils.Event
 import com.yurhel.alex.anotes.ui.screen_tasks.utils.Types
-import com.yurhel.alex.anotes.ui.screen_tasks.utils.offsetEnd
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -48,7 +47,7 @@ class TasksViewModel(val vm: MainViewModel): ViewModel() {
 
     var statuses by mutableStateOf<List<Status>>(listOf())
         private set
-    var tasks by mutableStateOf<List<Tasks>>(listOf())
+    var tasks by mutableStateOf<List<Task>>(listOf())
         private set
     var selectedStatus by mutableIntStateOf(0)
         private set
@@ -78,7 +77,7 @@ class TasksViewModel(val vm: MainViewModel): ViewModel() {
     }
     fun onDragEnd(
         idx: Int,
-        task: Tasks
+        task: Task
     ) {
         if (draggingObj == idx) {
             draggingObj = null
@@ -103,7 +102,7 @@ class TasksViewModel(val vm: MainViewModel): ViewModel() {
         // Try to find that touching item
         for (it in visibleItemsInfo) {
             if (itemIdx != it.index) {
-                for (offset in (it.offset + scrollOffset)..(it.offsetEnd - scrollOffset)) {
+                for (offset in (it.offset + scrollOffset)..((it.offset + it.size) - scrollOffset)) {
                     if (offset in (posTopDynamic + scrollOffset)..(posBottomDynamic - scrollOffset)) {
                         lastFoundedIdx = it.index
                     }
@@ -139,7 +138,8 @@ class TasksViewModel(val vm: MainViewModel): ViewModel() {
             when (event) {
                 // Status
                 is Event.UpsertStatus -> {
-                    if (event.status.id == 0) db.status.insert(event.status) else db.status.update(event.status)
+                    val status = event.status
+                    if (status.id == 0) db.status.insert(status) else db.status.update(status)
                     updateTasksData(true)
                 }
                 is Event.DeleteStatus -> {
@@ -151,14 +151,11 @@ class TasksViewModel(val vm: MainViewModel): ViewModel() {
                 }
                 // Task
                 is Event.UpsertTask -> {
-                    if (event.task.id == 0) {
-                        db.task.insert(
-                            event.task.copy(
-                                position = db.task.getHowManyTasksNoteHas(event.task.note)
-                            )
-                        )
+                    val task = event.task
+                    if (task.id == 0) {
+                        db.task.insert(task.copy(position = db.task.getNextPosition(task.note)))
                     } else {
-                        db.task.update(event.task)
+                        db.task.update(task)
                     }
                     delay(200.milliseconds)
                     updateTasksData(true)

@@ -1,4 +1,4 @@
-package com.yurhel.alex.anotes.data.dao
+package com.yurhel.alex.anotes.data.local_db_dao
 
 import com.yurhel.alex.anotes.data.Widget
 import db.WidgetsQueries

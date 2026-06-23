@@ -12,6 +12,8 @@ import androidx.navigation.compose.rememberNavController
 import com.yurhel.alex.anotes.SetStatusBarColor
 import com.yurhel.alex.anotes.ui.screen_board.BoardScreen
 import com.yurhel.alex.anotes.ui.screen_board.BoardViewModel
+import com.yurhel.alex.anotes.ui.screen_note.NoteScreen
+import com.yurhel.alex.anotes.ui.screen_notes.NotesScreen
 import com.yurhel.alex.anotes.ui.screen_swipes.SwipeNotesScreen
 import com.yurhel.alex.anotes.ui.screen_swipes.SwipeNotesViewModel
 import com.yurhel.alex.anotes.ui.screen_tasks.TasksScreen
@@ -20,7 +22,7 @@ import com.yurhel.alex.anotes.ui.theme.ANotesTheme
 import com.yurhel.alex.anotes.ui.utils.NoteType
 
 @Composable
-fun Navigation(vm: MainViewModel) {
+fun App(vm: MainViewModel) {
     val nav = rememberNavController()
     ANotesTheme(darkTheme = vm.darkTheme) {
         SetStatusBarColor(null, vm.darkTheme)

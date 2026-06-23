@@ -12,10 +12,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.outlined.DriveFileRenameOutline
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -39,14 +37,14 @@ import com.yurhel.alex.anotes.shared.right_side
 import com.yurhel.alex.anotes.shared.task
 import com.yurhel.alex.anotes.BackHandlerCustom
 import com.yurhel.alex.anotes.ui.components.CustomScaffold
-import com.yurhel.alex.anotes.ui.NoteBottomBar
+import com.yurhel.alex.anotes.ui.components.NoteBottomBar
 import com.yurhel.alex.anotes.ui.screen_swipes.components.SwipeNotesCard
 import com.yurhel.alex.anotes.ui.screen_swipes.components.SwipeNotesSheet
 import com.yurhel.alex.anotes.ui.screen_swipes.utils.Edit
 import com.yurhel.alex.anotes.ui.screen_swipes.utils.swipesCode
+import com.yurhel.alex.anotes.ui.utils.BottomBarButton
 import org.jetbrains.compose.resources.stringResource
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SwipeNotesScreen(
     vm: SwipeNotesViewModel,
@@ -72,9 +70,10 @@ fun SwipeNotesScreen(
                 },
                 onGetTextButtonClick = null,
                 additionalButtons = listOf(
-                    Triple(stringResource(Res.string.edit_note), Icons.Outlined.DriveFileRenameOutline) {
-                        vm.updateEdit(Edit.NoteText, vm.noteText)
-                    },
+                    BottomBarButton(
+                        onClick = { vm.updateEdit(Edit.NoteText, vm.noteText) },
+                        icon = Icons.Outlined.DriveFileRenameOutline,
+                        contentDescription = stringResource(Res.string.edit_note))
                 )
             )
         },
@@ -124,26 +123,30 @@ fun SwipeNotesScreen(
                     horizontalArrangement = Arrangement.SpaceAround
                 ) {
                     // Left row color button
-                    Button(
-                        onClick = {
-                            vm.updateEdit(Edit.Left, vm.leftText)
-                        },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = vm.leftColor
+                    Card(
+                        onClick = { vm.updateEdit(Edit.Left, vm.leftText) },
+                        colors = CardDefaults.cardColors(
+                            containerColor = vm.leftColor,
+                            contentColor = MaterialTheme.colorScheme.background
                         )
                     ) {
-                        Text(text = vm.leftText.ifEmpty { stringResource(Res.string.left_side) })
+                        Text(
+                            text = vm.leftText.ifEmpty { stringResource(Res.string.left_side) },
+                            modifier = Modifier.padding(10.dp)
+                        )
                     }
                     // Right row color button
-                    Button(
-                        onClick = {
-                            vm.updateEdit(Edit.Right, vm.rightText)
-                        },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = vm.rightColor
+                    Card(
+                        onClick = { vm.updateEdit(Edit.Right, vm.rightText) },
+                        colors = CardDefaults.cardColors(
+                            containerColor = vm.rightColor,
+                            contentColor = MaterialTheme.colorScheme.background
                         )
                     ) {
-                        Text(text = vm.rightText.ifEmpty { stringResource(Res.string.right_side) })
+                        Text(
+                            text = vm.rightText.ifEmpty { stringResource(Res.string.right_side) },
+                            modifier = Modifier.padding(10.dp)
+                        )
                     }
                 }
             }

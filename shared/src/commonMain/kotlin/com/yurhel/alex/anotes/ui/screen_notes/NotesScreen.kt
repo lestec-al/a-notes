@@ -1,5 +1,6 @@
-package com.yurhel.alex.anotes.ui
+package com.yurhel.alex.anotes.ui.screen_notes
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -25,8 +26,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.ContentScale as Scale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.yurhel.alex.anotes.shared.Res
@@ -37,6 +39,7 @@ import com.yurhel.alex.anotes.shared.sync_drive
 import com.yurhel.alex.anotes.shared.sync_local
 import com.yurhel.alex.anotes.BackHandlerCustom
 import com.yurhel.alex.anotes.data.Note
+import com.yurhel.alex.anotes.ui.MainViewModel
 import com.yurhel.alex.anotes.ui.components.CustomScaffold
 import com.yurhel.alex.anotes.ui.components.DropFloatingActionButton
 import com.yurhel.alex.anotes.ui.components.AskDialog
@@ -57,7 +60,7 @@ fun NotesScreen(
 ) {
     val scrollState = rememberLazyStaggeredGridState()
     LaunchedEffect(Unit) {
-        vm.initNotesScreen()
+        vm.initNotesScreen() // To sep viewModel ???
         scrollState.scrollToItem(
             index = vm.notesScreenSavedScroll.first,
             scrollOffset = vm.notesScreenSavedScroll.second
@@ -72,6 +75,7 @@ fun NotesScreen(
     val isSyncDialogOpen by vm.isSyncDialogOpen.collectAsState()
     val widgetId = remember { vm.platform.getWidgetIdWhenCreated() }
     val notNeedChooseWidget = widgetId == 0
+    val isGrid = appSettingsView == "grid"
 
     CustomScaffold(
         floatingActionButton = {
@@ -92,9 +96,9 @@ fun NotesScreen(
                 Text(text = stringResource(Res.string.empty_text))
             }
         }
-        // Notes - projects
+        // Notes
         LazyVerticalStaggeredGrid(
-            columns = StaggeredGridCells.Fixed(if (appSettingsView == "grid") 2 else 1),
+            columns = StaggeredGridCells.Fixed(if (isGrid) 2 else 1),
             state = scrollState,
             modifier = Modifier
                 .fillMaxSize()
@@ -108,8 +112,12 @@ fun NotesScreen(
             // Notes
             items(items = allNotes) { note: Note ->
                 val img = vm.tryGetImage(note.id)
+                val isDraw = note.type == NoteType.Draw.name
                 val isSwipes = note.type == NoteType.Swipe.name
                 val title = if (isSwipes) getSwipesTitle(note.text) else note.text
+                val containerColor = if (isDraw) Color.White else {
+                    MaterialTheme.colorScheme.surfaceVariant
+                }
 
                 Card(
                     onClick = {
@@ -126,23 +134,35 @@ fun NotesScreen(
                             )
                         }
                     },
-                    colors = CardDefaults.cardColors(
-                        containerColor = if (img != null) Color.White else {
-                            MaterialTheme.colorScheme.surfaceVariant
-                        }
-                    ),
+                    colors = CardDefaults.cardColors(containerColor = containerColor),
+                    border = if (!isDraw) null else {
+                        BorderStroke(1.dp, MaterialTheme.colorScheme.surfaceVariant)
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
                         .heightIn(min = 60.dp, max = 350.dp)
                         .padding(5.dp)
                 ) {
+                    // Image
+                    if (img != null) {
+                        Image(
+                            bitmap = img,
+                            contentDescription = stringResource(Res.string.draw),
+                            contentScale = Scale.Crop,
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxWidth()
+                                .background(containerColor)
+                                .clip(CardDefaults.shape)
+                        )
+                    }
                     // Normal text
                     if (title.isNotEmpty()) {
                         Text(
                             text = title,
                             overflow = TextOverflow.Ellipsis,
                             maxLines = 10,
-                            color = if (img != null) Color.Black else Color.Unspecified,
+                            color = if (isDraw) Color.Black else Color.Unspecified,
                             modifier = Modifier.padding(horizontal = 10.dp, vertical = 2.dp)
                         )
                     }
@@ -178,17 +198,6 @@ fun NotesScreen(
                                 onBackgroundColor = MaterialTheme.colorScheme.onBackground
                             )
                         }
-                    }
-                    // Try to draw an image
-                    if (img != null) {
-                        Image(
-                            bitmap = img,
-                            contentDescription = stringResource(Res.string.draw),
-                            contentScale = ContentScale.FillHeight,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .background(Color.White)
-                        )
                     }
                     Spacer(modifier = Modifier.height(8.dp))
                 }

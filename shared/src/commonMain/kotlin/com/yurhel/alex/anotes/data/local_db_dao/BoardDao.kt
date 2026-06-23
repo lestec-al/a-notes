@@ -1,4 +1,4 @@
-package com.yurhel.alex.anotes.data.dao
+package com.yurhel.alex.anotes.data.local_db_dao
 
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
