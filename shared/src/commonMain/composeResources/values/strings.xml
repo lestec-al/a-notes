@@ -1,15 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="privacy_link" translatable="false">https://lestec-al.github.io/lestec-al/privacy-policy</string>
-    <string name="email_link" translatable="false">mailto:alexyurgel@gmail.com</string>
-
     <string name="app_name">Notes</string><!-- Duplicated in Android ver -->
-
+    <string name="drive_sync">Google Drive (cloud backup)</string>
     <string name="search_text_hint">Search</string>
-    <string name="sync_collision">Data collisions were found. Please choose which one to use.</string>
-    <string name="sync_drive_action">Sync with cloud</string>
-    <string name="sync_drive">Drive data</string>
-    <string name="sync_local">Local data</string>
+    <string name="sync_collision">Data collisions were found. Please choose which one to use</string>
+    <string name="sync_data">Sync data</string>
+    <string name="drive_data">Drive data</string>
+    <string name="local_data">Local data</string>
     <string name="empty_text">It's empty here yet</string>
     <string name="updated">Updated</string>
     <string name="created">Created</string>
@@ -19,25 +16,24 @@
     <string name="text">Text</string>
     <string name="note">Note</string>
     <string name="change_view">Change view</string>
-    <string name="edit">Edit</string>
-    <string name="edit_tasks">Edit tasks</string>
+    <string name="edit_task">Edit task</string>
+    <string name="sync_option">Sync</string>
     <string name="edit_note">Edit note</string>
     <string name="delete">Delete</string>
-    <string name="create">Create</string>
+    <string name="create_task">Create task</string>
     <string name="save">Save</string>
-    <string name="up">Up</string>
-    <string name="down">Down</string>
+    <string name="create_status">Create status</string>
+    <string name="edit_status">Edit status</string>
     <string name="back">Back</string>
     <string name="delete_info">The note will be deleted</string>
     <string name="copy">Copy</string>
-    <string name="note_archived">Note archived</string>
-    <string name="note_restored">Note restored</string>
-    <string name="sent_note_to_archive">Sent note to archive</string>
-    <string name="restore_note_from_archive">Restore note from archive</string>
+    <string name="located_in">Located in:</string>
+    <string name="settings">Settings</string>
+    <string name="support">Contact support</string>
+    <string name="app_code">Source code &amp; Desktop version</string>
     <string name="sorting">Sorting</string>
-    <string name="filtering">Filtering</string>
-    <string name="show_main_notes">Show main notes</string>
-    <string name="show_archive_notes">Show archive notes</string>
+    <string name="folder">Folder</string>
+    <string name="main">Main</string>
     <string name="date_update">Date update</string>
     <string name="date_create">Date create</string>
     <string name="ascending">Ascending</string>
@@ -62,4 +58,22 @@
     <string name="app_ver">App version</string>
     <string name="add_img">Add image</string>
     <string name="del_img">Delete image</string>
+    <string name="add_folder">Add folder</string>
+    <string name="move_to_folder">Move to folder</string>
+    <string name="moved_to">Moved to</string>
+    <string name="local_sync">Local network (same Wi-Fi)</string>
+    <string name="folders">Folders</string>
+    <string name="edit_folder">Edit folder</string>
+    <string name="del_folder">Delete folder</string>
+    <string name="open_menu">Open dropdown menu</string>
+    <string name="get_data">Get Data from LAN</string>
+    <string name="lan_code">Your code:</string>
+    <string name="share_code">Share this code with the other device</string>
+    <string name="data_replace_info">Replaces all existing data here</string>
+    <string name="share_data">Share Data via LAN</string>
+    <string name="enter_code">Enter code from other device</string>
+
+    <string name="privacy_link" translatable="false">https://lestec-al.github.io/lestec-al/privacy-policy</string>
+    <string name="email_link" translatable="false">mailto:alexyurgel@gmail.com</string>
+    <string name="code_link" translatable="false">https://github.com/lestec-al/a-notes</string>
 </resources>

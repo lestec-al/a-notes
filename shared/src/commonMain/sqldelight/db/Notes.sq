@@ -4,7 +4,8 @@ CREATE TABLE notesTable (
     type TEXT,
     text TEXT,
     dateUpdate TEXT,
-    dateCreate TEXT
+    dateCreate TEXT,
+    folder INTEGER
 );
 
 getById:
@@ -21,11 +22,11 @@ SELECT * FROM notesTable WHERE LOWER(text) LIKE ('%' || LOWER(:query) || '%')
 OR id IN (SELECT note FROM tasksTable WHERE LOWER(description) LIKE ('%' || LOWER(:query) || '%'));
 
 insert:
-INSERT INTO notesTable(withTasks, type, text, dateUpdate, dateCreate)
+INSERT INTO notesTable(folder, type, text, dateUpdate, dateCreate)
 VALUES (?, ?, ?, ?, ?);
 
 insertWithId:
-INSERT INTO notesTable(id, withTasks, type, text, dateUpdate, dateCreate)
+INSERT INTO notesTable(id, folder, type, text, dateUpdate, dateCreate)
 VALUES (?, ?, ?, ?, ?, ?);
 
 deleteAll:
@@ -35,5 +36,5 @@ delete:
 DELETE FROM notesTable WHERE id = ?;
 
 update:
-UPDATE notesTable SET withTasks = ?, type = ?, text = ?, dateUpdate = ?
+UPDATE notesTable SET folder = ?, type = ?, text = ?, dateUpdate = ?
 WHERE id = ?;

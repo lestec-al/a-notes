@@ -13,7 +13,7 @@ import androidx.compose.ui.test.v2.runComposeUiTest
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.yurhel.alex.anotes.shared.Res
 import com.yurhel.alex.anotes.shared.back
-import com.yurhel.alex.anotes.shared.create
+import com.yurhel.alex.anotes.shared.create_task
 import com.yurhel.alex.anotes.shared.delete
 import com.yurhel.alex.anotes.shared.disable_all_actions
 import com.yurhel.alex.anotes.shared.draw
@@ -22,8 +22,10 @@ import com.yurhel.alex.anotes.shared.enable_draw
 import com.yurhel.alex.anotes.shared.left_side
 import com.yurhel.alex.anotes.shared.note
 import com.yurhel.alex.anotes.shared.open_drop_buttons
+import com.yurhel.alex.anotes.shared.open_menu
 import com.yurhel.alex.anotes.shared.right_side
 import com.yurhel.alex.anotes.shared.save
+import com.yurhel.alex.anotes.shared.settings
 import com.yurhel.alex.anotes.shared.status
 import com.yurhel.alex.anotes.shared.swipe_notes
 import com.yurhel.alex.anotes.shared.task
@@ -174,7 +176,7 @@ class NavigationTest {
         val swipesTitle = "Swipes Title"
         editTitle(swipesTitle, this)
 
-        val createSwipeTask = getString(Res.string.create) + " " + getString(Res.string.task).lowercase()
+        val createSwipeTask = getString(Res.string.create_task)
         onMain { onNodeWithContentDescription(createSwipeTask).performClick() }
 
         onNodeWithText("").assertExists()
@@ -277,11 +279,26 @@ class NavigationTest {
         onMain { onNodeWithContentDescription(saveButton).performClick() }
 
         swipes.forEach {
-            val createSwipeTask = getString(Res.string.create) + " " + getString(Res.string.task).lowercase()
+            val createSwipeTask = getString(Res.string.create_task)
             onMain { onNodeWithContentDescription(createSwipeTask).performClick() }
             onNodeWithText("").performTextInput(it)
             onMain { onNodeWithContentDescription(saveButton).performClick() }
         }
+
+        onMain { onNodeWithContentDescription(backButton).performClick() }
+    }
+
+    @OptIn(ExperimentalTestApi::class)
+    @Test
+    fun testSettings() = runComposeUiTest {
+        setUpUi()
+        clickOnDropButton(Res.string.open_menu, this)
+
+        val openMenuStr = getString(Res.string.open_menu)
+        val settingsStr = getString(Res.string.settings)
+
+        onMain { onNodeWithContentDescription(openMenuStr).performClick() }
+        onMain { onNodeWithContentDescription(settingsStr).performClick() }
 
         onMain { onNodeWithContentDescription(backButton).performClick() }
     }

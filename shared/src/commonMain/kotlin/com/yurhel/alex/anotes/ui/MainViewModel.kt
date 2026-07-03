@@ -1,14 +1,9 @@
 package com.yurhel.alex.anotes.ui
 
-import androidx.compose.foundation.lazy.staggeredgrid.LazyStaggeredGridState
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.text.input.clearText
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.FormatListBulleted
-import androidx.compose.material.icons.outlined.Brush
-import androidx.compose.material.icons.outlined.Swipe
-import androidx.compose.material.icons.outlined.TextFields
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.ImageBitmap
@@ -20,20 +15,17 @@ import com.yurhel.alex.anotes.Platform
 import com.yurhel.alex.anotes.data.LocalDB
 import com.yurhel.alex.anotes.data.Note
 import com.yurhel.alex.anotes.data.SettingsDataStore
+import com.yurhel.alex.anotes.data.SocketConnection
 import com.yurhel.alex.anotes.data.Status
+import com.yurhel.alex.anotes.data.SyncType
 import com.yurhel.alex.anotes.data.Task
-import com.yurhel.alex.anotes.shared.Res
-import com.yurhel.alex.anotes.shared.draw
-import com.yurhel.alex.anotes.shared.note
-import com.yurhel.alex.anotes.shared.swipe_notes
-import com.yurhel.alex.anotes.shared.tasks
 import com.yurhel.alex.anotes.ui.utils.DriveUtils
 import com.yurhel.alex.anotes.ui.utils.NoteType
 import com.yurhel.alex.anotes.ui.utils.SyncActionTypes
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 import java.util.Date
 import kotlin.reflect.KClass
 
@@ -64,24 +56,93 @@ class MainViewModel(
     }
 
 
-    var isSyncNow by mutableStateOf(false)
+    var isSyncOn by mutableStateOf(false)
         private set
     fun updateSyncNow(isSyncNow: Boolean) {
-        this.isSyncNow = isSyncNow
+        this.isSyncOn = isSyncNow
     }
 
-    private val _isSyncDialogOpen = MutableStateFlow(false)
-    val isSyncDialogOpen = _isSyncDialogOpen.asStateFlow()
-    fun syncDialogVisibility(isOpen: Boolean = false) {
-        _isSyncDialogOpen.value = isOpen
+    var isSyncDialogOpen by mutableStateOf(false)
+        private set
+    fun setSyncDialogVisibility(isOpen: Boolean = false) {
+        isSyncDialogOpen = isOpen
     }
 
-    fun syncData(syncActionType: SyncActionTypes) {
-        val driveUtils = DriveUtils(this@MainViewModel, platform.getDrive())
-        when (syncActionType) {
-            SyncActionTypes.Auto -> driveUtils.driveSyncAuto()
-            SyncActionTypes.ManualExport -> driveUtils.driveSyncManualThread(true)
-            SyncActionTypes.ManualImport -> driveUtils.driveSyncManualThread(false)
+    var isLocalSyncSheetOpen by mutableStateOf(false)
+        private set
+    fun localSyncDialogVisibility(isOpen: Boolean = false) {
+        isLocalSyncSheetOpen = isOpen
+    }
+
+    private suspend fun getLocalDataWithTime(): String {
+        return buildJsonObject {
+            put("modifiedTime", settings.getDataReceivedDate())
+            put("data", db.exportDB())
+        }.toString()
+    }
+
+    var localAddressCode by mutableStateOf("")
+        private set
+    var isSocketOn by mutableStateOf(false)
+        private set
+
+    fun createSocket() = viewModelScope.launch(Dispatchers.IO) {
+        localAddressCode = platform.getLocalIpAddress().split('.').last()
+        isSocketOn = true
+        val data = SocketConnection.getData(
+            onClientOn = {
+                updateSyncNow(true)
+                localSyncDialogVisibility(false)
+            }
+        )
+        if (data != null) {
+            db.importDB(data.data.toString())
+            settings.setDataReceivedDate(data.modifiedTime)
+            getDbNotes("")
+            getAllTasks()
+            getAllStatuses()
+        } else {
+            localSyncDialogVisibility(true)
+        }
+        isSocketOn = false
+        updateSyncNow(false)
+    }
+
+    fun cancelSocket() {
+        isSocketOn = false
+    }
+
+    fun connectToSocket(hostNumber: String) = viewModelScope.launch(Dispatchers.IO) {
+        localAddressCode = ""
+        isSocketOn = true
+        val res = SocketConnection.shareData(
+            hostNumber = hostNumber,
+            localData = getLocalDataWithTime(),
+            localIpAddress = platform.getLocalIpAddress(),
+            onClientOn = {
+                updateSyncNow(true)
+                localSyncDialogVisibility(false)
+            }
+        )
+        if (!res) {
+            localSyncDialogVisibility(true)
+        }
+        isSocketOn = false
+        updateSyncNow(false)
+    }
+
+    fun syncData(syncActionType: SyncActionTypes) = viewModelScope.launch(Dispatchers.IO) {
+        if (settings.getSyncType() == SyncType.drive.name) {
+            val sync = DriveUtils(this@MainViewModel, platform.getDrive())
+            when (syncActionType) {
+                SyncActionTypes.Auto -> sync.syncAuto()
+                SyncActionTypes.ManualExport -> sync.syncManual(true)
+                SyncActionTypes.ManualImport -> sync.syncManual(false)
+            }
+        } else {
+            if (!isLocalSyncSheetOpen) {
+                localSyncDialogVisibility(true)
+            }
         }
     }
 
@@ -91,24 +152,20 @@ class MainViewModel(
     var selectedNote by mutableStateOf<Note?>(null)
         private set
 
-    private val _allStatuses: MutableStateFlow<List<Status>> = MutableStateFlow(emptyList())
-    val allStatuses = _allStatuses.asStateFlow()
+    var allStatuses by mutableStateOf<List<Status>>(emptyList())
+        private set
 
-    private val _appSettingsView: MutableStateFlow<String> = MutableStateFlow("col")
-    val appSettingsView = _appSettingsView.asStateFlow()
+    var appSettingsView by mutableStateOf("col")
+        private set
 
-    private val _allNotes: MutableStateFlow<List<Note>> = MutableStateFlow(emptyList())
-    val allNotes = _allNotes.asStateFlow()
+    var allNotes by mutableStateOf<List<Note>>(emptyList())
+        private set
 
-    private val _allTasks: MutableStateFlow<List<Task>> = MutableStateFlow(emptyList())
-    val allTasks = _allTasks.asStateFlow()
+    var allTasks by mutableStateOf<List<Task>>(emptyList())
+        private set
 
     var editText by mutableStateOf(TextFieldState(""))
         private set
-
-    var notesScreenSavedScroll by mutableStateOf(Pair(0,0))
-        private set
-
 
     var searchText by mutableStateOf("")
         private set
@@ -116,10 +173,7 @@ class MainViewModel(
     var isSearchOn by mutableStateOf(false)
         private set
 
-    var isNotesMenuExpanded by mutableStateOf(false)
-        private set
-
-    var isShowArchive by mutableStateOf(false)
+    var chosenFolder by mutableIntStateOf(0)
         private set
 
     var sortType by mutableStateOf("")
@@ -131,7 +185,11 @@ class MainViewModel(
 
     init {
         viewModelScope.launch {
-            isShowArchive = settings.getDataShowing() == "archive"
+            val dataShowing = settings.getDataShowing()
+            chosenFolder = when (dataShowing) {
+                "all" -> 0
+                else -> allStatuses.find { dataShowing == it.id.toString() }?.id ?: 0
+            }
             sortType = settings.getSortType()
             sortArrow = settings.getSortArrow()
         }
@@ -149,23 +207,21 @@ class MainViewModel(
         getDbNotes("")
     }
 
-    fun hideArchive() = viewModelScope.launch {
-        isShowArchive = false
-        settings.setDataShowing("all")
+    fun chooseViewFolder(f: Int) = viewModelScope.launch {
+        chosenFolder = f
+        settings.setDataShowing(
+            when (f) {
+                0 -> "all"
+                else -> f.toString()
+            }
+        )
         getDbNotes("")
     }
 
-    fun showArchive() = viewModelScope.launch {
-        isShowArchive = true
-        settings.setDataShowing("archive")
-        getDbNotes("")
-    }
-
-    fun openMenu() {
-        isNotesMenuExpanded = true
-    }
-    fun closeMenu() {
-        isNotesMenuExpanded = false
+    var mainFolderName by mutableStateOf("")
+        private set
+    fun getMainFolderName() = viewModelScope.launch {
+        mainFolderName = settings.getMainName()
     }
 
     fun updateIsSearchOn(it: Boolean) {
@@ -179,34 +235,25 @@ class MainViewModel(
     fun changeNotesView() = viewModelScope.launch(Dispatchers.Default) {
         val value = if (settings.getViewMode() == "grid") "col" else "grid"
         settings.setViewMode(value)
-        _appSettingsView.value = value
+        appSettingsView = value
     }
 
     fun getDbNotes(query: String) = viewModelScope.launch(Dispatchers.Default) {
         searchText = query.replace("\n", "")
-
-        val dataShowing = settings.getDataShowing()
         val sortType = settings.getSortType()
         val sortArrow = settings.getSortArrow()
-
-        _allNotes.value = db.note.getAll(query)
-            .filter {
-                if (dataShowing == "archive") it.isArchived else !it.isArchived
-            }
-            .sortedBy {
-                if (sortType == "dateUpdate") it.dateUpdate else it.dateCreate
-            }
-            .let {
-                if (sortArrow == "ascending") it.reversed() else it
-            }
+        allNotes = db.note.getAll(query)
+            .filter { it.folder == chosenFolder }
+            .sortedBy { if (sortType == "dateUpdate") it.dateUpdate else it.dateCreate }
+            .let { if (sortArrow == "ascending") it.reversed() else it }
     }
 
     fun getAllStatuses() = viewModelScope.launch(Dispatchers.Default) {
-        _allStatuses.value = db.status.getAll()
+        allStatuses = db.status.getAll()
     }
 
     fun getAllTasks() = viewModelScope.launch(Dispatchers.Default) {
-        _allTasks.value = db.task.getAll().sortedBy { it.position }
+        allTasks = db.task.getAll().sortedBy { it.position }
     }
 
     fun updateEditTextValue(
@@ -233,7 +280,7 @@ class MainViewModel(
             db.note.insert(
                 Note(
                     text = "",
-                    isArchived = false,
+                    folder = chosenFolder,
                     dateCreate = date,
                     dateUpdate = date,
                     type = newNoteType.name
@@ -308,21 +355,18 @@ class MainViewModel(
         }
     }
 
-    fun archiveOrUnarchiveNote(isArchived: Boolean) {
+    fun setNoteFolder(f: Int, after: () -> Unit) {
         val edit = selectedNote
-        viewModelScope.launch(Dispatchers.Default) {
-            if (edit != null) {
-                val newEdit = edit.copy(isArchived = isArchived)
+        viewModelScope.launch {
+            if (edit != null && edit.folder != f) {
+                val newEdit = edit.copy(folder = f)
                 selectNote(newEdit)
                 db.note.update(newEdit)
                 // For sync
                 settings.setIsNotesEdited(true)
             }
+            after()
         }
-    }
-
-    fun getIsSelectedNoteArchived(): Boolean {
-        return if (selectedNote != null) selectedNote!!.isArchived else false
     }
 
     fun getNoteDate(created: Boolean = false) = platform.formatDate(
@@ -340,8 +384,8 @@ class MainViewModel(
             NoteType.Draw.name -> NoteType.Draw
             NoteType.Swipe.name -> NoteType.Swipe
             else -> {
-                val foundStatus = _allStatuses.value.find { it.note == note.id } != null
-                val foundTask = _allTasks.value.find { it.note == note.id } != null
+                val foundStatus = allStatuses.find { it.note == note.id } != null
+                val foundTask = allTasks.find { it.note == note.id } != null
                 if (foundStatus || foundTask) {
                     NoteType.Tasks
                 } else if (db.board.getImage(note.id) != null) {
@@ -355,54 +399,14 @@ class MainViewModel(
 
     fun tryGetImage(noteId: Int) = platform.toImageBitmap(db.board.getImage(noteId), true)
 
-    fun updateNotesScreenScrollItem(scrollState: LazyStaggeredGridState) {
-        notesScreenSavedScroll = Pair(
-            scrollState.firstVisibleItemIndex,
-            scrollState.firstVisibleItemScrollOffset
-        )
-    }
-
-    fun getNotesScreenDropMenuItems(
-        scrollState: LazyStaggeredGridState,
-        newNoteClicked: (type: NoteType) -> Unit
-    ) = listOf(
-        Triple(Res.string.swipe_notes, Icons.Outlined.Swipe) {
-            newNoteClicked(NoteType.Swipe)
-            updateNotesScreenScrollItem(scrollState)
-        },
-        Triple(Res.string.draw, Icons.Outlined.Brush) {
-            newNoteClicked(NoteType.Draw)
-            updateNotesScreenScrollItem(scrollState)
-        },
-        Triple(Res.string.tasks, Icons.AutoMirrored.Outlined.FormatListBulleted) {
-            newNoteClicked(NoteType.Tasks)
-            updateNotesScreenScrollItem(scrollState)
-        },
-        Triple(Res.string.note, Icons.Outlined.TextFields) {
-            newNoteClicked(NoteType.Note)
-            updateNotesScreenScrollItem(scrollState)
-        }
-    )
-
     fun initNotesScreen() {
         getDbNotes("")
         getAllTasks()
         getAllStatuses()
+        getMainFolderName()
         viewModelScope.launch {
-            _appSettingsView.value = settings.getViewMode()
+            appSettingsView = settings.getViewMode()
         }
-    }
-
-
-    // NOTE EDIT (for tasks, board screens)
-    var isNoteEditSheetOpen by mutableStateOf(false)
-        private set
-    fun updateNoteEditSheet(open: Boolean = false) {
-        isNoteEditSheetOpen = open
-    }
-    fun onSaveNoteText(it: String) {
-        updateEditTextValue(it)
-        saveNote()
     }
 
 

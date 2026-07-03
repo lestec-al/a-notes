@@ -1,89 +1,74 @@
 package com.yurhel.alex.anotes.ui.utils
 
 import com.yurhel.alex.anotes.PlatformDrive
+import com.yurhel.alex.anotes.data.DriveData
 import com.yurhel.alex.anotes.ui.MainViewModel
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
 
 class DriveUtils(
     private val vm: MainViewModel,
     private val drive: PlatformDrive
 ) {
-    private val scope = CoroutineScope(Job())
-
-    fun driveSyncAuto(
+    suspend fun syncAuto(
         before: () -> Unit = { vm.updateSyncNow(true) },
         after: () -> Unit = { vm.updateSyncNow(false) }
     ) {
-        scope.launch(Dispatchers.Default) {
-            try {
-                before()
+        try {
+            before()
 
-                val isNotesEdited = vm.settings.getIsNotesEdited()
-                val dataReceivedDate = vm.settings.getDataReceivedDate()
-                val data = drive.getData()
+            val isNotesEdited = vm.settings.getIsNotesEdited()
+            val lastReceived = vm.settings.getDataReceivedDate()
+            val data = drive.getData()
 
-                if (data.isServiceOK) {
-                    if (!isNotesEdited) {
-                        // Data not edited
-                        if (data.modifiedTime != null) {
-                            // Update local
-                            vm.db.importDB(data.data.toString())
-                            vm.settings.setDataReceivedDate(data.modifiedTime)
-                            vm.getDbNotes("")
-                            vm.getAllTasks()
-                            vm.getAllStatuses()
+            if (data.isServiceOK) {
+                if (data.modifiedTime == null) {
+                    sync(true)
+                } else {
+                    if (isNotesEdited) {
+                        if (data.modifiedTime == lastReceived) {
+                            sync(true)
                         } else {
-                            // If drive empty -> send data
-                            driveSyncManual(true)
+                            vm.setSyncDialogVisibility(true)
                         }
                     } else {
-                        // Data edited
-                        if (data.modifiedTime == dataReceivedDate || data.modifiedTime == null) {
-                            // Send data
-                            driveSyncManual(true)
-                        } else {
-                            // Get user to choose
-                            vm.syncDialogVisibility(true)
-                        }
+                        updateLocal(data)
                     }
                 }
-            } catch (_: Exception) {
-            } finally {
-                after()
             }
-        }
-    }
-
-    fun driveSyncManualThread(
-        isExport: Boolean,
-        before: () -> Unit = { vm.updateSyncNow(true) },
-        after: () -> Unit = { vm.updateSyncNow(false) }
-    ) {
-        scope.launch(Dispatchers.Default) {
-            before()
-            driveSyncManual(isExport)
+        } catch (_: Exception) {
+        } finally {
             after()
         }
     }
 
-    private suspend fun driveSyncManual(isExport: Boolean) {
+    suspend fun syncManual(
+        isExport: Boolean,
+        before: () -> Unit = { vm.updateSyncNow(true) },
+        after: () -> Unit = { vm.updateSyncNow(false) }
+    ) {
+        before()
+        sync(isExport)
+        after()
+    }
+
+    private suspend fun sync(isExport: Boolean) {
         if (isExport) {
-            // Send data
             drive.sendData(vm.db.exportDB().toString())
             vm.settings.setIsNotesEdited(false)
         }
-        // Get data
         val data = drive.getData()
         if (!isExport && data.modifiedTime != null) {
-            // Update local
-            vm.db.importDB(data.data.toString())
-            vm.getDbNotes("")
-            vm.getAllTasks()
-            vm.getAllStatuses()
+            updateLocal(data)
+        } else {
+            vm.settings.setDataReceivedDate(data.modifiedTime)
         }
+    }
+
+    private suspend fun updateLocal(data: DriveData) {
+        vm.db.importDB(data.data.toString())
+        vm.settings.setIsNotesEdited(false)
         vm.settings.setDataReceivedDate(data.modifiedTime)
+        vm.getDbNotes("")
+        vm.getAllTasks()
+        vm.getAllStatuses()
     }
 }

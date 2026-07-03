@@ -44,4 +44,6 @@ expect class Platform {
     fun showToast(msg: String)
 
     fun getAppVersion(): String
+
+    suspend fun getLocalIpAddress(): String
 }

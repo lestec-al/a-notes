@@ -5,9 +5,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -16,17 +14,18 @@ import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.CopyAll
-import androidx.compose.material.icons.outlined.Archive
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.DriveFileRenameOutline
-import androidx.compose.material.icons.outlined.Unarchive
+import androidx.compose.material.icons.outlined.FilterAlt
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -39,6 +38,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.PopupProperties
 import com.yurhel.alex.anotes.shared.Res
 import com.yurhel.alex.anotes.shared.back
 import com.yurhel.alex.anotes.shared.copy
@@ -46,13 +46,13 @@ import com.yurhel.alex.anotes.shared.created
 import com.yurhel.alex.anotes.shared.delete
 import com.yurhel.alex.anotes.shared.delete_info
 import com.yurhel.alex.anotes.shared.no
-import com.yurhel.alex.anotes.shared.note_archived
-import com.yurhel.alex.anotes.shared.note_restored
-import com.yurhel.alex.anotes.shared.restore_note_from_archive
-import com.yurhel.alex.anotes.shared.sent_note_to_archive
 import com.yurhel.alex.anotes.shared.updated
 import com.yurhel.alex.anotes.shared.yes
 import com.yurhel.alex.anotes.getOrientation
+import com.yurhel.alex.anotes.shared.located_in
+import com.yurhel.alex.anotes.shared.main
+import com.yurhel.alex.anotes.shared.move_to_folder
+import com.yurhel.alex.anotes.shared.moved_to
 import com.yurhel.alex.anotes.ui.MainViewModel
 import com.yurhel.alex.anotes.ui.utils.Orientation
 import com.yurhel.alex.anotes.ui.utils.BottomBarButton
@@ -75,10 +75,10 @@ fun NoteBottomBar(
     val clipboard = LocalClipboard.current
     var isInfoBottomSheetOpen by remember { mutableStateOf(false) }
     var infoBottomSheetText by remember { mutableStateOf("") }
-    var isNoteArchived by remember { mutableStateOf(vm.getIsSelectedNoteArchived()) }
-    val archive2 = stringResource(
-        if (isNoteArchived) Res.string.note_restored else Res.string.note_archived
-    )
+    var isEditSheetOpen by remember { mutableStateOf(false) }
+    var isMenuOpen by remember { mutableStateOf(false) }
+    val movedTo = stringResource(Res.string.moved_to)
+    val mainStr = vm.mainFolderName.takeIf { it.isNotEmpty() } ?: stringResource(Res.string.main)
     val orientation = getOrientation()
     val dateUpdated = vm.getNoteDate()
     val dateCreated = vm.getNoteDate(true)
@@ -110,27 +110,61 @@ fun NoteBottomBar(
             ) {
                 Icon(Icons.Outlined.Delete, stringResource(Res.string.delete), Modifier.size(30.dp))
             }
-            // Sent note to archive
-            IconButton(
-                onClick = {
-                    vm.archiveOrUnarchiveNote(!isNoteArchived)
-                    isNoteArchived = !isNoteArchived
-                    vm.platform.showToast(archive2)
-                }
-            ) {
+            // Sent note to folder
+            IconButton(onClick = { isMenuOpen = true }) {
                 Icon(
-                    imageVector = if (isNoteArchived) Icons.Outlined.Unarchive else Icons.Outlined.Archive,
-                    contentDescription = stringResource(
-                        if (isNoteArchived) Res.string.restore_note_from_archive else Res.string.sent_note_to_archive
-                    ),
+                    imageVector = Icons.Outlined.FilterAlt,
+                    contentDescription = stringResource(Res.string.move_to_folder),
                     modifier = Modifier.size(30.dp)
                 )
+            }
+            DropdownMenu(
+                expanded = isMenuOpen,
+                onDismissRequest = { isMenuOpen = false },
+                properties = PopupProperties(
+                    focusable = true,
+                    clippingEnabled = false
+                )
+            ) {
+                Text(
+                    text = stringResource(Res.string.located_in),
+                    modifier = Modifier.padding(horizontal = 20.dp)
+                )
+                RadioDropdownMenuItem(
+                    onClick = {
+                        vm.setNoteFolder(0) {
+                            isMenuOpen = false
+                            vm.platform.showToast("$movedTo $mainStr")
+                        }
+                    },
+                    text = mainStr,
+                    isSelected = vm.selectedNote?.folder == 0
+                )
+                vm.allStatuses.forEach { st ->
+                    if (st.note == 0) {
+                        RadioDropdownMenuItem(
+                            onClick = {
+                                vm.setNoteFolder(st.id) {
+                                    isMenuOpen = false
+                                    vm.platform.showToast("$movedTo ${st.title}")
+                                }
+                            },
+                            text = st.title.takeIf { it.isNotEmpty() } ?: st.id.toString(),
+                            isSelected = vm.selectedNote?.folder == st.id
+                        )
+                    }
+                }
             }
             // Copy button
             if (onGetTextButtonClick != null) {
                 IconButton(
                     onClick = {
-                        scope.launch { vm.platform.copyToClipboard(onGetTextButtonClick(), clipboard) }
+                        scope.launch {
+                            vm.platform.copyToClipboard(
+                                onGetTextButtonClick(),
+                                clipboard
+                            )
+                        }
                     }
                 ) {
                     Icon(
@@ -142,7 +176,7 @@ fun NoteBottomBar(
             }
             // Edit note button
             if (editNoteStr != null) {
-                IconButton(onClick = { vm.updateNoteEditSheet(true) }) {
+                IconButton(onClick = { isEditSheetOpen = true }) {
                     Icon(Icons.Outlined.DriveFileRenameOutline, editNoteStr, Modifier.size(30.dp))
                 }
             }
@@ -208,10 +242,7 @@ fun NoteBottomBar(
     }
     // BottomSheet (info || delete note)
     if (isInfoBottomSheetOpen) {
-        ModalBottomSheet(
-            onDismissRequest = { isInfoBottomSheetOpen = false },
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
-        ) {
+        BaseBottomSheet(onDismissRequest = { isInfoBottomSheetOpen = false }) {
             Text(
                 text = infoBottomSheetText,
                 style = MaterialTheme.typography.titleMedium,
@@ -227,27 +258,33 @@ fun NoteBottomBar(
                         .fillMaxWidth()
                         .padding(top = 20.dp)
                 ) {
-                    IconButton(onClick = { isInfoBottomSheetOpen = false }) {
+                    OutlinedButton(
+                        onClick = { isInfoBottomSheetOpen = false },
+                        shape = CardDefaults.shape
+                    ) {
                         Icon(Icons.Default.Close, stringResource(Res.string.no), Modifier.size(30.dp))
                     }
-                    IconButton(
+                    OutlinedButton(
                         onClick = {
                             vm.deleteNote()
                             onBackAfterDelete()
-                        }
+                        },
+                        shape = CardDefaults.shape
                     ) {
                         Icon(Icons.Default.Check, stringResource(Res.string.yes), Modifier.size(30.dp))
                     }
                 }
             }
-            Spacer(Modifier.fillMaxWidth().height(50.dp))
         }
     }
     // BottomSheet (edit note)
-    if (editNoteStr != null && vm.isNoteEditSheetOpen) {
+    if (editNoteStr != null && isEditSheetOpen) {
         SimpleEditSheet(
-            onDismissRequest = vm::updateNoteEditSheet,
-            onSave = vm::onSaveNoteText,
+            onDismissRequest = { isEditSheetOpen = false },
+            onSave = {
+                vm.updateEditTextValue(it)
+                vm.saveNote()
+            },
             copyToClipboard = { vm.platform.copyToClipboard(it, clipboard) },
             infoText = editNoteStr,
             initText = vm.editText.text.toString()

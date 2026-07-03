@@ -43,8 +43,13 @@ import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
 import app.cash.sqldelight.driver.android.AndroidSqliteDriver
 import com.yurhel.alex.anotes.data.LocalDB
+import com.yurhel.alex.anotes.data.Note
 import com.yurhel.alex.anotes.data.Status
 import com.yurhel.alex.anotes.data.Task
+import com.yurhel.alex.anotes.ui.screen_swipes.utils.SwipeTextPos
+import com.yurhel.alex.anotes.ui.screen_swipes.utils.getSwipesTitle
+import com.yurhel.alex.anotes.ui.screen_swipes.utils.importSwipesFromText
+import com.yurhel.alex.anotes.ui.utils.NoteType
 import db.Database
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -62,13 +67,13 @@ class NoteWidget : GlanceAppWidget() {
         }
     }
 
-    private fun updateWidgetData(context: Context, noteId: Int): Triple<List<Status>, List<Task>, String>? {
+    private fun updateWidgetData(context: Context, noteId: Int): Triple<List<Status>, List<Task>, Note>? {
         val db = LocalDB.getInstance(AndroidSqliteDriver(Database.Schema, context, "notes.db"))
         return db.note.getById(noteId)?.let {
             Triple(
                 db.status.getManyByNote(noteId),
                 db.task.getManyByNote(noteId),
-                it.text
+                it
             )
         }
     }
@@ -78,13 +83,12 @@ class NoteWidget : GlanceAppWidget() {
         // In this method, load data needed to render the AppWidget.
         // Use `withContext` to switch to another thread for long-running operations.
         provideContent {
-            //val noteCreated = currentState<Preferences>()[stringPreferencesKey("noteCreated")] ?: ""
-            //val noteText = currentState<Preferences>()[stringPreferencesKey("noteText")] ?: ""
             val noteId = currentState<Preferences>()[intPreferencesKey("noteId")] ?: 0
-
             var statuses: List<Status> by remember { mutableStateOf(emptyList()) }
             var tasks: List<Task> by remember { mutableStateOf(emptyList()) }
-            var text: String by remember { mutableStateOf("") }
+            var note: Note? by remember { mutableStateOf(null) }
+            val isSwipes = note?.type == NoteType.Swipe.name
+            val text = note?.text?.run { if (isSwipes) getSwipesTitle(this) else this } ?: ""
 
             LaunchedEffect(key1 = noteId) {
                 launch(Dispatchers.Default) {
@@ -92,7 +96,7 @@ class NoteWidget : GlanceAppWidget() {
                     if (res != null) {
                         statuses = res.first
                         tasks = res.second
-                        text = res.third
+                        note = res.third
                     }
                 }
             }
@@ -117,6 +121,64 @@ class NoteWidget : GlanceAppWidget() {
                                     .padding(10.dp, 0.dp, 10.dp, 0.dp)
                                     .fillMaxSize()
                             )
+                        }
+                    }
+                    // Swipes
+                    if (isSwipes) {
+                        var leftColor = Color.Red
+                        var rightColor = Color.Green
+                        items(
+                            items = importSwipesFromText(note?.text ?: "") { _, lColor, _, rColor ->
+                                leftColor = lColor
+                                rightColor = rColor
+                            }
+                        ) {
+                            Row(
+                                modifier = GlanceModifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 5.dp),
+                            ) {
+                                // Color indicator
+                                Box(
+                                    contentAlignment = Alignment.BottomCenter,
+                                    modifier = GlanceModifier
+                                        .height(22.dp)
+                                        .width(10.dp)
+                                ) {
+                                    Box(
+                                        modifier = GlanceModifier
+                                            .background(
+                                                try {
+                                                    if (it.pos == SwipeTextPos.Left) {
+                                                        leftColor
+                                                    } else {
+                                                        rightColor
+                                                    }
+                                                } catch (_: Exception) {
+                                                    Color(
+                                                        ColorProvider(R.color.glance_colorOnBackground)
+                                                            .getColor(context)
+                                                            .toArgb()
+                                                    )
+                                                }
+                                            )
+                                            .cornerRadius(5.dp)
+                                            .size(10.dp)
+                                    ) {}
+                                }
+                                // Description
+                                Text(
+                                    text = it.text,
+                                    style = TextStyle(
+                                        color = ColorProvider(R.color.glance_colorOnSurface),
+                                        fontSize = 20.sp
+                                    ),
+                                    modifier = GlanceModifier.padding(
+                                        horizontal = 5.dp,
+                                        vertical = 2.dp
+                                    )
+                                )
+                            }
                         }
                     }
                     // Tasks for this note
@@ -180,7 +242,7 @@ class NoteWidget : GlanceAppWidget() {
                             if (res != null) {
                                 statuses = res.first
                                 tasks = res.second
-                                text = res.third
+                                note = res.third
                             }
                         }
                     )

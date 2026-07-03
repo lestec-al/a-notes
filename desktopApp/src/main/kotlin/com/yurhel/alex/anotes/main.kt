@@ -48,7 +48,7 @@ fun main() = application {
         title = getAppName(),
         icon = painterResource("icon.png")
     ) {
-        this.window.minimumSize = Dimension(600, 600)
+        this.window.minimumSize = Dimension(400, 600)
         this.window.background = Color.WHITE
         val vm: MainViewModel = viewModel(
             factory = MainViewModel.Factory(platform = platform, settings = settings)

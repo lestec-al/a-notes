@@ -56,7 +56,7 @@ fun TasksScreen(
     vm: TasksViewModel,
     onBack: () -> Unit
 ) {
-    BackHandlerCustom(onBack = onBack)
+    BackHandlerCustom(onBack)
     val lazyListState = rememberLazyListState()
     val scrollOffset = if (getOrientation() == Orientation.Desktop) 20 else 50
 

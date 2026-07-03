@@ -14,6 +14,8 @@ import com.yurhel.alex.anotes.ui.screen_board.BoardScreen
 import com.yurhel.alex.anotes.ui.screen_board.BoardViewModel
 import com.yurhel.alex.anotes.ui.screen_note.NoteScreen
 import com.yurhel.alex.anotes.ui.screen_notes.NotesScreen
+import com.yurhel.alex.anotes.ui.screen_settings.SettingsScreen
+import com.yurhel.alex.anotes.ui.screen_settings.SettingsViewModel
 import com.yurhel.alex.anotes.ui.screen_swipes.SwipeNotesScreen
 import com.yurhel.alex.anotes.ui.screen_swipes.SwipeNotesViewModel
 import com.yurhel.alex.anotes.ui.screen_tasks.TasksScreen
@@ -47,12 +49,19 @@ fun App(vm: MainViewModel) {
                         vm.prepareNote(null)
                         nav.navigate(vm.checkNoteType(vm.selectedNote!!).name)
                     },
+                    toSettings = { nav.navigate("settings") },
                     onBack = vm.platform::callExit
                 )
             }
             composable(route = NoteType.Note.name) {
                 NoteScreen(
                     vm = vm,
+                    onBack = nav::popBackStack
+                )
+            }
+            composable(route = "settings") {
+                SettingsScreen(
+                    vm = viewModel(factory = SettingsViewModel.Factory(vm)),
                     onBack = nav::popBackStack
                 )
             }

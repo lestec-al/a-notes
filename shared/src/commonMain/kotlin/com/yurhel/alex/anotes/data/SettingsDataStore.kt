@@ -88,4 +88,14 @@ class SettingsDataStore private constructor (private val dataStore: DataStore<Pr
         updatePref(keyScreenPosX, posX)
         updatePref(keyScreenPosY, posY)
     }
+
+
+    private val keySyncType = stringPreferencesKey("syncType")
+    suspend fun getSyncType() = dataStore.data.first()[keySyncType] ?: "drive"
+    suspend fun setSyncType(it: String) = updatePref(keySyncType, it)
+
+
+    private val keyMainName = stringPreferencesKey("mainName")
+    suspend fun getMainName() = dataStore.data.first()[keyMainName] ?: ""
+    suspend fun setMainName(it: String) = updatePref(keyMainName, it)
 }

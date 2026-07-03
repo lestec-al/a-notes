@@ -10,20 +10,27 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.staggeredgrid.LazyStaggeredGridState
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridItemSpan
 import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.FormatListBulleted
+import androidx.compose.material.icons.outlined.Brush
+import androidx.compose.material.icons.outlined.Swipe
+import androidx.compose.material.icons.outlined.TextFields
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -35,10 +42,13 @@ import com.yurhel.alex.anotes.shared.Res
 import com.yurhel.alex.anotes.shared.draw
 import com.yurhel.alex.anotes.shared.empty_text
 import com.yurhel.alex.anotes.shared.sync_collision
-import com.yurhel.alex.anotes.shared.sync_drive
-import com.yurhel.alex.anotes.shared.sync_local
+import com.yurhel.alex.anotes.shared.drive_data
+import com.yurhel.alex.anotes.shared.local_data
 import com.yurhel.alex.anotes.BackHandlerCustom
 import com.yurhel.alex.anotes.data.Note
+import com.yurhel.alex.anotes.shared.note
+import com.yurhel.alex.anotes.shared.swipe_notes
+import com.yurhel.alex.anotes.shared.tasks
 import com.yurhel.alex.anotes.ui.MainViewModel
 import com.yurhel.alex.anotes.ui.components.CustomScaffold
 import com.yurhel.alex.anotes.ui.components.DropFloatingActionButton
@@ -56,39 +66,60 @@ fun NotesScreen(
     vm: MainViewModel,
     newNoteClicked: (type: NoteType) -> Unit,
     openExistingNoteClicked: (note: Note) -> Unit,
+    toSettings: () -> Unit,
     onBack: () -> Unit
 ) {
+    var notesScroll by remember { mutableStateOf(Pair(0,0)) }
     val scrollState = rememberLazyStaggeredGridState()
     LaunchedEffect(Unit) {
         vm.initNotesScreen() // To sep viewModel ???
         scrollState.scrollToItem(
-            index = vm.notesScreenSavedScroll.first,
-            scrollOffset = vm.notesScreenSavedScroll.second
+            index = notesScroll.first,
+            scrollOffset = notesScroll.second
         )
     }
-    BackHandlerCustom(onBack = onBack)
+    fun updateScrollItem(scrollState: LazyStaggeredGridState) {
+        notesScroll = Pair(
+            scrollState.firstVisibleItemIndex,
+            scrollState.firstVisibleItemScrollOffset
+        )
+    }
 
-    val appSettingsView by vm.appSettingsView.collectAsState()
-    val allNotes: List<Note> by vm.allNotes.collectAsState()
-    val allTasks by vm.allTasks.collectAsState()
-    val allStatuses by vm.allStatuses.collectAsState()
-    val isSyncDialogOpen by vm.isSyncDialogOpen.collectAsState()
+    BackHandlerCustom(onBack)
+
     val widgetId = remember { vm.platform.getWidgetIdWhenCreated() }
     val notNeedChooseWidget = widgetId == 0
-    val isGrid = appSettingsView == "grid"
+    val isGrid = vm.appSettingsView == "grid"
 
     CustomScaffold(
         floatingActionButton = {
             DropFloatingActionButton(
-                vm.getNotesScreenDropMenuItems(scrollState, newNoteClicked)
+                listOf(
+                    Triple(Res.string.swipe_notes, Icons.Outlined.Swipe) {
+                        newNoteClicked(NoteType.Swipe)
+                        updateScrollItem(scrollState)
+                    },
+                    Triple(Res.string.draw, Icons.Outlined.Brush) {
+                        newNoteClicked(NoteType.Draw)
+                        updateScrollItem(scrollState)
+                    },
+                    Triple(Res.string.tasks, Icons.AutoMirrored.Outlined.FormatListBulleted) {
+                        newNoteClicked(NoteType.Tasks)
+                        updateScrollItem(scrollState)
+                    },
+                    Triple(Res.string.note, Icons.Outlined.TextFields) {
+                        newNoteClicked(NoteType.Note)
+                        updateScrollItem(scrollState)
+                    }
+                )
             )
         },
         bottomBar = {
-            if (notNeedChooseWidget) NotesBottomBar(vm, appSettingsView)
+            if (notNeedChooseWidget) NotesBottomBar(vm, vm.appSettingsView, toSettings)
         }
     ) { bottomPadding, topPadding ->
         // Empty text
-        if (allNotes.isEmpty()) {
+        if (vm.allNotes.isEmpty()) {
             Box(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier.fillMaxSize()
@@ -110,7 +141,7 @@ fun NotesScreen(
                 Spacer(Modifier.height(topPadding))
             }
             // Notes
-            items(items = allNotes) { note: Note ->
+            items(items = vm.allNotes) { note: Note ->
                 val img = vm.tryGetImage(note.id)
                 val isDraw = note.type == NoteType.Draw.name
                 val isSwipes = note.type == NoteType.Swipe.name
@@ -123,7 +154,7 @@ fun NotesScreen(
                     onClick = {
                         if (notNeedChooseWidget) {
                             openExistingNoteClicked(note)
-                            vm.updateNotesScreenScrollItem(scrollState)
+                            updateScrollItem(scrollState)
                         } else {
                             vm.platform.callInitUpdateWidget(
                                 isInitAction = true,
@@ -184,7 +215,7 @@ fun NotesScreen(
                         }
                     }
                     // Tasks for this note
-                    allTasks.forEach { task ->
+                    vm.allTasks.forEach { task ->
                         if (task.note == note.id) {
                             TaskCard(
                                 task = task,
@@ -194,7 +225,7 @@ fun NotesScreen(
                                     .fillMaxWidth()
                                     .padding(horizontal = 5.dp),
                                 tasksTextPadding = 2,
-                                statuses = allStatuses,
+                                statuses = vm.allStatuses,
                                 onBackgroundColor = MaterialTheme.colorScheme.onBackground
                             )
                         }
@@ -205,16 +236,17 @@ fun NotesScreen(
         }
     }
     AskDialog(
-        onDismissRequest = vm::syncDialogVisibility,
-        isVisible = isSyncDialogOpen,
+        onDismissRequest = vm::setSyncDialogVisibility,
+        isVisible = vm.isSyncDialogOpen,
         infoText = Res.string.sync_collision,
-        leftButton = Pair(Res.string.sync_drive) {
+        leftButton = Pair(Res.string.drive_data) {
             vm.syncData(SyncActionTypes.ManualImport)
-            vm.syncDialogVisibility()
+            vm.setSyncDialogVisibility()
         },
-        rightButton = Pair(Res.string.sync_local) {
+        rightButton = Pair(Res.string.local_data) {
             vm.syncData(SyncActionTypes.ManualExport)
-            vm.syncDialogVisibility()
+            vm.setSyncDialogVisibility()
         }
     )
+    LocalSyncSheet(vm)
 }

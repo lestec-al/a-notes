@@ -3,14 +3,15 @@ package com.yurhel.alex.anotes.data
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
+import kotlinx.serialization.json.JsonArray
 
 data class Note(
     val id: Int = 0,
     val text: String,
-    val isArchived: Boolean,
+    val folder: Int,
     val dateUpdate: Long,
     val dateCreate: Long,
-    val type: String,
+    val type: String
 )
 
 data class Status(
@@ -53,3 +54,11 @@ data class BoardLine(
     val color: Color,
     val strokeWidth: Float
 )
+
+data class DriveData(
+    val data: JsonArray,
+    val modifiedTime: Long?,
+    val isServiceOK: Boolean
+)
+
+enum class SyncType { drive, local }

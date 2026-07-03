@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Нататкі</string><!-- Duplicated in Android ver -->
-
+    <string name="drive_sync">Google Drive (воблака)</string>
     <string name="search_text_hint">Пошук</string>
-    <string name="sync_collision">Выяўлены канфлікт у дадзеных. Калі ласка, абярыце, што выкарыстоўваць.</string>
-    <string name="sync_drive_action">Сынхранізацыя з воблакам</string>
-    <string name="sync_drive">Воблачныя даныя</string>
-    <string name="sync_local">Лякальныя даныя</string>
+    <string name="sync_collision">Выяўлены канфлікт у дадзеных. Калі ласка, абярыце, што выкарыстоўваць</string>
+    <string name="sync_data">Сынхранізацыя дадзеных</string>
+    <string name="drive_data">Воблачныя даныя</string>
+    <string name="local_data">Лякальныя даныя</string>
     <string name="empty_text">Тут яшчэ пуста</string>
     <string name="updated">Абноўлены</string>
     <string name="created">Створаны</string>
@@ -16,25 +16,24 @@
     <string name="text">Тэкст</string>
     <string name="note">Нататку</string>
     <string name="change_view">Зьмяніць выгляд</string>
-    <string name="edit">Рэдагаваць</string>
-    <string name="edit_tasks">Рэдагаваць задачы</string>
+    <string name="edit_task">Рэдагаваць задачу</string>
+    <string name="sync_option">Сынхранізацыя</string>
     <string name="edit_note">Рэдагаваць нататку</string>
     <string name="delete">Выдаліць</string>
-    <string name="create">Стварыць</string>
+    <string name="create_task">Стварыць задачу</string>
     <string name="save">Захаваць</string>
-    <string name="up">Угору</string>
-    <string name="down">Уніз</string>
+    <string name="create_status">Стварыць статус</string>
+    <string name="edit_status">Рэдагаваць статус</string>
     <string name="back">Назад</string>
     <string name="delete_info">Нататка будзе выдалена</string>
     <string name="copy">Скапіяваць</string>
-    <string name="note_archived">Нататка адпраўлена ў архіў</string>
-    <string name="note_restored">Нататка адноўлена</string>
-    <string name="sent_note_to_archive">Нататка дададзена ў архіў</string>
-    <string name="restore_note_from_archive">Аднавіць нататку з архіву</string>
+    <string name="located_in">Размешчана ў:</string>
+    <string name="settings">Налады</string>
+    <string name="support">Напісаць у падтрымку</string>
+    <string name="app_code">Зыходны код і Дэсктопная вэрсыя</string>
     <string name="sorting">Сартаваньне</string>
-    <string name="filtering">Фільтраваньне</string>
-    <string name="show_main_notes">Асноўныя нататкі</string>
-    <string name="show_archive_notes">Архіўныя нататкі</string>
+    <string name="folder">Папка</string>
+    <string name="main">Асноўнае</string>
     <string name="date_update">Дата зьмяненьня</string>
     <string name="date_create">Дата стварэньня</string>
     <string name="ascending">Па ўзрастаньню</string>
@@ -59,4 +58,18 @@
     <string name="app_ver">Вэрсыя дадатка</string>
     <string name="add_img">Дадаць выяву</string>
     <string name="del_img">Выдаліць выяву</string>
+    <string name="add_folder">Дадаць папку</string>
+    <string name="move_to_folder">Перамясьціць у папку</string>
+    <string name="moved_to">Перамешчана ў</string>
+    <string name="local_sync">Лякальная сетка (Wі-Fі)</string>
+    <string name="folders">Папкі</string>
+    <string name="edit_folder">Рэдагаваць папку</string>
+    <string name="del_folder">Выдаліць папку</string>
+    <string name="open_menu">Адкрыць меню</string>
+    <string name="get_data">Атрымаць даныя па лякальнай сетцы</string>
+    <string name="lan_code">Ваш код:</string>
+    <string name="share_code">Увядзіце код на іншай прыладзе</string>
+    <string name="data_replace_info">Усе бягучыя даныя будуць заменены</string>
+    <string name="share_data">Падзяліцца данымі па лякальнай сетцы</string>
+    <string name="enter_code">Увядзіце код зь іншай прылады</string>
 </resources>

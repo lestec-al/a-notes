@@ -28,14 +28,13 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.yurhel.alex.anotes.shared.Res
-import com.yurhel.alex.anotes.shared.create
-import com.yurhel.alex.anotes.shared.edit
+import com.yurhel.alex.anotes.shared.edit_task
 import com.yurhel.alex.anotes.shared.edit_note
 import com.yurhel.alex.anotes.shared.edit_side
 import com.yurhel.alex.anotes.shared.left_side
 import com.yurhel.alex.anotes.shared.right_side
-import com.yurhel.alex.anotes.shared.task
 import com.yurhel.alex.anotes.BackHandlerCustom
+import com.yurhel.alex.anotes.shared.create_task
 import com.yurhel.alex.anotes.ui.components.CustomScaffold
 import com.yurhel.alex.anotes.ui.components.NoteBottomBar
 import com.yurhel.alex.anotes.ui.screen_swipes.components.SwipeNotesCard
@@ -50,8 +49,8 @@ fun SwipeNotesScreen(
     vm: SwipeNotesViewModel,
     onBack: () -> Unit
 ) {
-    val createTaskStr = stringResource(Res.string.create) + " " + stringResource(Res.string.task).lowercase()
-    val editTaskStr = stringResource(Res.string.edit) + " " + stringResource(Res.string.task).lowercase()
+    val createTaskStr = stringResource(Res.string.create_task)
+    val editTaskStr = stringResource(Res.string.edit_task)
     val haptic = LocalHapticFeedback.current
     BackHandlerCustom {
         vm.saveNote()

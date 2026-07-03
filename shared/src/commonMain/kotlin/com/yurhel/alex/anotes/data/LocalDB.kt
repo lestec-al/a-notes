@@ -9,7 +9,6 @@ import com.yurhel.alex.anotes.data.local_db_dao.WidgetDao
 import db.Database
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
-import kotlinx.serialization.json.boolean
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.contentOrNull
@@ -47,7 +46,7 @@ class LocalDB private constructor(sqlDriver: SqlDriver) {
                     add(
                         buildJsonObject {
                             put("id", i.id.toInt())
-                            put("withTasks", i.withTasks == 1L)
+                            put("folder", i.folder?.toInt() ?: 0)
                             put("type", i.type ?: "")
                             put("text", i.text ?: "")
                             put("dateUpdate", i.dateUpdate ?: "")
@@ -114,6 +113,8 @@ class LocalDB private constructor(sqlDriver: SqlDriver) {
             db.notesQueries.deleteAll()
             db.statusesQueries.deleteAll()
             db.tasksQueries.deleteAll()
+            db.drawingsQueries.deleteAllDraw()
+            db.drawingsQueries.deleteAllImg()
             // Loop data
             val jsonData = Json.decodeFromString<JsonArray>(data)
             for (i in jsonData) {
@@ -182,7 +183,9 @@ class LocalDB private constructor(sqlDriver: SqlDriver) {
                     else -> {
                         db.notesQueries.insertWithId(
                             id = obj["id"]?.jsonPrimitive?.long,
-                            withTasks = if (obj["withTasks"]?.jsonPrimitive?.boolean == true) 1 else 0,
+                            folder = try {
+                                obj["folder"]?.jsonPrimitive?.long ?: 0
+                            } catch (_: Exception) { 0 },
                             type = obj["type"]?.jsonPrimitive?.contentOrNull ?: "",
                             text = obj["text"]?.jsonPrimitive?.content,
                             dateUpdate = obj["dateUpdate"]?.jsonPrimitive?.content,

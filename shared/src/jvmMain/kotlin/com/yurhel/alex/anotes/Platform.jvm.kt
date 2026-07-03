@@ -27,6 +27,7 @@ import java.awt.datatransfer.StringSelection
 import java.awt.image.BufferedImage
 import java.io.ByteArrayOutputStream
 import java.io.File
+import java.net.InetAddress
 import java.net.URI
 import java.text.DateFormat
 import java.util.Base64
@@ -166,8 +167,17 @@ actual class Platform {
         }
     }
 
-    actual fun getSqlDriver(): SqlDriver = JdbcSqliteDriver("jdbc:sqlite:notes.db").also {
-        try { Database.Schema.create(it) } catch (_: Exception) {}
+    actual fun getSqlDriver(): SqlDriver  {
+        return try {
+            JdbcSqliteDriver(
+                url = "jdbc:sqlite:notes.db",
+                schema = Database.Schema
+            )
+        } catch (_: Exception) {
+            JdbcSqliteDriver("jdbc:sqlite:notes.db").also {
+                try { Database.Schema.create(it) } catch (_: Exception) {}
+            }
+        }
     }
 
     actual fun createDataStorePlatform(): DataStore<Preferences> = PreferenceDataStoreFactory.createWithPath(
@@ -190,4 +200,8 @@ actual class Platform {
     actual fun showToast(msg: String) {}
 
     actual fun getAppVersion() = System.getProperty("jpackage.app-version") ?: ""
+
+    actual suspend fun getLocalIpAddress(): String = withContext(Dispatchers.IO) {
+        InetAddress.getLocalHost()
+    }.hostAddress
 }

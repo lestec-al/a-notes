@@ -1,7 +1,5 @@
 package com.yurhel.alex.anotes.ui.screen_tasks.components
 
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -10,15 +8,8 @@ import androidx.compose.foundation.lazy.staggeredgrid.LazyHorizontalStaggeredGri
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CopyAll
-import androidx.compose.material.icons.outlined.Delete
-import androidx.compose.material.icons.outlined.Save
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
@@ -30,7 +21,6 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -44,18 +34,18 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewModelScope
 import com.yurhel.alex.anotes.shared.Res
-import com.yurhel.alex.anotes.shared.copy
-import com.yurhel.alex.anotes.shared.create
 import com.yurhel.alex.anotes.shared.created
-import com.yurhel.alex.anotes.shared.delete
-import com.yurhel.alex.anotes.shared.edit
-import com.yurhel.alex.anotes.shared.save
+import com.yurhel.alex.anotes.shared.edit_task
 import com.yurhel.alex.anotes.shared.status
-import com.yurhel.alex.anotes.shared.task
 import com.yurhel.alex.anotes.shared.text
 import com.yurhel.alex.anotes.shared.updated
 import com.yurhel.alex.anotes.data.Status
 import com.yurhel.alex.anotes.data.Task
+import com.yurhel.alex.anotes.shared.create_task
+import com.yurhel.alex.anotes.shared.create_status
+import com.yurhel.alex.anotes.shared.edit_status
+import com.yurhel.alex.anotes.ui.components.BaseBottomSheet
+import com.yurhel.alex.anotes.ui.components.BottomSheetTopRow
 import com.yurhel.alex.anotes.ui.screen_tasks.utils.ActionTypes
 import com.yurhel.alex.anotes.ui.screen_tasks.utils.Event
 import com.yurhel.alex.anotes.ui.components.ColorPicker
@@ -69,9 +59,7 @@ import org.jetbrains.compose.resources.stringResource
 fun EditTasksSheet(vm: TasksViewModel) {
     val clipboard = LocalClipboard.current
     val primaryColor = MaterialTheme.colorScheme.primary
-    val sheetState = rememberModalBottomSheetState(
-        skipPartiallyExpanded = true
-    )
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val focusRequester = remember { FocusRequester() }
     // MOVE TO VIEWMODEL
     val editDialogObj = vm.editDialogObj!!
@@ -192,60 +180,45 @@ fun EditTasksSheet(vm: TasksViewModel) {
         }
     }
 
-    ModalBottomSheet(
+    BaseBottomSheet(
         onDismissRequest = { vm.onEvent(Event.HideEditDialog) },
         sheetState = sheetState,
-        containerColor = MaterialTheme.colorScheme.surfaceVariant,
         modifier = Modifier.fillMaxSize()
     ) {
-        // Top bar
-        Row(
-            modifier = Modifier
-                .padding(horizontal = 10.dp)
-                .fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Info text
-            Text(
-                text = when (editDialogObj.actionType) {
-                    ActionTypes.Create -> stringResource(Res.string.create)
-                    ActionTypes.Update -> stringResource(Res.string.edit)
-                } + " " + when (editDialogObj.dataType) {
-                    Types.Status -> stringResource(Res.string.status)
-                    Types.Task -> stringResource(Res.string.task)
-                }.lowercase(),
-                style = MaterialTheme.typography.titleMedium
-            )
-            Spacer(Modifier.weight(1f))
-            // Copy content button
-            if (editDialogObj.actionType == ActionTypes.Update && editDialogObj.dataType == Types.Task) {
-                IconButton(
-                    onClick = {
-                        vm.viewModelScope.launch { vm.vm.platform.copyToClipboard(edit.value, clipboard) }
+        // Top row
+        BottomSheetTopRow(
+            infoText = when (editDialogObj.actionType) {
+                ActionTypes.Create -> {
+                    when (editDialogObj.dataType) {
+                        Types.Status -> stringResource(Res.string.create_status)
+                        Types.Task -> stringResource(Res.string.create_task)
                     }
-                ) {
-                    Icon(Icons.Default.CopyAll, stringResource(Res.string.copy))
                 }
-            }
-            // Delete button
-            if (editDialogObj.actionType == ActionTypes.Update) {
-                IconButton(
-                    onClick = {
-                        when (editDialogObj.dataType) {
-                            Types.Status -> vm.onEvent(Event.DeleteStatus(editDialogObj.obj as Status))
-                            Types.Task -> vm.onEvent(Event.DeleteTask(editDialogObj.obj as Task))
-                        }
-                        vm.onEvent(Event.HideEditDialog)
+                ActionTypes.Update -> {
+                    when (editDialogObj.dataType) {
+                        Types.Status -> stringResource(Res.string.edit_status)
+                        Types.Task -> stringResource(Res.string.edit_task)
                     }
-                ) {
-                    Icon(Icons.Outlined.Delete, stringResource(Res.string.delete))
                 }
-            }
-            // Save button
-            IconButton(onClick = ::saveButtonOnClick) {
-                Icon(Icons.Outlined.Save, stringResource(Res.string.save))
-            }
-        }
+            },
+            saveAction = ::saveButtonOnClick,
+            copyAction = if (editDialogObj.actionType == ActionTypes.Update && editDialogObj.dataType == Types.Task) {
+                {
+                    vm.viewModelScope.launch {
+                        vm.vm.platform.copyToClipboard(edit.value, clipboard)
+                    }
+                }
+            } else null,
+            deleteAction = if (editDialogObj.actionType == ActionTypes.Update) {
+                {
+                    when (editDialogObj.dataType) {
+                        Types.Status -> vm.onEvent(Event.DeleteStatus(editDialogObj.obj as Status))
+                        Types.Task -> vm.onEvent(Event.DeleteTask(editDialogObj.obj as Task))
+                    }
+                    vm.onEvent(Event.HideEditDialog)
+                }
+            } else null
+        )
         // Info about task && Statuses
         if (editDialogObj.dataType == Types.Task) {
             // Info about task

@@ -97,7 +97,4 @@ actual fun SetStatusBarColor(setIsLight: Boolean?, darkTheme: Boolean?) {
 
 // For tests only ???
 @Composable
-actual fun getPlatform(): Platform {
-    val context = LocalContext.current
-    return Platform(context)
-}
+actual fun getPlatform() = Platform(LocalContext.current)

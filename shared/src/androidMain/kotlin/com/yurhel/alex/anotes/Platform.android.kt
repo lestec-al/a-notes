@@ -28,7 +28,6 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.intPreferencesKey
-import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.glance.appwidget.state.updateAppWidgetState
 import androidx.lifecycle.lifecycleScope
@@ -45,6 +44,11 @@ import java.io.ByteArrayOutputStream
 import java.util.Date
 import androidx.core.graphics.scale
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
+import java.net.Inet4Address
+import java.net.InetAddress
+import java.net.NetworkInterface
+import java.util.Collections
 import kotlin.time.Duration.Companion.milliseconds
 
 actual class Platform(private val context: Context) {
@@ -110,8 +114,6 @@ actual class Platform(private val context: Context) {
             // Update widget
             val glanceId = GlanceAppWidgetManager(context).getGlanceIdBy(widgetId)
             updateAppWidgetState(context, glanceId) {
-                it[stringPreferencesKey("noteCreated")] = noteCreated
-                it[stringPreferencesKey("noteText")] = note.text
                 it[intPreferencesKey("noteId")] = note.id
             }
             NoteWidget().update(context, glanceId)
@@ -205,5 +207,28 @@ actual class Platform(private val context: Context) {
         pInfo.versionName ?: ""
     } catch (_: Exception) {
         ""
+    }
+
+    actual suspend fun getLocalIpAddress(): String {
+        var result: String? = null
+        try {
+            withContext(Dispatchers.IO) {
+                val interfaces = Collections.list(NetworkInterface.getNetworkInterfaces())
+                for (networkInterface in interfaces) {
+                    val addresses = Collections.list(networkInterface.inetAddresses)
+                    for (address in addresses) {
+                        if (
+                            !address.isLoopbackAddress &&
+                            !address.isLinkLocalAddress &&
+                            address.isSiteLocalAddress &&
+                            address is Inet4Address
+                        ) {
+                            result = address.hostAddress
+                        }
+                    }
+                }
+            }
+        } catch (_: Exception) {}
+        return result ?: withContext(Dispatchers.IO) { InetAddress.getLocalHost() }.hostAddress
     }
 }

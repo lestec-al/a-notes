@@ -24,9 +24,9 @@ import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.outlined.Contrast
 import androidx.compose.material.icons.outlined.DarkMode
 import androidx.compose.material.icons.outlined.GridView
-import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.LightMode
 import androidx.compose.material.icons.outlined.Search
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.ViewAgenda
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
@@ -58,11 +58,9 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.PopupProperties
 import com.yurhel.alex.anotes.shared.Res
-import com.yurhel.alex.anotes.shared.app_ver
 import com.yurhel.alex.anotes.shared.ascending
 import com.yurhel.alex.anotes.shared.back
 import com.yurhel.alex.anotes.shared.change_view
@@ -70,15 +68,14 @@ import com.yurhel.alex.anotes.shared.date_create
 import com.yurhel.alex.anotes.shared.date_update
 import com.yurhel.alex.anotes.shared.delete
 import com.yurhel.alex.anotes.shared.descending
-import com.yurhel.alex.anotes.shared.filtering
-import com.yurhel.alex.anotes.shared.privacy_link
-import com.yurhel.alex.anotes.shared.privacy_policy
 import com.yurhel.alex.anotes.shared.search_text_hint
-import com.yurhel.alex.anotes.shared.show_archive_notes
-import com.yurhel.alex.anotes.shared.show_main_notes
+import com.yurhel.alex.anotes.shared.main
 import com.yurhel.alex.anotes.shared.sorting
-import com.yurhel.alex.anotes.shared.sync_drive_action
+import com.yurhel.alex.anotes.shared.sync_data
 import com.yurhel.alex.anotes.getOrientation
+import com.yurhel.alex.anotes.shared.folder
+import com.yurhel.alex.anotes.shared.open_menu
+import com.yurhel.alex.anotes.shared.settings
 import com.yurhel.alex.anotes.ui.MainViewModel
 import com.yurhel.alex.anotes.ui.components.BaseBottomBar
 import com.yurhel.alex.anotes.ui.components.RadioDropdownMenuItem
@@ -91,7 +88,8 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 fun NotesBottomBar(
     vm: MainViewModel,
-    appSettingsView: String
+    appSettingsView: String,
+    toSettings: () -> Unit
 ) {
     val keyboard = LocalSoftwareKeyboardController.current
     val focusManager = LocalFocusManager.current
@@ -100,16 +98,15 @@ fun NotesBottomBar(
     val surfaceColor = MaterialTheme.colorScheme.background
 
     val isSearchOnMobile = vm.isSearchOn && getOrientation() != Orientation.Desktop
-    val searchIsEmpty = vm.searchText.isEmpty()
+    val isSearchEmpty = vm.searchText.isEmpty()
+
+    var isMenuOpen by remember { mutableStateOf(false) }
 
     val borderModifier = Modifier.border(
         width = 1.dp,
         color = MaterialTheme.colorScheme.primary,
         shape = IconButtonDefaults.filledShape
     )
-
-    var showAdditional by remember { mutableStateOf(false) }
-    val privacyLink = stringResource(Res.string.privacy_link)
 
     BaseBottomBar {
         if (isSearchOnMobile) {
@@ -139,14 +136,14 @@ fun NotesBottomBar(
             // Additional in search field (clear text button or search icon)
             if (!isSearchOnMobile) {
                 Icon(
-                    imageVector = if (searchIsEmpty) Icons.Outlined.Search else Icons.Default.Close,
-                    contentDescription = if (searchIsEmpty) stringResource(Res.string.search_text_hint) else stringResource(Res.string.delete),
+                    imageVector = if (isSearchEmpty) Icons.Outlined.Search else Icons.Default.Close,
+                    contentDescription = if (isSearchEmpty) stringResource(Res.string.search_text_hint) else stringResource(Res.string.delete),
                     tint = MaterialTheme.colorScheme.outline,
                     modifier = Modifier
                         .padding(horizontal = 4.dp)
                         .clip(CircleShape)
                         .clickable(
-                            enabled = !searchIsEmpty,
+                            enabled = !isSearchEmpty,
                             onClick = {
                                 vm.updateIsSearchOn(false)
                                 focusManager.clearFocus()
@@ -219,7 +216,7 @@ fun NotesBottomBar(
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
                 // Sync indicator / button
-                if (vm.isSyncNow) {
+                if (vm.isSyncOn) {
                     CircularProgressIndicator(
                         modifier = Modifier
                             .padding(12.dp, 0.dp)
@@ -231,7 +228,7 @@ fun NotesBottomBar(
                     IconButton(onClick = { vm.syncData(SyncActionTypes.Auto) }) {
                         Icon(
                             Icons.Default.Refresh,
-                            stringResource(Res.string.sync_drive_action),
+                            stringResource(Res.string.sync_data),
                             Modifier.size(30.dp)
                         )
                     }
@@ -245,31 +242,39 @@ fun NotesBottomBar(
                     )
                 }
                 // More button
-                IconButton(onClick = vm::openMenu) {
-                    Icon(Icons.Default.MoreVert, "more", Modifier.size(30.dp))
+                IconButton(onClick = { isMenuOpen = true }) {
+                    Icon(
+                        Icons.Default.MoreVert,
+                        stringResource(Res.string.open_menu),
+                        Modifier.size(30.dp)
+                    )
                 }
                 DropdownMenu(
-                    expanded = vm.isNotesMenuExpanded,
-                    onDismissRequest = vm::closeMenu,
+                    expanded = isMenuOpen,
+                    onDismissRequest = { isMenuOpen = false },
                     properties = PopupProperties(
                         focusable = true,
                         clippingEnabled = false
                     )
                 ) {
                     Text(
-                        text = stringResource(Res.string.filtering),
+                        text = stringResource(Res.string.folder),
                         modifier = Modifier.padding(horizontal = 20.dp)
                     )
                     RadioDropdownMenuItem(
-                        onClick = vm::hideArchive,
-                        text = stringResource(Res.string.show_main_notes),
-                        isSelected = !vm.isShowArchive
+                        onClick = { vm.chooseViewFolder(0) },
+                        text = vm.mainFolderName.takeIf { it.isNotEmpty() } ?: stringResource(Res.string.main),
+                        isSelected = vm.chosenFolder == 0
                     )
-                    RadioDropdownMenuItem(
-                        onClick = vm::showArchive,
-                        text = stringResource(Res.string.show_archive_notes),
-                        isSelected = vm.isShowArchive
-                    )
+                    vm.allStatuses.forEach { st ->
+                        if (st.note == 0) {
+                            RadioDropdownMenuItem(
+                                onClick = { vm.chooseViewFolder(st.id) },
+                                text = st.title.takeIf { it.isNotEmpty() } ?: st.id.toString(),
+                                isSelected = vm.chosenFolder == st.id
+                            )
+                        }
+                    }
                     Text(
                         text = stringResource(Res.string.sorting),
                         modifier = Modifier.padding(horizontal = 20.dp)
@@ -325,29 +330,12 @@ fun NotesBottomBar(
                             Icon(Icons.Outlined.DarkMode, "dark mode")
                         }
                         VerticalDivider(Modifier.padding(horizontal = 5.dp))
-                        IconButton(
-                            onClick = { showAdditional = !showAdditional },
-                            modifier = if (showAdditional) borderModifier else Modifier
-                        ) {
-                            Icon(Icons.Outlined.Info, "info")
+                        IconButton(onClick = {
+                            toSettings()
+                            isMenuOpen = false
+                        }) {
+                            Icon(Icons.Outlined.Settings, stringResource(Res.string.settings))
                         }
-                    }
-                    if (showAdditional) {
-                        HorizontalDivider(Modifier.padding(vertical = 10.dp))
-                        Text(
-                            text = stringResource(Res.string.privacy_policy),
-                            modifier = Modifier
-                                .clickable { vm.platform.openLink(privacyLink) }
-                                .padding(horizontal = 20.dp, vertical = 5.dp)
-                                .fillMaxWidth(),
-                            textDecoration = TextDecoration.Underline
-                        )
-                        Text(
-                            text = stringResource(Res.string.app_ver) + ": " + vm.platform.getAppVersion(),
-                            modifier = Modifier
-                                .padding(start = 20.dp, end = 20.dp, top = 5.dp)
-                                .fillMaxWidth()
-                        )
                     }
                 }
             }
