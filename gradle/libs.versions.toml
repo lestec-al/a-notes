@@ -3,7 +3,7 @@ android-compileSdk = "37"
 android-minSdk = "24"
 android-targetSdk = "37"
 android-versionCode = "8"
-shared-versionName = "5.3"
+shared-versionName = "6.0"
 
 androidx-espresso = "3.7.0"
 androidx-testExt = "1.3.0"
