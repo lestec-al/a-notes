@@ -55,7 +55,7 @@ class SettingsDataStore private constructor (private val dataStore: DataStore<Pr
 
 
     private val keyDataShowing = stringPreferencesKey("dataShowing")
-    suspend fun getDataShowing() = dataStore.data.first()[keyDataShowing] ?: "all"
+    suspend fun getDataShowing() = dataStore.data.first()[keyDataShowing] ?: "0"
     suspend fun setDataShowing(it: String) = updatePref(keyDataShowing, it)
 
 

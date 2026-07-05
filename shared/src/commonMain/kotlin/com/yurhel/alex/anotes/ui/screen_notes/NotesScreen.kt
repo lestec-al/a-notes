@@ -10,12 +10,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.staggeredgrid.LazyStaggeredGridState
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridItemSpan
 import androidx.compose.foundation.lazy.staggeredgrid.items
-import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.FormatListBulleted
 import androidx.compose.material.icons.outlined.Brush
@@ -27,10 +25,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -69,21 +64,8 @@ fun NotesScreen(
     toSettings: () -> Unit,
     onBack: () -> Unit
 ) {
-    var notesScroll by remember { mutableStateOf(Pair(0,0)) }
-    val scrollState = rememberLazyStaggeredGridState()
-    LaunchedEffect(Unit) {
-        vm.initNotesScreen() // To sep viewModel ???
-        scrollState.scrollToItem(
-            index = notesScroll.first,
-            scrollOffset = notesScroll.second
-        )
-    }
-    fun updateScrollItem(scrollState: LazyStaggeredGridState) {
-        notesScroll = Pair(
-            scrollState.firstVisibleItemIndex,
-            scrollState.firstVisibleItemScrollOffset
-        )
-    }
+    // To sep viewModel ???
+    LaunchedEffect(Unit) { vm.initNotesScreen() }
 
     BackHandlerCustom(onBack)
 
@@ -91,25 +73,36 @@ fun NotesScreen(
     val notNeedChooseWidget = widgetId == 0
     val isGrid = vm.appSettingsView == "grid"
 
+    AskDialog(
+        onDismissRequest = vm::setSyncDialogVisibility,
+        isVisible = vm.isSyncDialogOpen,
+        infoText = Res.string.sync_collision,
+        leftButton = Pair(Res.string.drive_data) {
+            vm.syncData(SyncActionTypes.ManualImport)
+            vm.setSyncDialogVisibility()
+        },
+        rightButton = Pair(Res.string.local_data) {
+            vm.syncData(SyncActionTypes.ManualExport)
+            vm.setSyncDialogVisibility()
+        }
+    )
+    LocalSyncSheet(vm)
+
     CustomScaffold(
         floatingActionButton = {
-            DropFloatingActionButton(
+            if (notNeedChooseWidget) DropFloatingActionButton(
                 listOf(
                     Triple(Res.string.swipe_notes, Icons.Outlined.Swipe) {
                         newNoteClicked(NoteType.Swipe)
-                        updateScrollItem(scrollState)
                     },
                     Triple(Res.string.draw, Icons.Outlined.Brush) {
                         newNoteClicked(NoteType.Draw)
-                        updateScrollItem(scrollState)
                     },
                     Triple(Res.string.tasks, Icons.AutoMirrored.Outlined.FormatListBulleted) {
                         newNoteClicked(NoteType.Tasks)
-                        updateScrollItem(scrollState)
                     },
                     Triple(Res.string.note, Icons.Outlined.TextFields) {
                         newNoteClicked(NoteType.Note)
-                        updateScrollItem(scrollState)
                     }
                 )
             )
@@ -127,10 +120,10 @@ fun NotesScreen(
                 Text(text = stringResource(Res.string.empty_text))
             }
         }
-        // Notes
+        // Content
         LazyVerticalStaggeredGrid(
             columns = StaggeredGridCells.Fixed(if (isGrid) 2 else 1),
-            state = scrollState,
+            state = vm.scrollState,
             modifier = Modifier
                 .fillMaxSize()
                 .padding(bottom = bottomPadding)
@@ -141,7 +134,10 @@ fun NotesScreen(
                 Spacer(Modifier.height(topPadding))
             }
             // Notes
-            items(items = vm.allNotes) { note: Note ->
+            items(
+                items = vm.allNotes,
+                key = { it.id }
+            ) { note: Note ->
                 val img = vm.tryGetImage(note.id)
                 val isDraw = note.type == NoteType.Draw.name
                 val isSwipes = note.type == NoteType.Swipe.name
@@ -154,7 +150,6 @@ fun NotesScreen(
                     onClick = {
                         if (notNeedChooseWidget) {
                             openExistingNoteClicked(note)
-                            updateScrollItem(scrollState)
                         } else {
                             vm.platform.callInitUpdateWidget(
                                 isInitAction = true,
@@ -235,18 +230,4 @@ fun NotesScreen(
             }
         }
     }
-    AskDialog(
-        onDismissRequest = vm::setSyncDialogVisibility,
-        isVisible = vm.isSyncDialogOpen,
-        infoText = Res.string.sync_collision,
-        leftButton = Pair(Res.string.drive_data) {
-            vm.syncData(SyncActionTypes.ManualImport)
-            vm.setSyncDialogVisibility()
-        },
-        rightButton = Pair(Res.string.local_data) {
-            vm.syncData(SyncActionTypes.ManualExport)
-            vm.setSyncDialogVisibility()
-        }
-    )
-    LocalSyncSheet(vm)
 }

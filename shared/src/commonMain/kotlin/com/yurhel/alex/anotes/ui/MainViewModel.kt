@@ -1,5 +1,6 @@
 package com.yurhel.alex.anotes.ui
 
+import androidx.compose.foundation.lazy.staggeredgrid.LazyStaggeredGridState
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.text.input.clearText
 import androidx.compose.runtime.getValue
@@ -182,14 +183,12 @@ class MainViewModel(
     var sortArrow by mutableStateOf("")
         private set
 
+    val scrollState by mutableStateOf(LazyStaggeredGridState())
 
     init {
         viewModelScope.launch {
             val dataShowing = settings.getDataShowing()
-            chosenFolder = when (dataShowing) {
-                "all" -> 0
-                else -> allStatuses.find { dataShowing == it.id.toString() }?.id ?: 0
-            }
+            chosenFolder = try { dataShowing.toInt() } catch (_: Exception) { 0 }
             sortType = settings.getSortType()
             sortArrow = settings.getSortArrow()
         }
@@ -209,12 +208,7 @@ class MainViewModel(
 
     fun chooseViewFolder(f: Int) = viewModelScope.launch {
         chosenFolder = f
-        settings.setDataShowing(
-            when (f) {
-                0 -> "all"
-                else -> f.toString()
-            }
-        )
+        settings.setDataShowing("$f")
         getDbNotes("")
     }
 
@@ -242,8 +236,9 @@ class MainViewModel(
         searchText = query.replace("\n", "")
         val sortType = settings.getSortType()
         val sortArrow = settings.getSortArrow()
+        val notChoosingWidget = platform.getWidgetIdWhenCreated() == 0
         allNotes = db.note.getAll(query)
-            .filter { it.folder == chosenFolder }
+            .filter { if (notChoosingWidget) it.folder == chosenFolder else true }
             .sortedBy { if (sortType == "dateUpdate") it.dateUpdate else it.dateCreate }
             .let { if (sortArrow == "ascending") it.reversed() else it }
     }

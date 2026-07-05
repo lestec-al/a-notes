@@ -29,7 +29,6 @@ kotlin {
         withDeviceTestBuilder {
             sourceSetTreeName = "test"
         }
-        // For testing on android
         packaging {
             resources {
                 excludes += "/META-INF/{AL2.0,LGPL2.1}"

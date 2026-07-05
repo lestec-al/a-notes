@@ -16,9 +16,9 @@ src="https://github.com/lestec-al/a-notes/raw/main/screenshots_desktop.png"/>
 #### Sorting
 - Folders — organize your notes with a custom folder structure
 
-#### Sync & Transfer
+#### Sync
 - Cloud sync of data (Google Drive)
-- Local LAN transfer — get data from another device on the same Wi-Fi network
+- Local LAN sync — get data from another device on the same Wi-Fi network
 
 #### Extras
 - Settings screen — centralized place for preferences

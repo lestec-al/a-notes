@@ -38,5 +38,13 @@ compose.desktop {
                 iconFile.set(project.file("icon.ico"))
             }
         }
+
+        buildTypes.release.proguard {
+            isEnabled.set(true)
+            obfuscate.set(true)
+            optimize.set(true)
+            joinOutputJars.set(true)
+            configurationFiles.from(project.file("desktop-proguard-rules.pro"))
+        }
     }
 }
