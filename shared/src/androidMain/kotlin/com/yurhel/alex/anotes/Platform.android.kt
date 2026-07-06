@@ -1,0 +1,234 @@
+package com.yurhel.alex.anotes
+
+import android.app.Activity
+import android.app.Activity.RESULT_OK
+import android.appwidget.AppWidgetManager
+import android.content.ClipData
+import android.content.Context
+import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.ImageDecoder
+import android.os.Build
+import android.provider.MediaStore
+import android.text.format.DateFormat
+import android.text.format.DateUtils
+import android.util.Base64
+import android.widget.Toast
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.ManagedActivityResultLauncher
+import androidx.activity.result.ActivityResult
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asAndroidBitmap
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.platform.Clipboard
+import androidx.compose.ui.platform.toClipEntry
+import androidx.core.net.toUri
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.PreferenceDataStoreFactory
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.glance.appwidget.GlanceAppWidgetManager
+import androidx.glance.appwidget.state.updateAppWidgetState
+import androidx.lifecycle.lifecycleScope
+import app.cash.sqldelight.db.SqlDriver
+import app.cash.sqldelight.driver.android.AndroidSqliteDriver
+import com.yurhel.alex.anotes.data.LocalDB
+import com.yurhel.alex.anotes.data.Note
+import com.yurhel.alex.anotes.data.Widget
+import db.Database
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import okio.Path.Companion.toPath
+import java.io.ByteArrayOutputStream
+import java.util.Date
+import androidx.core.graphics.scale
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
+import java.net.Inet4Address
+import java.net.InetAddress
+import java.net.NetworkInterface
+import java.util.Collections
+import kotlin.time.Duration.Companion.milliseconds
+
+actual class Platform(private val context: Context) {
+    actual var showBackButtonTest: Boolean = false
+
+    var importLauncher: ManagedActivityResultLauncher<Intent, ActivityResult>? = null
+    private var importedBase64Image: String? = null
+
+    fun resultImportImage(result: ActivityResult) {
+        importedBase64Image = if (result.resultCode == RESULT_OK && result.data != null) {
+            try {
+                result.data!!.data?.run {
+                    val result = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                        val src = ImageDecoder.createSource(context.contentResolver, this)
+                        ImageDecoder.decodeBitmap(src)
+                    } else {
+                        @Suppress("DEPRECATION")
+                        MediaStore.Images.Media.getBitmap(context.contentResolver, this)
+                    }
+                    toBase64(result.asImageBitmap(), "jpg")
+                } ?: ""
+            } catch (_: Exception) { "" }
+        } else {
+            ""
+        }
+    }
+
+    actual suspend fun importImage(after: (String) -> Unit) {
+        if (importLauncher != null) {
+            val intent = Intent(Intent.ACTION_OPEN_DOCUMENT)
+            intent.addCategory(Intent.CATEGORY_OPENABLE)
+            intent.type = "image/*"
+            importLauncher!!.launch(intent)
+
+            while (importedBase64Image == null) {
+                delay(100.milliseconds)
+            }
+            importedBase64Image.takeIf { !it.isNullOrEmpty() }?.also { after(it) }
+            importedBase64Image = null
+        }
+    }
+
+    actual fun getDrive(): PlatformDrive = PlatformDrive(context)
+
+    actual fun callExit() = (context as Activity).finishAffinity()
+
+    actual fun getWidgetIdWhenCreated(): Int {
+        return (context as ComponentActivity).intent.getIntExtra(
+            AppWidgetManager.EXTRA_APPWIDGET_ID,
+            AppWidgetManager.INVALID_APPWIDGET_ID
+        )
+    }
+
+    actual fun callInitUpdateWidget(
+        isInitAction: Boolean,
+        widgetId: Int,
+        noteCreated: String,
+        note: Note,
+        db: LocalDB
+    ) {
+        val activity = context as ComponentActivity
+        activity.lifecycleScope.launch(Dispatchers.Default) {
+            // Update widget
+            val glanceId = GlanceAppWidgetManager(context).getGlanceIdBy(widgetId)
+            updateAppWidgetState(context, glanceId) {
+                it[intPreferencesKey("noteId")] = note.id
+            }
+            NoteWidget().update(context, glanceId)
+            // Initialize widget
+            if (isInitAction) {
+                // Log widget to DB
+                db.widget.insert(Widget(widgetId = widgetId, noteCreated = noteCreated))
+                // Create the return intent, set it with the activity result, finish the activity
+                activity.setResult(RESULT_OK, Intent())
+                activity.finish()
+            }
+        }
+    }
+
+    actual fun formatDate(date: Long): String {
+        return if (DateUtils.isToday(date)) {
+            DateFormat.getTimeFormat(context).format(Date(date))
+        } else {
+            DateFormat.getMediumDateFormat(context).format(Date(date))
+        }
+    }
+
+    actual suspend fun copyToClipboard(str: String, clipboard: Clipboard) {
+        val clipData = ClipData.newPlainText("", str)
+        clipboard.setClipEntry(clipData.toClipEntry())
+    }
+
+    actual fun toBase64(
+        img: ImageBitmap,
+        format: String,
+        maxSizeKB: Int
+    ): String? {
+        var quality = 100
+        var byteArray: ByteArray
+        val bitmap = img.asAndroidBitmap()
+        val formatE = if (format == "PNG") Bitmap.CompressFormat.PNG else Bitmap.CompressFormat.JPEG
+        // Decrease the quality
+        while (quality > 10) {
+            val stream = ByteArrayOutputStream()
+            bitmap.compress(formatE, quality, stream)
+            byteArray = stream.toByteArray()
+            if (byteArray.size <= maxSizeKB * 1024) {
+                return Base64.encodeToString(byteArray, Base64.DEFAULT)
+            }
+            quality -= 5
+        }
+        // Fallback: resize if still too large
+        val resized = bitmap.scale(bitmap.width / 2, bitmap.height / 2)
+        return toBase64(resized.asImageBitmap(), format)
+    }
+
+    actual fun toImageBitmap(str: String?, compress: Boolean): ImageBitmap? {
+        if (str == null) return null
+        val byteArray = Base64.decode(str, Base64.DEFAULT)
+        return BitmapFactory
+            .decodeByteArray(byteArray, 0, byteArray.size)
+            .run {
+                if (!compress) {
+                    this.asImageBitmap()
+                } else {
+                    if (!(this.width > 1000 || this.height > 1000)) {
+                        this.asImageBitmap()
+                    } else {
+                        this.scale(this.width / 2, this.height / 2).asImageBitmap()
+                    }
+                }
+            }
+    }
+
+    actual fun getSqlDriver(): SqlDriver = AndroidSqliteDriver(Database.Schema, context, "notes.db")
+
+    actual fun createDataStorePlatform(): DataStore<Preferences> = PreferenceDataStoreFactory.createWithPath(
+        produceFile = {
+            (context.filesDir.absolutePath + "/notes.preferences_pb").toPath()
+        }
+    )
+
+    actual fun openLink(link: String) {
+        val intent = Intent(Intent.ACTION_VIEW)
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        context.startActivity(intent.setData(link.toUri()))
+    }
+
+    actual fun showToast(msg: String) {
+        Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+    }
+
+    actual fun getAppVersion() = try {
+        val context = context
+        val pInfo = context.packageManager.getPackageInfo(context.packageName, 0)
+        pInfo.versionName ?: ""
+    } catch (_: Exception) {
+        ""
+    }
+
+    actual suspend fun getLocalIpAddress(): String {
+        var result: String? = null
+        try {
+            withContext(Dispatchers.IO) {
+                val interfaces = Collections.list(NetworkInterface.getNetworkInterfaces())
+                for (networkInterface in interfaces) {
+                    val addresses = Collections.list(networkInterface.inetAddresses)
+                    for (address in addresses) {
+                        if (
+                            !address.isLoopbackAddress &&
+                            !address.isLinkLocalAddress &&
+                            address.isSiteLocalAddress &&
+                            address is Inet4Address
+                        ) {
+                            result = address.hostAddress
+                        }
+                    }
+                }
+            }
+        } catch (_: Exception) {}
+        return result ?: withContext(Dispatchers.IO) { InetAddress.getLocalHost() }.hostAddress
+    }
+}

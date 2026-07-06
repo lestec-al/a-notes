@@ -1,0 +1,40 @@
+CREATE TABLE notesTable (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    withTasks INTEGER,
+    type TEXT,
+    text TEXT,
+    dateUpdate TEXT,
+    dateCreate TEXT,
+    folder INTEGER
+);
+
+getById:
+SELECT * FROM notesTable WHERE id = ?;
+
+getLast:
+SELECT * FROM notesTable ORDER BY id DESC LIMIT 1;
+
+getAll:
+SELECT * FROM notesTable;
+
+getQuery:
+SELECT * FROM notesTable WHERE LOWER(text) LIKE ('%' || LOWER(:query) || '%')
+OR id IN (SELECT note FROM tasksTable WHERE LOWER(description) LIKE ('%' || LOWER(:query) || '%'));
+
+insert:
+INSERT INTO notesTable(folder, type, text, dateUpdate, dateCreate)
+VALUES (?, ?, ?, ?, ?);
+
+insertWithId:
+INSERT INTO notesTable(id, folder, type, text, dateUpdate, dateCreate)
+VALUES (?, ?, ?, ?, ?, ?);
+
+deleteAll:
+DELETE FROM notesTable;
+
+delete:
+DELETE FROM notesTable WHERE id = ?;
+
+update:
+UPDATE notesTable SET folder = ?, type = ?, text = ?, dateUpdate = ?
+WHERE id = ?;
