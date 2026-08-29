@@ -28,6 +28,8 @@ import androidx.compose.ui.graphics.rememberGraphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import com.yurhel.alex.anotes.shared.Res
 import com.yurhel.alex.anotes.shared.disable_all_actions
 import com.yurhel.alex.anotes.shared.edit_note
@@ -51,7 +53,10 @@ fun BoardScreen(
     val boardState = rememberTransformableState { _, _, panChange, _ ->
         vm.updateBoardOffsets(panChange)
     }
-    BackHandlerCustom { vm.saveDrawToDB(graphicsLayer, onBack) }
+    BackHandlerCustom(onBack)
+    LifecycleEventEffect(Lifecycle.Event.ON_STOP) {
+        vm.saveDrawToDB(graphicsLayer)
+    }
     SetStatusBarColor(true, vm.vm.darkTheme)
 
     CustomScaffold(
@@ -60,9 +65,7 @@ fun BoardScreen(
                 vm = vm.vm,
                 scope = rememberCoroutineScope(),
                 onBackAfterDelete = onBack,
-                onBackButtonClick = {
-                    vm.saveDrawToDB(graphicsLayer, onBack)
-                },
+                onBackButtonClick = onBack,
                 onGetTextButtonClick = null,
                 editNoteStr = stringResource(Res.string.edit_note),
                 additionalButtons = listOf(

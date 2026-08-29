@@ -1,6 +1,7 @@
 package com.yurhel.alex.anotes.ui.screen_tasks
 
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -13,7 +14,6 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -27,16 +27,14 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
 import com.yurhel.alex.anotes.shared.Res
 import com.yurhel.alex.anotes.shared.edit_note
 import com.yurhel.alex.anotes.BackHandlerCustom
 import com.yurhel.alex.anotes.data.Task
-import com.yurhel.alex.anotes.getOrientation
 import com.yurhel.alex.anotes.ui.components.CustomScaffold
 import com.yurhel.alex.anotes.ui.components.DropFloatingActionButton
 import com.yurhel.alex.anotes.ui.components.NoteBottomBar
@@ -46,11 +44,10 @@ import com.yurhel.alex.anotes.ui.screen_tasks.components.StatusCard
 import com.yurhel.alex.anotes.ui.screen_tasks.utils.ActionTypes
 import com.yurhel.alex.anotes.ui.screen_tasks.utils.Event
 import com.yurhel.alex.anotes.ui.screen_tasks.utils.Types
-import com.yurhel.alex.anotes.ui.utils.Orientation
+import com.yurhel.alex.anotes.ui.screen_tasks.utils.overlaps
 import org.jetbrains.compose.resources.stringResource
 import kotlin.math.roundToInt
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TasksScreen(
     vm: TasksViewModel,
@@ -58,7 +55,6 @@ fun TasksScreen(
 ) {
     BackHandlerCustom(onBack)
     val lazyListState = rememberLazyListState()
-    val scrollOffset = if (getOrientation() == Orientation.Desktop) 20 else 50
 
     CustomScaffold(
         bottomBar = {
@@ -118,12 +114,16 @@ fun TasksScreen(
                     }
                 }
                 // Tasks
-                LazyColumn(state = lazyListState) {
+                LazyColumn(
+                    state = lazyListState,
+                    modifier = Modifier.padding(5.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
                     itemsIndexed(items = vm.tasks) { idx: Int, task: Task ->
                         // For drag & drop
-                        var offsetY by remember { mutableFloatStateOf(0f) }
-                        var posTop = 0f
-                        var posBottom = 0f
+                        var y by remember { mutableFloatStateOf(0f) }
+                        var z by remember { mutableFloatStateOf(0f) }
+                        var thisIt: IntRange? = null
 
                         TaskCard(
                             task = task,
@@ -133,40 +133,49 @@ fun TasksScreen(
                             },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(5.dp)
                                 // For drag & drop
-                                .onGloballyPositioned {
-                                    posTop = it.positionInParent().y
-                                    posBottom = it.positionInParent().y + it.size.height
-                                }
-                                .offset {
-                                    IntOffset(
-                                        x = 0,
-                                        y = offsetY.roundToInt()
-                                    )
-                                }
+                                .zIndex(z)
+                                .offset { IntOffset(x = 0, y = y.roundToInt()) }
                                 .pointerInput(vm.selectedStatus) {
                                     // If status is not selected (all tasks shown)
                                     if (vm.selectedStatus == 0) {
                                         detectDragGesturesAfterLongPress(
                                             onDragStart = {
+                                                z = 1f
                                                 vm.onDragStart(idx)
                                             },
                                             onDragEnd = {
-                                                offsetY = 0f
+                                                y = 0f
+                                                z = 0f
+                                                thisIt = null
                                                 vm.onDragEnd(idx, task)
                                             },
                                             onDragCancel = {
-                                                offsetY = 0f
+                                                y = 0f
+                                                z = 0f
+                                                thisIt = null
                                                 vm.onDragEnd(idx, task)
                                             },
                                             onDrag = { _, dragAmount ->
-                                                if (vm.draggingObj != idx) return@detectDragGesturesAfterLongPress
-                                                offsetY += dragAmount.y
-                                                vm.onDrag(
-                                                    offsetY, posTop, posBottom, idx, scrollOffset,
-                                                    lazyListState.layoutInfo.visibleItemsInfo
-                                                )
+                                                if (vm.dragIdx != idx) return@detectDragGesturesAfterLongPress
+                                                y += dragAmount.y
+                                                // Check if this item overlaps with other items
+                                                lazyListState.layoutInfo.visibleItemsInfo.forEach {
+                                                    if (idx == it.index) {
+                                                        val start = (it.offset + y).roundToInt()
+                                                        val end = ((it.offset + it.size) + y).roundToInt()
+                                                        thisIt = start..end
+                                                    } else {
+                                                        thisIt?.apply {
+                                                            if (
+                                                                (it.offset..(it.offset + it.size))
+                                                                    .overlaps(this)
+                                                            ) {
+                                                                vm.updateLastFoundIdx(it.index)
+                                                            }
+                                                        }
+                                                    }
+                                                }
                                             }
                                         )
                                     }

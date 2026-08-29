@@ -27,6 +27,8 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import com.yurhel.alex.anotes.shared.Res
 import com.yurhel.alex.anotes.shared.edit_task
 import com.yurhel.alex.anotes.shared.edit_note
@@ -52,9 +54,9 @@ fun SwipeNotesScreen(
     val createTaskStr = stringResource(Res.string.create_task)
     val editTaskStr = stringResource(Res.string.edit_task)
     val haptic = LocalHapticFeedback.current
-    BackHandlerCustom {
+    BackHandlerCustom(onBack)
+    LifecycleEventEffect(Lifecycle.Event.ON_STOP) {
         vm.saveNote()
-        onBack()
     }
 
     CustomScaffold(
@@ -63,10 +65,7 @@ fun SwipeNotesScreen(
                 vm = vm.vm,
                 scope = rememberCoroutineScope(),
                 onBackAfterDelete = onBack,
-                onBackButtonClick = {
-                    vm.saveNote()
-                    onBack()
-                },
+                onBackButtonClick = onBack,
                 onGetTextButtonClick = null,
                 additionalButtons = listOf(
                     BottomBarButton(

@@ -1,6 +1,5 @@
 package com.yurhel.alex.anotes.ui.screen_tasks
 
-import androidx.compose.foundation.lazy.LazyListItemInfo
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.Sort
 import androidx.compose.material.icons.automirrored.outlined.StickyNote2
@@ -12,11 +11,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
+import com.yurhel.alex.anotes.data.Status
+import com.yurhel.alex.anotes.data.Task
 import com.yurhel.alex.anotes.shared.Res
 import com.yurhel.alex.anotes.shared.status
 import com.yurhel.alex.anotes.shared.task
-import com.yurhel.alex.anotes.data.Status
-import com.yurhel.alex.anotes.data.Task
 import com.yurhel.alex.anotes.ui.MainViewModel
 import com.yurhel.alex.anotes.ui.screen_tasks.utils.ActionTypes
 import com.yurhel.alex.anotes.ui.screen_tasks.utils.EditDialogObj
@@ -51,10 +50,6 @@ class TasksViewModel(val vm: MainViewModel): ViewModel() {
         private set
     var selectedStatus by mutableIntStateOf(0)
         private set
-    var draggingObj by mutableStateOf<Int?>(null)
-        private set
-    var lastFoundedIdx by mutableStateOf<Int?>(null)
-        private set
     var editDialogObj by mutableStateOf<EditDialogObj?>(null)
         private set
 
@@ -62,6 +57,7 @@ class TasksViewModel(val vm: MainViewModel): ViewModel() {
         selectedStatus = if (selectedStatus != status.id) status.id else 0
         updateTasksData(false)
     }
+
     fun editStatus(status: Status) {
         onEvent(
             Event.ShowEditDialog(
@@ -72,49 +68,32 @@ class TasksViewModel(val vm: MainViewModel): ViewModel() {
         )
     }
 
+    var dragIdx: Int? = null
+        private set
+    var foundIdx: Int? = null
+        private set
+
+    fun updateLastFoundIdx(index: Int) {
+        foundIdx = index
+    }
+
     fun onDragStart(idx: Int) {
-        if (draggingObj == null) draggingObj = idx
+        if (dragIdx == null) dragIdx = idx
     }
     fun onDragEnd(
         idx: Int,
         task: Task
     ) {
-        if (draggingObj == idx) {
-            draggingObj = null
-            val lastFoundedIdxSt = lastFoundedIdx
-            if (lastFoundedIdxSt != null) {
-                onEvent(Event.ChangePos(pos = lastFoundedIdxSt, task = task))
-                lastFoundedIdx = null
-            }
-        }
-    }
-    fun onDrag(
-        offsetY: Float,
-        posTop: Float,
-        posBottom: Float,
-        itemIdx: Int,
-        scrollOffset: Int,
-        visibleItemsInfo: List<LazyListItemInfo>
-    ) {
-        val posTopDynamic = (posTop + offsetY).toInt()
-        val posBottomDynamic = (posBottom + offsetY).toInt()
-        // Check offsets of all items
-        // Try to find that touching item
-        for (it in visibleItemsInfo) {
-            if (itemIdx != it.index) {
-                for (offset in (it.offset + scrollOffset)..((it.offset + it.size) - scrollOffset)) {
-                    if (offset in (posTopDynamic + scrollOffset)..(posBottomDynamic - scrollOffset)) {
-                        lastFoundedIdx = it.index
-                    }
-                }
+        if (dragIdx == idx) {
+            dragIdx = null
+            foundIdx?.let {
+                onEvent(Event.ChangePos(pos = it, task = task))
+                foundIdx = null
             }
         }
     }
 
-    private fun updateTasksData(
-        isSaveNote: Boolean,
-        afterGettingTasks: () -> Unit = {}
-    ) {
+    private fun updateTasksData(isSaveNote: Boolean) {
         val noteId = vm.selectedNote!!.id
         // Get statuses
         viewModelScope.launch(Dispatchers.Default) {
@@ -128,7 +107,13 @@ class TasksViewModel(val vm: MainViewModel): ViewModel() {
             } else {
                 db.task.getManyByNoteAndStatus(noteId, statusId)
             }.sortedBy { it.position }
-            afterGettingTasks()
+            // Prevent of having problems with drag/drop, because of not unique position vars
+            // Just set them to unique values
+            val sortedTasks = tasks.sortedBy { it.position }
+            sortedTasks.forEachIndexed { idx, it ->
+                db.task.update(it.copy(position = idx))
+            }
+            tasks = sortedTasks
         }
         if (isSaveNote) vm.saveNote(isEditDateForcedUpdate = true)
     }
@@ -183,15 +168,7 @@ class TasksViewModel(val vm: MainViewModel): ViewModel() {
                                 ))
                             }
                         }
-                    updateTasksData(true) {
-                        // Prevent of having problems while drag/drop, because of not unique position vars
-                        // Just set them to unique values
-                        val sortedTasks = tasks.sortedBy { it.position }
-                        sortedTasks.forEachIndexed { idx, it ->
-                            db.task.update(it.copy(position = idx))
-                        }
-                        tasks = sortedTasks
-                    }
+                    updateTasksData(true)
                 }
                 // Others
                 is Event.ShowEditDialog -> {

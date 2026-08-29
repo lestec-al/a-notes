@@ -36,6 +36,8 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import com.yurhel.alex.anotes.BackHandlerCustom
 import com.yurhel.alex.anotes.keyboardAsState
 import com.yurhel.alex.anotes.shared.Res
@@ -53,9 +55,9 @@ fun NoteScreen(
     vm: MainViewModel,
     onBack: () -> Unit
 ) {
-    BackHandlerCustom {
+    BackHandlerCustom(onBack)
+    LifecycleEventEffect(Lifecycle.Event.ON_STOP) {
         vm.saveNote()
-        onBack()
     }
 
     // Fixing a bug with BasicTextField2, when keyboard not showed second time
@@ -81,10 +83,7 @@ fun NoteScreen(
                 vm = vm,
                 scope = coroutineScope,
                 onBackAfterDelete = onBack,
-                onBackButtonClick = {
-                    vm.saveNote()
-                    onBack()
-                },
+                onBackButtonClick = onBack,
                 onGetTextButtonClick = vm.editText.text::toString,
                 additionalButtons = listOf(
                     if (vm.isAddImage) {
