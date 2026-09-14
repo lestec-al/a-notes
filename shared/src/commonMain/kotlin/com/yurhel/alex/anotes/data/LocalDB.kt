@@ -51,6 +51,7 @@ class LocalDB private constructor(sqlDriver: SqlDriver) {
                             put("text", i.text ?: "")
                             put("dateUpdate", i.dateUpdate ?: "")
                             put("dateCreate", i.dateCreate ?: "")
+                            put("withTasks", i.withTasks?.toInt() ?: 0)
                         }
                     )
                 }
@@ -189,7 +190,10 @@ class LocalDB private constructor(sqlDriver: SqlDriver) {
                             type = obj["type"]?.jsonPrimitive?.contentOrNull ?: "",
                             text = obj["text"]?.jsonPrimitive?.content,
                             dateUpdate = obj["dateUpdate"]?.jsonPrimitive?.content,
-                            dateCreate = obj["dateCreate"]?.jsonPrimitive?.content
+                            dateCreate = obj["dateCreate"]?.jsonPrimitive?.content,
+                            withTasks = try {
+                                obj["withTasks"]?.jsonPrimitive?.long ?: 0
+                            } catch (_: Exception) { 0 }
                         )
                     }
                 }

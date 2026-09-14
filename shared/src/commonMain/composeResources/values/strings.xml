@@ -72,6 +72,23 @@
     <string name="data_replace_info">Replaces all existing data here</string>
     <string name="share_data">Share Data via LAN</string>
     <string name="enter_code">Enter code from other device</string>
+    <string name="text_color">Text color</string>
+    <string name="back_color">Background color</string>
+    <string name="reset">Reset</string>
+    <string name="edit_link">Edit link</string>
+    <string name="see_link">See link</string>
+    <string name="bold">Bold</string>
+    <string name="italic">Italic</string>
+    <string name="underline">Underline</string>
+    <string name="line_through">Line Through</string>
+    <string name="align_left">Align Left</string>
+    <string name="align_center">Align Center</string>
+    <string name="align_right">Align Right</string>
+    <string name="align_justify">Align Justify</string>
+    <string name="format_h">Format h</string>
+    <string name="list_numbered">List Numbered</string>
+    <string name="list_bulleted">List Bulleted</string>
+    <string name="add_link">Add Link</string>
 
     <string name="privacy_link" translatable="false">https://lestec-al.github.io/lestec-al/privacy-policy</string>
     <string name="email_link" translatable="false">mailto:alexyurgel@gmail.com</string>

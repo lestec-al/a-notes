@@ -2,6 +2,7 @@ package com.yurhel.alex.anotes
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.text.Html
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -11,6 +12,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.text.HtmlCompat
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.glance.GlanceId
@@ -89,6 +91,11 @@ class NoteWidget : GlanceAppWidget() {
             var note: Note? by remember { mutableStateOf(null) }
             val isSwipes = note?.type == NoteType.Swipe.name
             val text = note?.text?.run { if (isSwipes) getSwipesTitle(this) else this } ?: ""
+            val richText = if (note?.format == 10) {
+                HtmlCompat.fromHtml(text, Html.FROM_HTML_MODE_COMPACT).toString()
+            } else {
+                text
+            }
 
             LaunchedEffect(key1 = noteId) {
                 launch(Dispatchers.Default) {
@@ -110,9 +117,9 @@ class NoteWidget : GlanceAppWidget() {
                 LazyColumn {
                     // Text
                     item {
-                        if (text.isNotEmpty()) {
+                        if (richText.isNotEmpty()) {
                             Text(
-                                text = text,
+                                text = richText,
                                 style = TextStyle(
                                     color = ColorProvider(R.color.glance_colorOnSurface),
                                     fontSize = 20.sp

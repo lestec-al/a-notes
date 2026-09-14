@@ -12,7 +12,8 @@ class NotesDao(private val db: NotesQueries) {
             type = note.type,
             text = note.text,
             dateUpdate = note.dateUpdate.toString(),
-            dateCreate = note.dateCreate.toString()
+            dateCreate = note.dateCreate.toString(),
+            withTasks = note.format.toLong()
         )
     }
 
@@ -22,6 +23,7 @@ class NotesDao(private val db: NotesQueries) {
             type = note.type,
             text = note.text,
             dateUpdate = note.dateUpdate.toString(),
+            withTasks = note.format.toLong(),
             id = note.id.toLong()
         )
     }
@@ -65,5 +67,6 @@ private fun createNote(i: NotesTable) = Note(
     type = i.type ?: "",
     folder = try { i.folder?.toInt() ?: 0 } catch (_: Exception) { 0 },
     dateUpdate = i.dateUpdate?.toLong() ?: 0,
-    dateCreate = i.dateCreate?.toLong() ?: 0
+    dateCreate = i.dateCreate?.toLong() ?: 0,
+    format = i.withTasks?.toInt() ?: 0
 )

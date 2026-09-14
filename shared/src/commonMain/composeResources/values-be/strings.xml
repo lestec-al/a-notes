@@ -72,4 +72,21 @@
     <string name="data_replace_info">Усе бягучыя даныя будуць заменены</string>
     <string name="share_data">Падзяліцца данымі па лякальнай сетцы</string>
     <string name="enter_code">Увядзіце код зь іншай прылады</string>
+    <string name="text_color">Колер тэксту</string>
+    <string name="back_color">Колер фону</string>
+    <string name="reset">Скінуць</string>
+    <string name="edit_link">Рэдагаваць спасылку</string>
+    <string name="see_link">Паглядзець спасылку</string>
+    <string name="bold">Тлусты</string>
+    <string name="italic">Курсіў</string>
+    <string name="underline">Падкрэсьлены</string>
+    <string name="line_through">Закрэсьлены</string>
+    <string name="align_left">Па левым баку</string>
+    <string name="align_center">Па цэнтры</string>
+    <string name="align_right">Па правым баку</string>
+    <string name="align_justify">Па шырыні</string>
+    <string name="format_h">Загаловак h</string>
+    <string name="list_numbered">Нумараваны сьпіс</string>
+    <string name="list_bulleted">Маркаваны сьпіс</string>
+    <string name="add_link">Дадаць спасылку</string>
 </resources>

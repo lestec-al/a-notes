@@ -5,10 +5,8 @@ import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.yurhel.alex.anotes.data.SettingsDataStore
 import com.yurhel.alex.anotes.ui.App
-import com.yurhel.alex.anotes.ui.MainViewModel
 import com.yurhel.alex.anotes.ui.utils.getAppName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -19,13 +17,10 @@ import java.awt.Color
 import java.awt.Dimension
 
 fun main() = application {
-    // Fixes problems with sharpness & flickering
-    System.setProperty("skiko.renderApi", "OPENGL")
-
+    System.setProperty("skiko.renderApi", "OPENGL") // Fixes problems with sharpness & flickering
     val platform = Platform()
     val settings = SettingsDataStore.getInstance { platform.createDataStorePlatform() }
-    // runBlocking is necessary here
-    val screen = runBlocking { settings.getScreen() }
+    val screen = runBlocking { settings.getScreen() } // runBlocking is necessary here
     val screenState = rememberWindowState(
         position = WindowPosition(screen.posX, screen.posY),
         width = screen.width,
@@ -50,9 +45,6 @@ fun main() = application {
     ) {
         this.window.minimumSize = Dimension(400, 600)
         this.window.background = Color.WHITE
-        val vm: MainViewModel = viewModel(
-            factory = MainViewModel.Factory(platform = platform, settings = settings)
-        )
-        App(vm)
+        App(platform = platform, settings = settings)
     }
 }

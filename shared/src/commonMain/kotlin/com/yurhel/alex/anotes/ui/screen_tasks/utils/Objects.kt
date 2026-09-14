@@ -12,12 +12,6 @@ interface Event {
         val pos: Int,
         val task: Task
     ): Event
-    data class ShowEditDialog(
-        val dataType: Types,
-        val actionType: ActionTypes,
-        val selectedObj: Any? = null
-    ): Event
-    object HideEditDialog: Event
 }
 
 enum class Types { Status, Task }

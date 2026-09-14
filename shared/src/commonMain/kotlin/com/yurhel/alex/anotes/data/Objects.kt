@@ -11,7 +11,8 @@ data class Note(
     val folder: Int,
     val dateUpdate: Long,
     val dateCreate: Long,
-    val type: String
+    val type: String,
+    val format: Int // 0..9 (plain text), >= 10 (HTML)
 )
 
 data class Status(
@@ -61,4 +62,5 @@ data class DriveData(
     val isServiceOK: Boolean
 )
 
+// I need them to be small-cased (how they recorded in the DB)
 enum class SyncType { drive, local }

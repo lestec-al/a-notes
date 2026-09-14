@@ -72,4 +72,21 @@
     <string name="data_replace_info">Все текущие данные будут заменены</string>
     <string name="share_data">Поделиться данными по локальной сети</string>
     <string name="enter_code">Введите код с другого устройства</string>
+    <string name="text_color">Цвет текста</string>
+    <string name="back_color">Цвет фона</string>
+    <string name="reset">Сбросить</string>
+    <string name="edit_link">Редактировать ссылку</string>
+    <string name="see_link">Посмотреть ссылку</string>
+    <string name="bold">Жирный</string>
+    <string name="italic">Курсив</string>
+    <string name="underline">Подчёркнутый</string>
+    <string name="line_through">Зачёркнутый</string>
+    <string name="align_left">По левому краю</string>
+    <string name="align_center">По центру</string>
+    <string name="align_right">По правому краю</string>
+    <string name="align_justify">По ширине</string>
+    <string name="format_h">Заголовок h</string>
+    <string name="list_numbered">Нумерованный список</string>
+    <string name="list_bulleted">Маркированный список</string>
+    <string name="add_link">Добавить ссылку</string>
 </resources>

@@ -10,7 +10,6 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.v2.runComposeUiTest
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.yurhel.alex.anotes.shared.Res
 import com.yurhel.alex.anotes.shared.back
 import com.yurhel.alex.anotes.shared.create_task
@@ -32,7 +31,6 @@ import com.yurhel.alex.anotes.shared.task
 import com.yurhel.alex.anotes.shared.tasks
 import com.yurhel.alex.anotes.shared.yes
 import com.yurhel.alex.anotes.ui.App
-import com.yurhel.alex.anotes.ui.MainViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
@@ -112,7 +110,7 @@ class NavigationTest {
         setContent {
             val platform = getPlatform()
             platform.showBackButtonTest = true
-            App(vm = viewModel(factory = MainViewModel.Factory(platform = platform)))
+            App(platform = platform)
         }
     }
 

@@ -72,7 +72,7 @@ fun BoardScreen(
                     BottomBarButton(
                         onClick = vm::undo,
                         icon = Icons.AutoMirrored.Filled.Undo,
-                        contentDescription = stringResource(Res.string.undo)
+                        contentDescription = Res.string.undo
                     )
                 )
             )

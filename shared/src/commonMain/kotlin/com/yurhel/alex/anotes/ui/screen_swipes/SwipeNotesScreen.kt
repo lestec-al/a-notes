@@ -71,7 +71,8 @@ fun SwipeNotesScreen(
                     BottomBarButton(
                         onClick = { vm.updateEdit(Edit.NoteText, vm.noteText) },
                         icon = Icons.Outlined.DriveFileRenameOutline,
-                        contentDescription = stringResource(Res.string.edit_note))
+                        contentDescription = Res.string.edit_note
+                    )
                 )
             )
         },

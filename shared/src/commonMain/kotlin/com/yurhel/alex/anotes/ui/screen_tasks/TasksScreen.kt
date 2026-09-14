@@ -42,7 +42,6 @@ import com.yurhel.alex.anotes.ui.screen_tasks.components.TaskCard
 import com.yurhel.alex.anotes.ui.screen_tasks.components.EditTasksSheet
 import com.yurhel.alex.anotes.ui.screen_tasks.components.StatusCard
 import com.yurhel.alex.anotes.ui.screen_tasks.utils.ActionTypes
-import com.yurhel.alex.anotes.ui.screen_tasks.utils.Event
 import com.yurhel.alex.anotes.ui.screen_tasks.utils.Types
 import com.yurhel.alex.anotes.ui.screen_tasks.utils.overlaps
 import org.jetbrains.compose.resources.stringResource
@@ -56,6 +55,8 @@ fun TasksScreen(
     BackHandlerCustom(onBack)
     val lazyListState = rememberLazyListState()
 
+    EditTasksSheet(vm = vm)
+
     CustomScaffold(
         bottomBar = {
             NoteBottomBar(
@@ -68,7 +69,7 @@ fun TasksScreen(
             )
         },
         floatingActionButton = {
-            DropFloatingActionButton(vm.taskScreenDropMenuItems)
+            DropFloatingActionButton(vm.dropDownMenuItems)
         }
     ) { bottomPadding, topPadding ->
         // Need update tasks (ids) after drag drop change position
@@ -129,7 +130,7 @@ fun TasksScreen(
                             task = task,
                             cardColor = MaterialTheme.colorScheme.background,
                             onClick = {
-                                vm.onEvent(Event.ShowEditDialog(Types.Task, ActionTypes.Update, task))
+                                vm.showEditDialog(Types.Task, ActionTypes.Update, task)
                             },
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -189,6 +190,4 @@ fun TasksScreen(
             }
         }
     }
-    // Bottom sheet
-    if (vm.editDialogObj != null) EditTasksSheet(vm = vm)
 }
