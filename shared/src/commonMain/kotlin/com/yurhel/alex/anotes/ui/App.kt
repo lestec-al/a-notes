@@ -9,10 +9,14 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.yurhel.alex.anotes.Platform
 import com.yurhel.alex.anotes.SetStatusBarColor
+import com.yurhel.alex.anotes.data.LocalDB
+import com.yurhel.alex.anotes.data.SettingsDataStore
 import com.yurhel.alex.anotes.ui.screen_board.BoardScreen
 import com.yurhel.alex.anotes.ui.screen_board.BoardViewModel
 import com.yurhel.alex.anotes.ui.screen_note.NoteScreen
+import com.yurhel.alex.anotes.ui.screen_note.NoteViewModel
 import com.yurhel.alex.anotes.ui.screen_notes.NotesScreen
 import com.yurhel.alex.anotes.ui.screen_settings.SettingsScreen
 import com.yurhel.alex.anotes.ui.screen_settings.SettingsViewModel
@@ -24,8 +28,14 @@ import com.yurhel.alex.anotes.ui.theme.ANotesTheme
 import com.yurhel.alex.anotes.ui.utils.NoteType
 
 @Composable
-fun App(vm: MainViewModel) {
+fun App(
+    platform: Platform,
+    settings: SettingsDataStore = SettingsDataStore.getInstance { platform.createDataStorePlatform() },
+    db: LocalDB = LocalDB.getInstance(platform.getSqlDriver()),
+) {
+    val vm: MainViewModel = viewModel(factory = MainViewModel.Factory(platform, settings, db))
     val nav = rememberNavController()
+
     ANotesTheme(darkTheme = vm.darkTheme) {
         SetStatusBarColor(null, vm.darkTheme)
         NavHost(
@@ -55,7 +65,7 @@ fun App(vm: MainViewModel) {
             }
             composable(route = NoteType.Note.name) {
                 NoteScreen(
-                    vm = vm,
+                    vm = viewModel(factory = NoteViewModel.Factory(vm)),
                     onBack = nav::popBackStack
                 )
             }

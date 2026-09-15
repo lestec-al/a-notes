@@ -33,6 +33,7 @@ src="https://github.com/lestec-al/a-notes/raw/main/screenshots_desktop.png"/>
 - SQLite (through SQLDelight)
 - DataStore
 - Google Cloud with Google Drive API
+- [Compose Rich Editor by Mohamed Rejeb](https://github.com/MohamedRejeb/compose-rich-editor)
 
 ## Other
 - This is the Kotlin Multiplatform Project - one project for multiple OSes (Android & PC). Most of the UI and business logic are shared

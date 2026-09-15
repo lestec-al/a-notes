@@ -185,14 +185,18 @@ fun NoteBottomBar(
                 IconButton(
                     onClick = it.onClick,
                     colors = IconButtonDefaults.iconButtonColors(
-                        contentColor = if (it.enabled) {
+                        contentColor = if (it.toggled) {
                             MaterialTheme.colorScheme.primary
                         } else {
                             LocalContentColor.current
                         }
                     )
                 ) {
-                    Icon(it.icon, it.contentDescription, Modifier.size(30.dp))
+                    Icon(
+                        it.icon,
+                        it.contentDescription?.let { r -> stringResource(r) },
+                        Modifier.size(30.dp)
+                    )
                 }
             }
         }

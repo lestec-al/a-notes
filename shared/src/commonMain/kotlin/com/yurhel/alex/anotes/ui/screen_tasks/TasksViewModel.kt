@@ -1,6 +1,5 @@
 package com.yurhel.alex.anotes.ui.screen_tasks
 
-import androidx.compose.foundation.lazy.LazyListItemInfo
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.Sort
 import androidx.compose.material.icons.automirrored.outlined.StickyNote2
@@ -8,15 +7,17 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
+import com.yurhel.alex.anotes.data.Status
+import com.yurhel.alex.anotes.data.Task
 import com.yurhel.alex.anotes.shared.Res
 import com.yurhel.alex.anotes.shared.status
 import com.yurhel.alex.anotes.shared.task
-import com.yurhel.alex.anotes.data.Status
-import com.yurhel.alex.anotes.data.Task
 import com.yurhel.alex.anotes.ui.MainViewModel
 import com.yurhel.alex.anotes.ui.screen_tasks.utils.ActionTypes
 import com.yurhel.alex.anotes.ui.screen_tasks.utils.EditDialogObj
@@ -36,12 +37,12 @@ class TasksViewModel(val vm: MainViewModel): ViewModel() {
 
     private val db = vm.db
 
-    val taskScreenDropMenuItems = listOf(
+    val dropDownMenuItems = listOf(
         Triple(Res.string.status, Icons.AutoMirrored.Outlined.Sort) {
-            onEvent(Event.ShowEditDialog(Types.Status, ActionTypes.Create))
+            showEditDialog(Types.Status, ActionTypes.Create)
         },
         Triple(Res.string.task, Icons.AutoMirrored.Outlined.StickyNote2) {
-            onEvent(Event.ShowEditDialog(Types.Task, ActionTypes.Create))
+            showEditDialog(Types.Task, ActionTypes.Create)
         }
     )
 
@@ -51,69 +52,56 @@ class TasksViewModel(val vm: MainViewModel): ViewModel() {
         private set
     var selectedStatus by mutableIntStateOf(0)
         private set
-    var draggingObj by mutableStateOf<Int?>(null)
-        private set
-    var lastFoundedIdx by mutableStateOf<Int?>(null)
-        private set
     var editDialogObj by mutableStateOf<EditDialogObj?>(null)
         private set
+    var dragIdx: Int? = null
+        private set
+    var foundIdx: Int? = null
+        private set
+
+    fun showEditDialog(
+        type: Types,
+        actionType: ActionTypes,
+        selectedObj: Any? = null
+    ) {
+        editDialogObj = EditDialogObj(type, actionType, selectedObj)
+    }
+
+    fun hideEditDialog() { editDialogObj = null }
 
     fun changeStatus(status: Status) {
         selectedStatus = if (selectedStatus != status.id) status.id else 0
-        updateTasksData(false)
+        updateTasksData(isSaveNote = false, isSetTasksIds = false)
     }
+
     fun editStatus(status: Status) {
-        onEvent(
-            Event.ShowEditDialog(
-                Types.Status,
-                ActionTypes.Update,
-                status
-            )
-        )
+        showEditDialog(Types.Status, ActionTypes.Update, status)
+    }
+
+    fun updateLastFoundIdx(index: Int) {
+        foundIdx = index
     }
 
     fun onDragStart(idx: Int) {
-        if (draggingObj == null) draggingObj = idx
+        if (dragIdx == null) dragIdx = idx
     }
+
     fun onDragEnd(
         idx: Int,
         task: Task
     ) {
-        if (draggingObj == idx) {
-            draggingObj = null
-            val lastFoundedIdxSt = lastFoundedIdx
-            if (lastFoundedIdxSt != null) {
-                onEvent(Event.ChangePos(pos = lastFoundedIdxSt, task = task))
-                lastFoundedIdx = null
-            }
-        }
-    }
-    fun onDrag(
-        offsetY: Float,
-        posTop: Float,
-        posBottom: Float,
-        itemIdx: Int,
-        scrollOffset: Int,
-        visibleItemsInfo: List<LazyListItemInfo>
-    ) {
-        val posTopDynamic = (posTop + offsetY).toInt()
-        val posBottomDynamic = (posBottom + offsetY).toInt()
-        // Check offsets of all items
-        // Try to find that touching item
-        for (it in visibleItemsInfo) {
-            if (itemIdx != it.index) {
-                for (offset in (it.offset + scrollOffset)..((it.offset + it.size) - scrollOffset)) {
-                    if (offset in (posTopDynamic + scrollOffset)..(posBottomDynamic - scrollOffset)) {
-                        lastFoundedIdx = it.index
-                    }
-                }
+        if (dragIdx == idx) {
+            dragIdx = null
+            foundIdx?.let {
+                onEvent(Event.ChangePos(pos = it, task = task))
+                foundIdx = null
             }
         }
     }
 
     private fun updateTasksData(
-        isSaveNote: Boolean,
-        afterGettingTasks: () -> Unit = {}
+        isSaveNote: Boolean = true,
+        isSetTasksIds: Boolean = true
     ) {
         val noteId = vm.selectedNote!!.id
         // Get statuses
@@ -128,7 +116,15 @@ class TasksViewModel(val vm: MainViewModel): ViewModel() {
             } else {
                 db.task.getManyByNoteAndStatus(noteId, statusId)
             }.sortedBy { it.position }
-            afterGettingTasks()
+            // Prevent of having problems with drag/drop, because of not unique position vars
+            // Just set them to unique values
+            if (isSetTasksIds) {
+                val sortedTasks = tasks.sortedBy { it.position }
+                sortedTasks.forEachIndexed { idx, it ->
+                    db.task.update(it.copy(position = idx))
+                }
+                tasks = sortedTasks
+            }
         }
         if (isSaveNote) vm.saveNote(isEditDateForcedUpdate = true)
     }
@@ -140,13 +136,13 @@ class TasksViewModel(val vm: MainViewModel): ViewModel() {
                 is Event.UpsertStatus -> {
                     val status = event.status
                     if (status.id == 0) db.status.insert(status) else db.status.update(status)
-                    updateTasksData(true)
+                    updateTasksData()
                 }
                 is Event.DeleteStatus -> {
                     if (vm.selectedNote != null) {
                         db.status.delete(event.status.id)
                         db.task.deleteManyByStatus(event.status.id)
-                        updateTasksData(true)
+                        updateTasksData()
                     }
                 }
                 // Task
@@ -158,12 +154,12 @@ class TasksViewModel(val vm: MainViewModel): ViewModel() {
                         db.task.update(task)
                     }
                     delay(200.milliseconds)
-                    updateTasksData(true)
+                    updateTasksData()
                 }
                 is Event.DeleteTask -> {
                     db.task.delete(event.task.id)
                     delay(200.milliseconds)
-                    updateTasksData(true)
+                    updateTasksData()
                 }
                 is Event.ChangePos -> {
                     val newPos = if (event.pos < 0) 0 else event.pos
@@ -183,22 +179,7 @@ class TasksViewModel(val vm: MainViewModel): ViewModel() {
                                 ))
                             }
                         }
-                    updateTasksData(true) {
-                        // Prevent of having problems while drag/drop, because of not unique position vars
-                        // Just set them to unique values
-                        val sortedTasks = tasks.sortedBy { it.position }
-                        sortedTasks.forEachIndexed { idx, it ->
-                            db.task.update(it.copy(position = idx))
-                        }
-                        tasks = sortedTasks
-                    }
-                }
-                // Others
-                is Event.ShowEditDialog -> {
-                    editDialogObj = EditDialogObj(event.dataType, event.actionType, event.selectedObj)
-                }
-                Event.HideEditDialog -> {
-                    editDialogObj = null
+                    updateTasksData()
                 }
             }
         }
@@ -216,7 +197,94 @@ class TasksViewModel(val vm: MainViewModel): ViewModel() {
         }
     }
 
+    fun formatDate(date: Long) = vm.platform.formatDate(date)
+
+    fun editTaskSheetOnSave(
+        edit: String,
+        status: Int,
+        statusColor: Color
+    ) {
+        val initObj = editDialogObj!!
+
+        val valid = when {
+            edit.isBlank() -> false
+            (initObj.dataType != Types.Task && edit.length > 100) -> false
+            else -> true
+        }
+        if (!valid) return
+
+        when (initObj.actionType) {
+            ActionTypes.Create -> {
+                when (initObj.dataType) {
+                    Types.Status -> {
+                        onEvent(
+                            Event.UpsertStatus(
+                                Status(
+                                    title = edit,
+                                    color = statusColor.toArgb(),
+                                    note = vm.selectedNote!!.id
+                                )
+                            )
+                        )
+                    }
+                    Types.Task -> {
+                        val dateNow = System.currentTimeMillis()
+                        onEvent(
+                            Event.UpsertTask(
+                                Task(
+                                    description = edit,
+                                    status = status,
+                                    note = vm.selectedNote!!.id,
+                                    dateCreate = dateNow,
+                                    dateUpdate = dateNow,
+                                    dateUpdateStatus = dateNow
+                                )
+                            )
+                        )
+                    }
+                }
+            }
+            ActionTypes.Update -> {
+                when (initObj.dataType) {
+                    Types.Status -> {
+                        onEvent(
+                            Event.UpsertStatus(
+                                (initObj.obj as Status).copy(
+                                    title = edit,
+                                    color = statusColor.toArgb()
+                                )
+                            )
+                        )
+                    }
+                    Types.Task -> {
+                        val oldTask = initObj.obj as Task
+                        val dateNow = System.currentTimeMillis()
+                        onEvent(
+                            Event.UpsertTask(
+                                oldTask.copy(
+                                    description = edit,
+                                    status = status,
+                                    dateUpdate = if (edit != oldTask.description) {
+                                        dateNow
+                                    } else {
+                                        oldTask.dateUpdate
+                                    },
+                                    dateUpdateStatus = if (status != oldTask.status) {
+                                        dateNow
+                                    } else {
+                                        oldTask.dateUpdateStatus
+                                    }
+                                )
+                            )
+                        )
+                    }
+                }
+            }
+        }
+        hideEditDialog()
+    }
+
     init {
-        updateTasksData(false)
+        updateTasksData(isSaveNote = false)
     }
 }

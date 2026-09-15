@@ -55,10 +55,7 @@ class BoardViewModel(val vm: MainViewModel) : ViewModel() {
         }
     }
 
-    fun saveDrawToDB(
-        graphicsLayer: GraphicsLayer,
-        onBack: () -> Unit
-    ) {
+    fun saveDrawToDB(graphicsLayer: GraphicsLayer) {
         launch {
             if (isDraw) {
                 enableDisableDraw(false)
@@ -70,7 +67,6 @@ class BoardViewModel(val vm: MainViewModel) : ViewModel() {
             }
             localDraw.clear()
             vm.saveNote()
-            onBack()
         }
     }
 

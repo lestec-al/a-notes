@@ -16,6 +16,7 @@ import androidx.compose.ui.unit.Dp
 fun CustomScaffold(
     topBar: @Composable () -> Unit = {},
     bottomBar: @Composable () -> Unit = {},
+    snackbarHost: @Composable (() -> Unit) = {},
     floatingActionButton: @Composable () -> Unit = {},
     statusBarColorAlpha: Float = 0.5f,
     content: @Composable (bottom: Dp, top: Dp) -> Unit
@@ -23,6 +24,7 @@ fun CustomScaffold(
     Scaffold(
         topBar = topBar,
         bottomBar = bottomBar,
+        snackbarHost = snackbarHost,
         floatingActionButton = floatingActionButton
     ) { paddingValues ->
         val topPadding = paddingValues.calculateTopPadding()

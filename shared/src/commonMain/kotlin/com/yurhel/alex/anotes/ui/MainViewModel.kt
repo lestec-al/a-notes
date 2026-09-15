@@ -7,7 +7,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.graphics.ImageBitmap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -31,18 +30,18 @@ import java.util.Date
 import kotlin.reflect.KClass
 
 class MainViewModel(
-    val db: LocalDB,
+    val platform: Platform,
     val settings: SettingsDataStore,
-    val platform: Platform
+    val db: LocalDB
 ) : ViewModel() {
     class Factory(
         private val platform: Platform,
-        private val db: LocalDB = LocalDB.getInstance(platform.getSqlDriver()),
-        private val settings: SettingsDataStore = SettingsDataStore.getInstance { platform.createDataStorePlatform() }
+        private val settings: SettingsDataStore,
+        private val db: LocalDB
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: KClass<T>, extras: CreationExtras): T =
-            MainViewModel(db, settings, platform) as T
+            MainViewModel(platform, settings, db) as T
     }
 
 
@@ -278,7 +277,8 @@ class MainViewModel(
                     folder = chosenFolder,
                     dateCreate = date,
                     dateUpdate = date,
-                    type = newNoteType.name
+                    type = newNoteType.name,
+                    format = 10
                 )
             )
             viewModelScope.launch {
@@ -313,9 +313,12 @@ class MainViewModel(
         }
     }
 
-    fun saveNote(isEditDateForcedUpdate: Boolean = false) {
+    fun saveNote(
+        isEditDateForcedUpdate: Boolean = false,
+        text: String? = null
+    ) {
         val edit = selectedNote
-        val editTextStr = editText.text.toString()
+        val editTextStr = text.takeIf { it != null } ?: editText.text.toString()
         updateEditTextValue(null)
         viewModelScope.launch(Dispatchers.Default) {
             // Check if the note exists
@@ -326,7 +329,7 @@ class MainViewModel(
                     text = editTextStr
                     dateUpdate = Date().time
                 }
-                val newEdit = edit.copy(text = text, dateUpdate = dateUpdate)
+                val newEdit = edit.copy(text = text, dateUpdate = dateUpdate, format = 10)
                 // Update selected note
                 selectNote(newEdit)
                 // Update note db
@@ -383,7 +386,7 @@ class MainViewModel(
                 val foundTask = allTasks.find { it.note == note.id } != null
                 if (foundStatus || foundTask) {
                     NoteType.Tasks
-                } else if (db.board.getImage(note.id) != null) {
+                } else if (db.board.getDraws(note.id).isNotEmpty()) {
                     NoteType.Draw
                 } else {
                     NoteType.Note
@@ -402,38 +405,5 @@ class MainViewModel(
         viewModelScope.launch {
             appSettingsView = settings.getViewMode()
         }
-    }
-
-
-    // PICTURE (note screen)
-    var noteImage by mutableStateOf<ImageBitmap?>(null)
-        private set
-    var isAddImage by mutableStateOf(true)
-        private set
-
-    fun addImage() = viewModelScope.launch {
-        platform.importImage { base64Str ->
-            val noteId = selectedNote?.id
-            if (noteId != null) {
-                db.board.addUpdateImage(noteId, base64Str)
-                updateImageData()
-            }
-        }
-    }
-
-    fun delImage() {
-        selectedNote?.id?.let { db.board.delImage(it) }
-        updateImageData()
-    }
-
-    fun updateImageData() {
-        noteImage = selectedNote?.id?.let {
-            val imgStr = db.board.getImage(it)
-            if (imgStr == null) null else {
-                val img = platform.toImageBitmap(db.board.getImage(it), false)
-                img ?: ImageBitmap(50, 50)
-            }
-        }
-        isAddImage = noteImage == null
     }
 }

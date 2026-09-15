@@ -25,7 +25,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -57,13 +56,14 @@ import org.jetbrains.compose.resources.stringResource
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditTasksSheet(vm: TasksViewModel) {
+    if (vm.editDialogObj == null) return
+
     val clipboard = LocalClipboard.current
     val primaryColor = MaterialTheme.colorScheme.primary
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val focusRequester = remember { FocusRequester() }
-    // MOVE TO VIEWMODEL
     val editDialogObj = vm.editDialogObj!!
-    val edit = remember {
+    var edit by remember {
         mutableStateOf(
             if (editDialogObj.obj == null) "" else {
                 when (editDialogObj.dataType) {
@@ -73,7 +73,7 @@ fun EditTasksSheet(vm: TasksViewModel) {
             }
         )
     }
-    val selectedStatus = remember {
+    var status by remember {
         mutableIntStateOf(
             if (editDialogObj.dataType != Types.Task) 0 else {
                 when (editDialogObj.actionType) {
@@ -93,95 +93,11 @@ fun EditTasksSheet(vm: TasksViewModel) {
         )
     }
     val value = remember {
-        mutableStateOf(TextFieldValue(text = edit.value, selection = TextRange(edit.value.length)))
-    }
-    fun saveButtonOnClick() {
-        val valid = when {
-            edit.value.isBlank() -> false
-            (editDialogObj.dataType != Types.Task && edit.value.length > 100) -> false
-            else -> true
-        }
-        if (!valid) return
-        when (editDialogObj.actionType) {
-            ActionTypes.Create -> {
-                when (editDialogObj.dataType) {
-                    Types.Status -> {
-                        vm.onEvent(
-                            Event.UpsertStatus(
-                                Status(
-                                    title = edit.value,
-                                    color = statusColor.toArgb(),
-                                    note = vm.vm.selectedNote!!.id
-                                )
-                            )
-                        )
-                    }
-                    Types.Task -> {
-                        val dateNow = System.currentTimeMillis()
-                        vm.onEvent(
-                            Event.UpsertTask(
-                                Task(
-                                    description = edit.value,
-                                    status = selectedStatus.intValue,
-                                    note = vm.vm.selectedNote!!.id,
-                                    dateCreate = dateNow,
-                                    dateUpdate = dateNow,
-                                    dateUpdateStatus = dateNow
-                                )
-                            )
-                        )
-                    }
-                }
-            }
-            ActionTypes.Update -> {
-                when (editDialogObj.dataType) {
-                    Types.Status -> {
-                        vm.onEvent(
-                            Event.UpsertStatus(
-                                (editDialogObj.obj as Status).copy(
-                                    title = edit.value,
-                                    color = statusColor.toArgb()
-                                )
-                            )
-                        )
-                    }
-                    Types.Task -> {
-                        val oldTask = editDialogObj.obj as Task
-                        val dateNow = System.currentTimeMillis()
-                        vm.onEvent(
-                            Event.UpsertTask(
-                                oldTask.copy(
-                                    description = edit.value,
-                                    status = selectedStatus.intValue,
-                                    dateUpdate = if (edit.value != oldTask.description) {
-                                        dateNow
-                                    } else {
-                                        oldTask.dateUpdate
-                                    },
-                                    dateUpdateStatus = if (selectedStatus.intValue != oldTask.status) {
-                                        dateNow
-                                    } else {
-                                        oldTask.dateUpdateStatus
-                                    }
-                                )
-                            )
-                        )
-                    }
-                }
-            }
-        }
-        vm.onEvent(Event.HideEditDialog)
-    }
-    fun onStatusClick(status: Status) {
-        if (selectedStatus.intValue != status.id) {
-            selectedStatus.intValue = status.id
-        } else {
-            selectedStatus.intValue = 0
-        }
+        mutableStateOf(TextFieldValue(text = edit, selection = TextRange(edit.length)))
     }
 
     BaseBottomSheet(
-        onDismissRequest = { vm.onEvent(Event.HideEditDialog) },
+        onDismissRequest = vm::hideEditDialog,
         sheetState = sheetState,
         modifier = Modifier.fillMaxSize()
     ) {
@@ -201,11 +117,13 @@ fun EditTasksSheet(vm: TasksViewModel) {
                     }
                 }
             },
-            saveAction = ::saveButtonOnClick,
+            saveAction = {
+                vm.editTaskSheetOnSave(edit, status, statusColor)
+            },
             copyAction = if (editDialogObj.actionType == ActionTypes.Update && editDialogObj.dataType == Types.Task) {
                 {
                     vm.viewModelScope.launch {
-                        vm.vm.platform.copyToClipboard(edit.value, clipboard)
+                        vm.vm.platform.copyToClipboard(edit, clipboard)
                     }
                 }
             } else null,
@@ -215,7 +133,7 @@ fun EditTasksSheet(vm: TasksViewModel) {
                         Types.Status -> vm.onEvent(Event.DeleteStatus(editDialogObj.obj as Status))
                         Types.Task -> vm.onEvent(Event.DeleteTask(editDialogObj.obj as Task))
                     }
-                    vm.onEvent(Event.HideEditDialog)
+                    vm.hideEditDialog()
                 }
             } else null
         )
@@ -224,15 +142,15 @@ fun EditTasksSheet(vm: TasksViewModel) {
             // Info about task
             if (editDialogObj.actionType == ActionTypes.Update) {
                 val task = editDialogObj.obj as Task
-                val dateUpdated = vm.vm.getNoteDate()
-                val dateCreated = vm.vm.getNoteDate(true)
-                val dateStatusUpdated = vm.vm.platform.formatDate(task.dateUpdateStatus)
+                val createdStr = stringResource(Res.string.created)
+                val updatedStr = stringResource(Res.string.updated)
+                val statusStr = stringResource(Res.string.status)
                 Text(
                     text = """
-                            ${stringResource(Res.string.created)}: $dateCreated
-                            ${stringResource(Res.string.updated)}: $dateUpdated
-                            ${stringResource(Res.string.status)} ${stringResource(Res.string.updated)}: $dateStatusUpdated
-                        """.trimIndent(),
+                        $createdStr: ${vm.formatDate(task.dateCreate)}
+                        $updatedStr: ${vm.formatDate(task.dateUpdate)}
+                        $statusStr $updatedStr: ${vm.formatDate(task.dateUpdateStatus)}
+                    """.trimIndent(),
                     style = MaterialTheme.typography.bodySmall,
                     modifier = Modifier.padding(10.dp)
                 )
@@ -248,9 +166,11 @@ fun EditTasksSheet(vm: TasksViewModel) {
                 ) {
                     items(items = vm.statuses) {
                         StatusCard(
-                            selectedStatusId = selectedStatus.intValue,
+                            selectedStatusId = status,
                             status = it,
-                            onClick = ::onStatusClick
+                            onClick = { _ ->
+                                status = if (status != it.id) it.id else 0
+                            }
                         )
                     }
                 }
@@ -266,7 +186,7 @@ fun EditTasksSheet(vm: TasksViewModel) {
         TextField(
             value = value.value,
             onValueChange = {
-                edit.value = it.text
+                edit = it.text
                 value.value = it
             },
             label = {

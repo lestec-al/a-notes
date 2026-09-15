@@ -12,6 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.yurhel.alex.anotes.BackHandlerCustom
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -22,6 +23,8 @@ fun BaseBottomSheet(
     containerColor: Color = MaterialTheme.colorScheme.surfaceVariant,
     content: @Composable ColumnScope.() -> Unit
 ) {
+    BackHandlerCustom(onBack = onDismissRequest)
+
     ModalBottomSheet(
         onDismissRequest = onDismissRequest,
         modifier = modifier,

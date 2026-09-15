@@ -33,6 +33,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale as Scale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.mohamedrejeb.richeditor.annotation.ExperimentalRichTextApi
+import com.mohamedrejeb.richeditor.model.RichTextState
+import com.mohamedrejeb.richeditor.ui.BasicRichText
 import com.yurhel.alex.anotes.shared.Res
 import com.yurhel.alex.anotes.shared.draw
 import com.yurhel.alex.anotes.shared.empty_text
@@ -72,6 +75,10 @@ fun NotesScreen(
     val widgetId = remember { vm.platform.getWidgetIdWhenCreated() }
     val notNeedChooseWidget = widgetId == 0
     val isGrid = vm.appSettingsView == "grid"
+    val textStyle = MaterialTheme.typography.bodyLarge
+    val surfaceColor = MaterialTheme.colorScheme.surfaceVariant
+    val onSurfaceColor = MaterialTheme.colorScheme.onSurfaceVariant
+    val onBackgroundColor = MaterialTheme.colorScheme.onBackground
 
     AskDialog(
         onDismissRequest = vm::setSyncDialogVisibility,
@@ -142,9 +149,7 @@ fun NotesScreen(
                 val isDraw = note.type == NoteType.Draw.name
                 val isSwipes = note.type == NoteType.Swipe.name
                 val title = if (isSwipes) getSwipesTitle(note.text) else note.text
-                val containerColor = if (isDraw) Color.White else {
-                    MaterialTheme.colorScheme.surfaceVariant
-                }
+                val containerColor = if (isDraw) Color.White else surfaceColor
 
                 Card(
                     onClick = {
@@ -161,9 +166,7 @@ fun NotesScreen(
                         }
                     },
                     colors = CardDefaults.cardColors(containerColor = containerColor),
-                    border = if (!isDraw) null else {
-                        BorderStroke(1.dp, MaterialTheme.colorScheme.surfaceVariant)
-                    },
+                    border = if (!isDraw) null else BorderStroke(1.dp, surfaceColor),
                     modifier = Modifier
                         .fillMaxWidth()
                         .heightIn(min = 60.dp, max = 350.dp)
@@ -184,11 +187,20 @@ fun NotesScreen(
                     }
                     // Normal text
                     if (title.isNotEmpty()) {
-                        Text(
-                            text = title,
+                        @OptIn(ExperimentalRichTextApi::class)
+                        BasicRichText(
+                            state = RichTextState().let {
+                                if (note.format == 10) {
+                                    it.setHtml(title)
+                                } else {
+                                    it.setText(title)
+                                }
+                            },
                             overflow = TextOverflow.Ellipsis,
                             maxLines = 10,
-                            color = if (isDraw) Color.Black else Color.Unspecified,
+                            style = textStyle.copy(
+                                color = if (isDraw) Color.Black else onSurfaceColor,
+                            ),
                             modifier = Modifier.padding(horizontal = 10.dp, vertical = 2.dp)
                         )
                     }
@@ -221,7 +233,7 @@ fun NotesScreen(
                                     .padding(horizontal = 5.dp),
                                 tasksTextPadding = 2,
                                 statuses = vm.allStatuses,
-                                onBackgroundColor = MaterialTheme.colorScheme.onBackground
+                                onBackgroundColor = onBackgroundColor
                             )
                         }
                     }
