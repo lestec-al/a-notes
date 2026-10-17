@@ -269,10 +269,7 @@ fun NoteBottomBar(
                         Icon(Icons.Default.Close, stringResource(Res.string.no), Modifier.size(30.dp))
                     }
                     OutlinedButton(
-                        onClick = {
-                            vm.deleteNote()
-                            onBackAfterDelete()
-                        },
+                        onClick = { vm.deleteNote { onBackAfterDelete() } },
                         shape = CardDefaults.shape
                     ) {
                         Icon(Icons.Default.Check, stringResource(Res.string.yes), Modifier.size(30.dp))
@@ -291,7 +288,8 @@ fun NoteBottomBar(
             },
             copyToClipboard = { vm.platform.copyToClipboard(it, clipboard) },
             infoText = editNoteStr,
-            initText = vm.editText.text.toString()
+            initText = vm.editText.text.toString(),
+            allowEmptyText = true
         )
     }
 }

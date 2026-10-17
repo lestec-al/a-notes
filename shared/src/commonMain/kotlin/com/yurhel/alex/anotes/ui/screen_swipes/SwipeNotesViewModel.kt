@@ -70,10 +70,7 @@ class SwipeNotesViewModel(val vm: MainViewModel): ViewModel() {
         else -> rightColor
     }
 
-    fun saveNote() {
-        vm.updateEditTextValue(noteText + exportDataToText())
-        vm.saveNote()
-    }
+    fun saveNote() = vm.saveNote(text = noteText + exportDataToText())
 
     fun deleteSwipeText() {
         if (editedSwipeTextId != -1) {

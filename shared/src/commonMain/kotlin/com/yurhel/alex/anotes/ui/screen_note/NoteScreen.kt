@@ -1,5 +1,6 @@
 package com.yurhel.alex.anotes.ui.screen_note
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Column
@@ -54,6 +55,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import com.mohamedrejeb.richeditor.ui.BasicRichTextEditor
 import com.yurhel.alex.anotes.BackHandlerCustom
+import com.yurhel.alex.anotes.FixCutBugCompositionProvider
 import com.yurhel.alex.anotes.getOrientation
 import com.yurhel.alex.anotes.shared.Res
 import com.yurhel.alex.anotes.shared.edit_link
@@ -70,6 +72,7 @@ import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import kotlin.time.Duration.Companion.seconds
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun NoteScreen(
     vm: NoteViewModel,
@@ -84,6 +87,7 @@ fun NoteScreen(
     val scrollState = rememberScrollState()
     val orientation = getOrientation()
     var prevSelection by remember { mutableStateOf(TextRange(0)) }
+    var prevSelectedText by remember { mutableStateOf("") }
     var isScrollOn by remember { mutableStateOf(true) }
     val snackBarHostState = remember { SnackbarHostState() }
 
@@ -137,6 +141,7 @@ fun NoteScreen(
         }
         if (!vm.state.selection.collapsed) {
             prevSelection = vm.state.selection
+            prevSelectedText = vm.state.toText(prevSelection)
         }
     }
 
@@ -218,74 +223,76 @@ fun NoteScreen(
             }
         }
     ) { bottomPadding, topPadding ->
-        BasicRichTextEditor(
-            state = vm.state,
-            keyboardOptions = KeyboardOptions(
-                capitalization = KeyboardCapitalization.Sentences,
-                keyboardType = KeyboardType.Text,
-                imeAction = ImeAction.Default
-            ),
-            textStyle = TextStyle(
-                color = MaterialTheme.colorScheme.onSurface,
-                fontSize = MaterialTheme.typography.bodyLarge.fontSize
-            ),
-            cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
-            decorationBox = { innerTextField ->
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .verticalScroll(
-                            state = scrollState,
-                            enabled = isScrollOn
-                        )
-                ) {
-                    // Status bar spacer
-                    Spacer(Modifier.height(topPadding))
-                    // Image
-                    vm.noteImage?.also { image ->
-                        Image(
-                            bitmap = image,
-                            contentDescription = null,
-                            contentScale = ContentScale.FillWidth,
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                    }
-                    // Text
-                    innerTextField()
-                }
-            },
-            modifier = Modifier
-                .padding(start = 5.dp, end = 5.dp, bottom = bottomPadding)
-                .fillMaxSize()
-                // Fixing issue where initial click on text run scroll to previous selection
-                .nestedScroll(object : NestedScrollConnection {
-                    override fun onPreScroll(
-                        available: Offset,
-                        source: NestedScrollSource
-                    ): Offset {
-                        return if (!isScrollOn) available else super.onPreScroll(available, source)
-                    }
-                })
-                .onFocusChanged {
-                    // Fixing desktop issue where selection is collapsed after UI btn is clicked
-                    if (orientation == Orientation.Desktop) {
-                        if (!prevSelection.collapsed && vm.state.selection.max == prevSelection.max) {
-                            vm.state.selection = prevSelection
+        FixCutBugCompositionProvider({ prevSelectedText }) {
+            BasicRichTextEditor(
+                state = vm.state,
+                keyboardOptions = KeyboardOptions(
+                    capitalization = KeyboardCapitalization.Sentences,
+                    keyboardType = KeyboardType.Text,
+                    imeAction = ImeAction.Default
+                ),
+                textStyle = TextStyle(
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontSize = MaterialTheme.typography.bodyLarge.fontSize
+                ),
+                cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+                decorationBox = { innerTextField ->
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .verticalScroll(
+                                state = scrollState,
+                                enabled = isScrollOn
+                            )
+                    ) {
+                        // Status bar spacer
+                        Spacer(Modifier.height(topPadding))
+                        // Image
+                        vm.noteImage?.also { image ->
+                            Image(
+                                bitmap = image,
+                                contentDescription = null,
+                                contentScale = ContentScale.FillWidth,
+                                modifier = Modifier.fillMaxWidth()
+                            )
                         }
+                        // Text
+                        innerTextField()
                     }
+                },
+                modifier = Modifier
+                    .padding(start = 5.dp, end = 5.dp, bottom = bottomPadding)
+                    .fillMaxSize()
                     // Fixing issue where initial click on text run scroll to previous selection
-                    if (it.isFocused) {
-                        val lastScrollPosition = scrollState.value
-                        isScrollOn = false
-                        scope.launch {
-                            delay(1.seconds)
-                            withFrameMillis {}
-                            withFrameMillis {}
-                            isScrollOn = true
-                            scrollState.scrollTo(lastScrollPosition)
+                    .nestedScroll(object : NestedScrollConnection {
+                        override fun onPreScroll(
+                            available: Offset,
+                            source: NestedScrollSource
+                        ): Offset {
+                            return if (!isScrollOn) available else super.onPreScroll(available, source)
+                        }
+                    })
+                    .onFocusChanged {
+                        // Fixing desktop issue where selection is collapsed after UI btn is clicked
+                        if (orientation == Orientation.Desktop) {
+                            if (!prevSelection.collapsed && vm.state.selection.max == prevSelection.max) {
+                                vm.state.selection = prevSelection
+                            }
+                        }
+                        // Fixing issue where initial click on text run scroll to previous selection
+                        if (it.isFocused) {
+                            val lastScrollPosition = scrollState.value
+                            isScrollOn = false
+                            scope.launch {
+                                delay(1.seconds)
+                                withFrameMillis {}
+                                withFrameMillis {}
+                                isScrollOn = true
+                                scrollState.scrollTo(lastScrollPosition)
+                            }
                         }
                     }
-                }
-        )
+            )
+        }
     }
 }
