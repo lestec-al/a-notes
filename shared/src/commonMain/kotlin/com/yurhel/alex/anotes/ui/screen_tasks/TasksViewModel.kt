@@ -37,6 +37,9 @@ class TasksViewModel(val vm: MainViewModel): ViewModel() {
 
     private val db = vm.db
 
+    var statusesInTopBar by mutableStateOf(false)
+        private set
+
     val dropDownMenuItems = listOf(
         Triple(Res.string.status, Icons.AutoMirrored.Outlined.Sort) {
             showEditDialog(Types.Status, ActionTypes.Create)
@@ -111,19 +114,22 @@ class TasksViewModel(val vm: MainViewModel): ViewModel() {
         // Get tasks
         val statusId = selectedStatus
         viewModelScope.launch(Dispatchers.Default) {
-            tasks = if (statusId == 0) {
-                db.task.getManyByNote(noteId)
-            } else {
-                db.task.getManyByNoteAndStatus(noteId, statusId)
-            }.sortedBy { it.position }
-            // Prevent of having problems with drag/drop, because of not unique position vars
-            // Just set them to unique values
             if (isSetTasksIds) {
-                val sortedTasks = tasks.sortedBy { it.position }
-                sortedTasks.forEachIndexed { idx, it ->
+                // Prevent of having problems with drag/drop, because of not unique position vars
+                // Just set them to unique values
+                val sTasks = db.task.getManyByNote(noteId).sortedBy { it.position }
+                sTasks.forEachIndexed { idx, it ->
                     db.task.update(it.copy(position = idx))
                 }
-                tasks = sortedTasks
+                tasks = if (statusId == 0) sTasks else {
+                    sTasks.filter { it.status == statusId }
+                }
+            } else {
+                tasks = if (statusId == 0) {
+                    db.task.getManyByNote(noteId)
+                } else {
+                    db.task.getManyByNoteAndStatus(noteId, statusId)
+                }.sortedBy { it.position }
             }
         }
         if (isSaveNote) vm.saveNote(isEditDateForcedUpdate = true)
@@ -285,6 +291,9 @@ class TasksViewModel(val vm: MainViewModel): ViewModel() {
     }
 
     init {
+        viewModelScope.launch {
+            statusesInTopBar = vm.settings.getStatusesInTopBar()
+        }
         updateTasksData(isSaveNote = false)
     }
 }

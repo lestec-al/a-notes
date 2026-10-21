@@ -33,7 +33,8 @@ fun SimpleEditSheet(
     onSave: (String) -> Unit,
     copyToClipboard: suspend (str: String) -> Unit,
     infoText: String = "",
-    initText: String = ""
+    initText: String = "",
+    allowEmptyText: Boolean = false
 ) {
     val focusRequester = remember { FocusRequester() }
     var edit by remember { mutableStateOf(initText) }
@@ -44,7 +45,7 @@ fun SimpleEditSheet(
         BottomSheetTopRow(
             infoText = infoText,
             saveAction = {
-                if (edit.isNotEmpty()) {
+                if (edit.isNotEmpty() || allowEmptyText) {
                     onSave(edit)
                     onDismissRequest()
                 }

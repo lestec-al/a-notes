@@ -100,8 +100,22 @@ class SettingsViewModel(private val vm: MainViewModel): ViewModel() {
     }
 
 
+    var statusesInTopBar by mutableStateOf(false)
+        private set
+
+    fun changeStatusesInTopBar(it: Boolean) {
+        viewModelScope.launch {
+            vm.settings.setStatusesInTopBar(it)
+        }
+        statusesInTopBar = it
+    }
+
+
     init {
         getDbFolders()
         getDbSyncType()
+        viewModelScope.launch {
+            statusesInTopBar = vm.settings.getStatusesInTopBar()
+        }
     }
 }

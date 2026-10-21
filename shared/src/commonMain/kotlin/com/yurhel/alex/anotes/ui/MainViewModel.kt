@@ -240,6 +240,7 @@ class MainViewModel(
             .filter { if (notChoosingWidget) it.folder == chosenFolder else true }
             .sortedBy { if (sortType == "dateUpdate") it.dateUpdate else it.dateCreate }
             .let { if (sortArrow == "ascending") it.reversed() else it }
+            .map { it.copy(type = checkNoteType(it).name) }
     }
 
     fun getAllStatuses() = viewModelScope.launch(Dispatchers.Default) {
@@ -294,7 +295,7 @@ class MainViewModel(
         origNoteText = noteText
     }
 
-    fun deleteNote() {
+    fun deleteNote(after: () -> Unit) {
         updateEditTextValue(null)
         viewModelScope.launch(Dispatchers.Default) {
             val note = selectedNote
@@ -310,6 +311,7 @@ class MainViewModel(
                 // For sync
                 settings.setIsNotesEdited(true)
             }
+            viewModelScope.launch { after() }
         }
     }
 

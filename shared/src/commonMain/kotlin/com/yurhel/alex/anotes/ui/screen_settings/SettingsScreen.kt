@@ -23,6 +23,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -53,6 +54,7 @@ import com.yurhel.alex.anotes.shared.main
 import com.yurhel.alex.anotes.shared.privacy_link
 import com.yurhel.alex.anotes.shared.privacy_policy
 import com.yurhel.alex.anotes.shared.settings
+import com.yurhel.alex.anotes.shared.show_statuses_in_topbar
 import com.yurhel.alex.anotes.shared.support
 import com.yurhel.alex.anotes.shared.sync_option
 import com.yurhel.alex.anotes.ui.components.RadioDropdownMenuItem
@@ -118,7 +120,7 @@ fun SettingsScreen(
                 .fillMaxSize(),
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
-            items(count = 3) { s ->
+            items(count = 4) { s ->
                 ElevatedCard(Modifier.padding(horizontal = 10.dp)) {
                     Spacer(Modifier.height(10.dp))
                     // Sync section
@@ -187,8 +189,29 @@ fun SettingsScreen(
                             Icon(Icons.Outlined.Add, addFolderStr)
                         }
                     }
-                    // About section
+                    // Other section
                     if (s == 2) {
+                        Row(
+                            modifier = Modifier
+                                .padding(horizontal = 20.dp, vertical = 10.dp)
+                                .fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = stringResource(Res.string.show_statuses_in_topbar),
+                                style = MaterialTheme.typography.titleMedium,
+                                modifier = Modifier
+                                    .padding(end = 10.dp)
+                                    .weight(1f)
+                            )
+                            Switch(
+                                checked = vm.statusesInTopBar,
+                                onCheckedChange = vm::changeStatusesInTopBar
+                            )
+                        }
+                    }
+                    // About section
+                    if (s == 3) {
                         aboutSection.forEach {
                             if (it.second == null) {
                                 Text(

@@ -57,16 +57,19 @@ class BoardViewModel(val vm: MainViewModel) : ViewModel() {
 
     fun saveDrawToDB(graphicsLayer: GraphicsLayer) {
         launch {
-            if (isDraw) {
-                enableDisableDraw(false)
-                delay(500.milliseconds)
+            // Check that note is not deleted
+            if (vm.selectedNote != null) {
+                if (isDraw) {
+                    enableDisableDraw(false)
+                    delay(500.milliseconds)
+                }
+                val base64img = vm.platform.toBase64(graphicsLayer.toImageBitmap(), "PNG")
+                if (base64img != null) {
+                    vm.db.board.addUpdateImage(noteId, base64img)
+                }
+                localDraw.clear()
+                vm.saveNote()
             }
-            val base64img = vm.platform.toBase64(graphicsLayer.toImageBitmap(), "PNG")
-            if (base64img != null) {
-                vm.db.board.addUpdateImage(noteId, base64img)
-            }
-            localDraw.clear()
-            vm.saveNote()
         }
     }
 

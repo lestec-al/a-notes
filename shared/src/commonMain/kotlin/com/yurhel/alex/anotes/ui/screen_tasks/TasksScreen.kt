@@ -9,9 +9,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.MaterialTheme
@@ -27,6 +26,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -40,7 +40,7 @@ import com.yurhel.alex.anotes.ui.components.DropFloatingActionButton
 import com.yurhel.alex.anotes.ui.components.NoteBottomBar
 import com.yurhel.alex.anotes.ui.screen_tasks.components.TaskCard
 import com.yurhel.alex.anotes.ui.screen_tasks.components.EditTasksSheet
-import com.yurhel.alex.anotes.ui.screen_tasks.components.StatusCard
+import com.yurhel.alex.anotes.ui.screen_tasks.components.Statuses
 import com.yurhel.alex.anotes.ui.screen_tasks.utils.ActionTypes
 import com.yurhel.alex.anotes.ui.screen_tasks.utils.Types
 import com.yurhel.alex.anotes.ui.screen_tasks.utils.overlaps
@@ -54,6 +54,8 @@ fun TasksScreen(
 ) {
     BackHandlerCustom(onBack)
     val lazyListState = rememberLazyListState()
+    val halfScreenWidth = LocalWindowInfo.current.containerDpSize.width / 2
+    val isShowTopBar = vm.vm.selectedNote != null && vm.vm.selectedNote!!.text.isNotEmpty()
 
     EditTasksSheet(vm = vm)
 
@@ -80,7 +82,7 @@ fun TasksScreen(
                     .fillMaxSize()
             ) {
                 // Top bar
-                if (vm.vm.selectedNote != null && vm.vm.selectedNote!!.text.isNotEmpty()) {
+                if (isShowTopBar) {
                     TopAppBar(
                         colors = TopAppBarDefaults.topAppBarColors(
                             scrolledContainerColor = MaterialTheme.colorScheme.background,
@@ -89,35 +91,35 @@ fun TasksScreen(
                         windowInsets = WindowInsets(0,0,0,0),
                         title = {
                             Text(
-                                text = vm.vm.selectedNote!!.text,
+                                text = vm.vm.selectedNote?.text ?: "",
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis,
                                 modifier = Modifier.padding(0.dp, 0.dp, 10.dp, 0.dp)
                             )
+                        },
+                        actions = {
+                            // Statuses
+                            if (vm.statusesInTopBar) {
+                                Statuses(
+                                    vm = vm, modifier = Modifier.widthIn(max = halfScreenWidth)
+                                )
+                            }
                         }
                     )
                 }
                 // Statuses
-                if (vm.statuses.isNotEmpty()) {
-                    LazyRow(
+                if (!vm.statusesInTopBar || !isShowTopBar) {
+                    Statuses(
+                        vm = vm,
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(50.dp)
-                    ) {
-                        items(items = vm.statuses) {
-                            StatusCard(
-                                selectedStatusId = vm.selectedStatus,
-                                status = it,
-                                onClick = vm::changeStatus,
-                                onLongClicked = vm::editStatus
-                            )
-                        }
-                    }
+                    )
                 }
                 // Tasks
                 LazyColumn(
                     state = lazyListState,
-                    modifier = Modifier.padding(5.dp),
+                    modifier = Modifier.padding(horizontal = 5.dp),
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     itemsIndexed(items = vm.tasks) { idx: Int, task: Task ->
@@ -158,7 +160,9 @@ fun TasksScreen(
                                                 vm.onDragEnd(idx, task)
                                             },
                                             onDrag = { _, dragAmount ->
-                                                if (vm.dragIdx != idx) return@detectDragGesturesAfterLongPress
+                                                if (vm.dragIdx != idx) {
+                                                    return@detectDragGesturesAfterLongPress
+                                                }
                                                 y += dragAmount.y
                                                 // Check if this item overlaps with other items
                                                 lazyListState.layoutInfo.visibleItemsInfo.forEach {

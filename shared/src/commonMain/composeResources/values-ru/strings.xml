@@ -89,4 +89,5 @@
     <string name="list_numbered">Нумерованный список</string>
     <string name="list_bulleted">Маркированный список</string>
     <string name="add_link">Добавить ссылку</string>
+    <string name="show_statuses_in_topbar">Показывать статусы в верхней панели</string>
 </resources>

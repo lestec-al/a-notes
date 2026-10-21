@@ -89,4 +89,5 @@
     <string name="list_numbered">Нумараваны сьпіс</string>
     <string name="list_bulleted">Маркаваны сьпіс</string>
     <string name="add_link">Дадаць спасылку</string>
+    <string name="show_statuses_in_topbar">Паказваць статусы ў верхняй панэлі</string>
 </resources>

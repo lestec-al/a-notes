@@ -98,4 +98,9 @@ class SettingsDataStore private constructor (private val dataStore: DataStore<Pr
     private val keyMainName = stringPreferencesKey("mainName")
     suspend fun getMainName() = dataStore.data.first()[keyMainName] ?: ""
     suspend fun setMainName(it: String) = updatePref(keyMainName, it)
+
+
+    private val keyStatusesInTopBar = booleanPreferencesKey("statusesInTopBar")
+    suspend fun getStatusesInTopBar() = dataStore.data.first()[keyStatusesInTopBar] ?: false
+    suspend fun setStatusesInTopBar(it: Boolean) = updatePref(keyStatusesInTopBar, it)
 }

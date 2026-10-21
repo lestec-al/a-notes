@@ -146,6 +146,7 @@ fun NotesScreen(
                 key = { it.id }
             ) { note: Note ->
                 val img = vm.tryGetImage(note.id)
+                val isNote = note.type == NoteType.Note.name
                 val isDraw = note.type == NoteType.Draw.name
                 val isSwipes = note.type == NoteType.Swipe.name
                 val title = if (isSwipes) getSwipesTitle(note.text) else note.text
@@ -179,7 +180,11 @@ fun NotesScreen(
                             contentDescription = stringResource(Res.string.draw),
                             contentScale = Scale.Crop,
                             modifier = Modifier
-                                .weight(1f)
+                                .then(if (isDraw) {
+                                    Modifier.weight(1f)
+                                } else {
+                                    Modifier.height(150.dp)
+                                })
                                 .fillMaxWidth()
                                 .background(containerColor)
                                 .clip(CardDefaults.shape)
@@ -187,22 +192,30 @@ fun NotesScreen(
                     }
                     // Normal text
                     if (title.isNotEmpty()) {
-                        @OptIn(ExperimentalRichTextApi::class)
-                        BasicRichText(
-                            state = RichTextState().let {
-                                if (note.format == 10) {
-                                    it.setHtml(title)
-                                } else {
-                                    it.setText(title)
-                                }
-                            },
-                            overflow = TextOverflow.Ellipsis,
-                            maxLines = 10,
-                            style = textStyle.copy(
-                                color = if (isDraw) Color.Black else onSurfaceColor,
-                            ),
-                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 2.dp)
-                        )
+                        if (isNote) {
+                            @OptIn(ExperimentalRichTextApi::class)
+                            BasicRichText(
+                                state = RichTextState().let {
+                                    if (note.format == 10) {
+                                        it.setHtml(title)
+                                    } else {
+                                        it.setText(title)
+                                    }
+                                },
+                                overflow = TextOverflow.Ellipsis,
+                                maxLines = 15,
+                                style = textStyle.copy(color = onSurfaceColor),
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 2.dp)
+                            )
+                        } else {
+                            Text(
+                                text = title,
+                                overflow = TextOverflow.Ellipsis,
+                                maxLines = 10,
+                                color = if (isDraw) Color.Black else Color.Unspecified,
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 2.dp)
+                            )
+                        }
                     }
                     // Swipes
                     if (isSwipes) {
