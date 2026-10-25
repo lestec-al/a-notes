@@ -24,10 +24,8 @@ import com.yurhel.alex.anotes.ui.screen_tasks.utils.EditDialogObj
 import com.yurhel.alex.anotes.ui.screen_tasks.utils.Event
 import com.yurhel.alex.anotes.ui.screen_tasks.utils.Types
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.reflect.KClass
-import kotlin.time.Duration.Companion.milliseconds
 
 class TasksViewModel(val vm: MainViewModel): ViewModel() {
     class Factory(val vm: MainViewModel) : ViewModelProvider.Factory {
@@ -117,10 +115,13 @@ class TasksViewModel(val vm: MainViewModel): ViewModel() {
             if (isSetTasksIds) {
                 // Prevent of having problems with drag/drop, because of not unique position vars
                 // Just set them to unique values
-                val sTasks = db.task.getManyByNote(noteId).sortedBy { it.position }
-                sTasks.forEachIndexed { idx, it ->
-                    db.task.update(it.copy(position = idx))
-                }
+                val sTasks = db.task.getManyByNote(noteId)
+                    .sortedBy { it.position }
+                    .mapIndexed { idx, it ->
+                        val task = it.copy(position = idx)
+                        db.task.update(task)
+                        task
+                    }
                 tasks = if (statusId == 0) sTasks else {
                     sTasks.filter { it.status == statusId }
                 }
@@ -159,12 +160,10 @@ class TasksViewModel(val vm: MainViewModel): ViewModel() {
                     } else {
                         db.task.update(task)
                     }
-                    delay(200.milliseconds)
                     updateTasksData()
                 }
                 is Event.DeleteTask -> {
                     db.task.delete(event.task.id)
-                    delay(200.milliseconds)
                     updateTasksData()
                 }
                 is Event.ChangePos -> {
