@@ -14,13 +14,11 @@ import java.net.ServerSocket
 import java.net.Socket
 
 object SocketConnection {
-    private const val PORT = 8834
-
-    suspend fun getData(onClientOn: () -> Unit): DriveData? {
+    suspend fun getData(port: Int, onClientOn: () -> Unit): DriveData? {
         return try {
             var result = ""
             withContext(Dispatchers.IO) {
-                ServerSocket(PORT).use { serverSocket ->
+                ServerSocket(port).use { serverSocket ->
                     serverSocket.soTimeout = 12000
                     serverSocket.accept().use { clientSocket ->
                         onClientOn()
@@ -52,6 +50,7 @@ object SocketConnection {
         hostNumber: String,
         localData: String,
         localIpAddress: String,
+        port: Int,
         onClientOn: () -> Unit
     ): Boolean {
         return try {
@@ -60,7 +59,7 @@ object SocketConnection {
                     val firstPart = this.split('.').take(3).joinToString(".")
                     "$firstPart.$hostNumber"
                 }
-                Socket(address, PORT).use { kkSocket ->
+                Socket(address, port).use { kkSocket ->
                     onClientOn()
                     PrintWriter(kkSocket.getOutputStream(), true).use { output ->
                         BufferedReader(InputStreamReader(kkSocket.getInputStream())).use {

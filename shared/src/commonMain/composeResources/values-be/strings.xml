@@ -90,4 +90,7 @@
     <string name="list_bulleted">Маркаваны сьпіс</string>
     <string name="add_link">Дадаць спасылку</string>
     <string name="show_statuses_in_topbar">Паказваць статусы ў верхняй панэлі</string>
+    <string name="line_spacing">Міжрадковы інтэрвал</string>
+    <string name="port">Порт</string>
+    <string name="select_all">Выбраць усе</string>
 </resources>

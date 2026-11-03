@@ -31,7 +31,7 @@ import com.yurhel.alex.anotes.ui.utils.NoteType
 fun App(
     platform: Platform,
     settings: SettingsDataStore = SettingsDataStore.getInstance { platform.createDataStorePlatform() },
-    db: LocalDB = LocalDB.getInstance(platform.getSqlDriver()),
+    db: LocalDB = LocalDB.getInstance(platform.getSqlDriver())
 ) {
     val vm: MainViewModel = viewModel(factory = MainViewModel.Factory(platform, settings, db))
     val nav = rememberNavController()
@@ -51,13 +51,12 @@ fun App(
                 NotesScreen(
                     vm = vm,
                     newNoteClicked = {
-                        vm.prepareNote(it)
+                        vm.selectNote(newNoteType = it)
                         nav.navigate(it.name)
                     },
                     openExistingNoteClicked = {
-                        vm.selectNote(it)
-                        vm.prepareNote(null)
-                        nav.navigate(vm.checkNoteType(vm.selectedNote!!).name)
+                        vm.selectNote(note = it)
+                        nav.navigate(vm.checkNoteType(it).name)
                     },
                     toSettings = { nav.navigate("settings") },
                     onBack = vm.platform::callExit

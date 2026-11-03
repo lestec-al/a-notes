@@ -64,8 +64,7 @@ fun BoardScreen(
             NoteBottomBar(
                 vm = vm.vm,
                 scope = rememberCoroutineScope(),
-                onBackAfterDelete = onBack,
-                onBackButtonClick = onBack,
+                onBack = onBack,
                 onGetTextButtonClick = null,
                 editNoteStr = stringResource(Res.string.edit_note),
                 additionalButtons = listOf(
@@ -130,6 +129,7 @@ fun BoardScreen(
                     // Call record to capture the content in the graphics layer
                     graphicsLayer.record {
                         // Draw the contents of the composable into the graphics layer
+                        drawRect(Color.White, size = this.size)
                         this@drawWithContent.drawContent()
                     }
                     // Draw the graphics layer on the visible canvas

@@ -51,6 +51,7 @@ import com.yurhel.alex.anotes.shared.email_link
 import com.yurhel.alex.anotes.shared.folders
 import com.yurhel.alex.anotes.shared.local_sync
 import com.yurhel.alex.anotes.shared.main
+import com.yurhel.alex.anotes.shared.port
 import com.yurhel.alex.anotes.shared.privacy_link
 import com.yurhel.alex.anotes.shared.privacy_policy
 import com.yurhel.alex.anotes.shared.settings
@@ -87,14 +88,16 @@ fun SettingsScreen(
     val addFolderStr = stringResource(Res.string.add_folder)
     val editFolderStr = stringResource(Res.string.edit_folder)
     val delFolderStr = stringResource(Res.string.del_folder)
-    var isEditFolderOpen by remember { mutableStateOf(false) }
-    if (isEditFolderOpen) {
+    val portStr = stringResource(Res.string.port)
+
+    var editTextOpenFor: Triple<String, String, (String) -> Unit>? by remember { mutableStateOf(null) }
+    editTextOpenFor?.let { editData ->
         SimpleEditSheet(
-            onDismissRequest = { isEditFolderOpen = false },
-            onSave = vm::onSaveFolder,
+            onDismissRequest = { editTextOpenFor = null },
+            onSave = editData.third,
             copyToClipboard = { vm.copyToClipboard(it, clipboard) },
-            infoText = if (vm.editedFolder != null) editFolderStr else addFolderStr,
-            initText = if (vm.editedFolder != null) vm.editedFolder?.title ?: "" else ""
+            infoText = editData.first,
+            initText = editData.second
         )
     }
 
@@ -140,6 +143,32 @@ fun SettingsScreen(
                             text = stringResource(Res.string.local_sync),
                             isSelected = vm.syncType == SyncType.local.name
                         )
+                        if (vm.syncType == SyncType.local.name) {
+                            val portValStr = "${vm.localSyncPort}"
+                            // Local sync port
+                            Row(
+                                modifier = modifier.padding(start = 10.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "$portStr: $portValStr",
+                                    modifier = Modifier.weight(1f)
+                                )
+                                IconButton(
+                                    onClick = {
+                                        editTextOpenFor = Triple(portStr, portValStr) {
+                                            it.toIntOrNull()?.let { port ->
+                                                vm.setLocalSyncPortDb(port)
+                                                editTextOpenFor = null
+                                            }
+                                        }
+                                    },
+                                    content = {
+                                        Icon(Icons.Outlined.Edit, editFolderStr)
+                                    }
+                                )
+                            }
+                        }
                     }
                     // Folders section
                     if (s == 1) {
@@ -160,7 +189,12 @@ fun SettingsScreen(
                                 IconButton(
                                     onClick = {
                                         vm.updateEditedFolder(f)
-                                        isEditFolderOpen = true
+                                        editTextOpenFor = Triple(editFolderStr, f.title) {
+                                            if (it.isNotEmpty()) {
+                                                vm.onSaveFolder(it)
+                                                editTextOpenFor = null
+                                            }
+                                        }
                                     },
                                     content = {
                                         Icon(Icons.Outlined.Edit, editFolderStr)
@@ -177,7 +211,12 @@ fun SettingsScreen(
                         OutlinedButton(
                             onClick = {
                                 vm.updateEditedFolder(null)
-                                isEditFolderOpen = true
+                                editTextOpenFor = Triple(addFolderStr, "") {
+                                    if (it.isNotEmpty()) {
+                                        vm.onSaveFolder(it)
+                                        editTextOpenFor = null
+                                    }
+                                }
                             },
                             modifier = modifier,
                             border = BorderStroke(

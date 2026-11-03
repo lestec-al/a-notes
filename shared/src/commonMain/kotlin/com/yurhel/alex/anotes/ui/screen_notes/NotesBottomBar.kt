@@ -147,7 +147,7 @@ fun NotesBottomBar(
                             onClick = {
                                 vm.updateIsSearchOn(false)
                                 focusManager.clearFocus()
-                                vm.getDbNotes("")
+                                vm.getDbNotesScope("")
                             }
                         )
                 )
@@ -155,7 +155,7 @@ fun NotesBottomBar(
             // Text field
             BasicTextField(
                 value = vm.searchText,
-                onValueChange = vm::getDbNotes,
+                onValueChange = vm::getDbNotesScope,
                 modifier = Modifier
                     .weight(1f)
                     .focusRequester(textFocusRequester)
@@ -205,7 +205,7 @@ fun NotesBottomBar(
                 onClick = {
                     vm.updateIsSearchOn(false)
                     focusManager.clearFocus()
-                    vm.getDbNotes("")
+                    vm.getDbNotesScope("")
                 }
             ) {
                 Icon(Icons.Default.Close, stringResource(Res.string.delete), Modifier.size(30.dp))

@@ -2,8 +2,8 @@
 android-compileSdk = "37"
 android-minSdk = "24"
 android-targetSdk = "37"
-android-versionCode = "10"
-shared-versionName = "6.2"
+android-versionCode = "12"
+shared-versionName = "6.4"
 uiTestAndroidManifest = "1.12.0"
 agp = "9.2.1"
 androidx-activity = "1.13.0"
@@ -72,6 +72,7 @@ sqldelight-jvm = { module = "app.cash.sqldelight:sqlite-driver", version.ref = "
 sqldelight-coroutines = { module = "app.cash.sqldelight:coroutines-extensions", version.ref = "sqldelight" }
 
 richeditor-compose = { module = "com.mohamedrejeb.richeditor:richeditor-compose", version.ref = "richeditorCompose" }
+
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }

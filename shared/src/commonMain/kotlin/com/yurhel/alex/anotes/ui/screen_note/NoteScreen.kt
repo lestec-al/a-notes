@@ -2,7 +2,6 @@ package com.yurhel.alex.anotes.ui.screen_note
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -10,7 +9,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -19,15 +17,12 @@ import androidx.compose.material.icons.automirrored.outlined.Send
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.IconButtonDefaults
-import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -61,9 +56,8 @@ import com.yurhel.alex.anotes.shared.Res
 import com.yurhel.alex.anotes.shared.edit_link
 import com.yurhel.alex.anotes.shared.see_link
 import com.yurhel.alex.anotes.shared.text_color
-import com.yurhel.alex.anotes.ui.components.BaseBottomBar
-import com.yurhel.alex.anotes.ui.components.NoteBottomBar
 import com.yurhel.alex.anotes.ui.components.CustomScaffold
+import com.yurhel.alex.anotes.ui.components.SimpleEditSheet
 import com.yurhel.alex.anotes.ui.screen_note.components.ColorSheet
 import com.yurhel.alex.anotes.ui.screen_note.components.LinkEditSheet
 import com.yurhel.alex.anotes.ui.utils.Orientation
@@ -130,6 +124,18 @@ fun NoteScreen(
         )
     }
 
+    vm.textEditSheetOpenFor?.let {
+        SimpleEditSheet(
+            onDismissRequest = vm::closeTextEditSheet,
+            onSave = vm::textEditSheetOnSave,
+            copyToClipboard = null,
+            infoText = stringResource(it.first),
+            label = it.first,
+            initText = "${it.second}",
+            deleteAction = vm::textEditSheetOnDelete
+        )
+    }
+
     LaunchedEffect(vm.state.selection) {
         if (vm.state.isLink) {
             scope.launch {
@@ -146,47 +152,7 @@ fun NoteScreen(
     }
 
     CustomScaffold(
-        bottomBar = {
-            Column {
-                BaseBottomBar(withInsets = false) {
-                    Row(
-                        modifier = Modifier
-                            .padding(top = 2.dp)
-                            .fillMaxWidth()
-                            .horizontalScroll(rememberScrollState())
-                    ) {
-                        vm.getToolButtons().forEach {
-                            if (it == null) VerticalDivider() else {
-                                IconButton(
-                                    onClick = it.onClick,
-                                    enabled = it.enabled,
-                                    colors = IconButtonDefaults.iconButtonColors(
-                                        contentColor = if (it.toggled) {
-                                            MaterialTheme.colorScheme.primary
-                                        } else {
-                                            it.iconColor ?: LocalContentColor.current
-                                        }
-                                    )
-                                ) {
-                                    Icon(
-                                        it.icon,
-                                        it.contentDescription?.let { r -> stringResource(r) },
-                                        Modifier.size(30.dp)
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
-                NoteBottomBar(
-                    vm = vm.vm,
-                    scope = scope,
-                    onBackAfterDelete = onBack,
-                    onBackButtonClick = onBack,
-                    onGetTextButtonClick = vm.state::toText
-                )
-            }
-        },
+        bottomBar = { ToolsBottomBar(vm, scope, onBack) },
         snackbarHost = {
             SnackbarHost(hostState = snackBarHostState) {
                 Snackbar {

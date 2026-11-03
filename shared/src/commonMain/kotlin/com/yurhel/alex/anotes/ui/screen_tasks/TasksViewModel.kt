@@ -34,9 +34,7 @@ class TasksViewModel(val vm: MainViewModel): ViewModel() {
     }
 
     private val db = vm.db
-
-    var statusesInTopBar by mutableStateOf(false)
-        private set
+    val noteId = vm.selectedNote!!.id
 
     val dropDownMenuItems = listOf(
         Triple(Res.string.status, Icons.AutoMirrored.Outlined.Sort) {
@@ -104,36 +102,33 @@ class TasksViewModel(val vm: MainViewModel): ViewModel() {
         isSaveNote: Boolean = true,
         isSetTasksIds: Boolean = true
     ) {
-        val noteId = vm.selectedNote!!.id
         // Get statuses
         viewModelScope.launch(Dispatchers.Default) {
             statuses = db.status.getManyByNote(noteId)
         }
         // Get tasks
         val statusId = selectedStatus
-        viewModelScope.launch(Dispatchers.Default) {
-            if (isSetTasksIds) {
-                // Prevent of having problems with drag/drop, because of not unique position vars
-                // Just set them to unique values
-                val sTasks = db.task.getManyByNote(noteId)
-                    .sortedBy { it.position }
-                    .mapIndexed { idx, it ->
-                        val task = it.copy(position = idx)
-                        db.task.update(task)
-                        task
-                    }
-                tasks = if (statusId == 0) sTasks else {
-                    sTasks.filter { it.status == statusId }
+        if (isSetTasksIds) {
+            // Prevent of having problems with drag/drop, because of not unique position vars
+            // Just set them to unique values
+            val sTasks = db.task.getManyByNote(noteId)
+                .sortedBy { it.position }
+                .mapIndexed { idx, it ->
+                    val task = it.copy(position = idx)
+                    db.task.update(task)
+                    task
                 }
-            } else {
-                tasks = if (statusId == 0) {
-                    db.task.getManyByNote(noteId)
-                } else {
-                    db.task.getManyByNoteAndStatus(noteId, statusId)
-                }.sortedBy { it.position }
+            tasks = if (statusId == 0) sTasks else {
+                sTasks.filter { it.status == statusId }
             }
+        } else {
+            tasks = if (statusId == 0) {
+                db.task.getManyByNote(noteId)
+            } else {
+                db.task.getManyByNoteAndStatus(noteId, statusId)
+            }.sortedBy { it.position }
         }
-        if (isSaveNote) vm.saveNote(isEditDateForcedUpdate = true)
+        if (isSaveNote) vm.saveNote(updateDate = true)
     }
 
     fun onEvent(event: Event) {
@@ -146,11 +141,9 @@ class TasksViewModel(val vm: MainViewModel): ViewModel() {
                     updateTasksData()
                 }
                 is Event.DeleteStatus -> {
-                    if (vm.selectedNote != null) {
-                        db.status.delete(event.status.id)
-                        db.task.deleteManyByStatus(event.status.id)
-                        updateTasksData()
-                    }
+                    db.status.delete(event.status.id)
+                    db.task.deleteManyByStatus(event.status.id)
+                    updateTasksData()
                 }
                 // Task
                 is Event.UpsertTask -> {
@@ -227,7 +220,7 @@ class TasksViewModel(val vm: MainViewModel): ViewModel() {
                                 Status(
                                     title = edit,
                                     color = statusColor.toArgb(),
-                                    note = vm.selectedNote!!.id
+                                    note = noteId
                                 )
                             )
                         )
@@ -239,7 +232,7 @@ class TasksViewModel(val vm: MainViewModel): ViewModel() {
                                 Task(
                                     description = edit,
                                     status = status,
-                                    note = vm.selectedNote!!.id,
+                                    note = noteId,
                                     dateCreate = dateNow,
                                     dateUpdate = dateNow,
                                     dateUpdateStatus = dateNow
@@ -290,9 +283,6 @@ class TasksViewModel(val vm: MainViewModel): ViewModel() {
     }
 
     init {
-        viewModelScope.launch {
-            statusesInTopBar = vm.settings.getStatusesInTopBar()
-        }
         updateTasksData(isSaveNote = false)
     }
 }

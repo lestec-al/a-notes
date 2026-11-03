@@ -11,10 +11,12 @@ import androidx.compose.material.icons.filled.FormatBold
 import androidx.compose.material.icons.filled.FormatColorFill
 import androidx.compose.material.icons.filled.FormatColorText
 import androidx.compose.material.icons.filled.FormatItalic
+import androidx.compose.material.icons.filled.FormatLineSpacing
 import androidx.compose.material.icons.filled.FormatListNumbered
 import androidx.compose.material.icons.filled.FormatStrikethrough
 import androidx.compose.material.icons.filled.FormatUnderlined
 import androidx.compose.material.icons.filled.Link
+import androidx.compose.material.icons.filled.SelectAll
 import androidx.compose.material.icons.outlined.Image
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -23,10 +25,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.text.ParagraphStyle
 import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.unit.em
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -45,9 +49,11 @@ import com.yurhel.alex.anotes.shared.bold
 import com.yurhel.alex.anotes.shared.del_img
 import com.yurhel.alex.anotes.shared.format_h
 import com.yurhel.alex.anotes.shared.italic
+import com.yurhel.alex.anotes.shared.line_spacing
 import com.yurhel.alex.anotes.shared.line_through
 import com.yurhel.alex.anotes.shared.list_bulleted
 import com.yurhel.alex.anotes.shared.list_numbered
+import com.yurhel.alex.anotes.shared.select_all
 import com.yurhel.alex.anotes.shared.text_color
 import com.yurhel.alex.anotes.shared.underline
 import com.yurhel.alex.anotes.shared.undo
@@ -71,7 +77,7 @@ class NoteViewModel(val vm: MainViewModel): ViewModel() {
     }
 
     private val db = vm.db
-    private val selectedNote = vm.selectedNote
+    private val selectedNote = vm.selectedNote!!
     private val platform = vm.platform
 
 
@@ -80,8 +86,27 @@ class NoteViewModel(val vm: MainViewModel): ViewModel() {
         private set
     var linkSheetOpenFor: Pair<String, String>? by mutableStateOf(null)
         private set
+    var textEditSheetOpenFor: Pair<StringResource, Float>? by mutableStateOf(null)
+        private set
 
     fun closeColorSheet() { colorSheetOpenFor = null }
+
+    fun closeTextEditSheet() { textEditSheetOpenFor = null }
+
+    fun textEditSheetOnSave(lineHeightStr: String) {
+        lineHeightStr.toFloatOrNull()?.let { lineHeight ->
+            state.addParagraphStyle(ParagraphStyle(lineHeight = lineHeight.em))
+            closeTextEditSheet()
+        }
+    }
+
+    fun textEditSheetOnDelete() {
+        // Remove line height from selection
+        val html = state.toHtml(state.selection)
+        val fixedHtml = html.replace(Regex("""line-height: [^;]*;"""), "")
+        state.setHtml(fixedHtml)
+        closeTextEditSheet()
+    }
 
     fun updateLinkSheetFor(field: Pair<String, String>?) { linkSheetOpenFor = field }
 
@@ -117,6 +142,11 @@ class NoteViewModel(val vm: MainViewModel): ViewModel() {
                 icon = Icons.AutoMirrored.Filled.Undo,
                 contentDescription = Res.string.undo,
                 enabled = state.history.canUndo
+            ),
+            BottomBarButton(
+                onClick = { state.selection = TextRange(0, state.toText().length) },
+                icon = Icons.Default.SelectAll,
+                contentDescription = Res.string.select_all
             ),
             null,
             BottomBarButton(
@@ -174,6 +204,15 @@ class NoteViewModel(val vm: MainViewModel): ViewModel() {
                 icon = Icons.Default.FormatAlignJustify,
                 contentDescription = Res.string.align_justify,
                 toggled = state.currentParagraphStyle.textAlign == TextAlign.Justify
+            ),
+            BottomBarButton(
+                onClick = {
+                    textEditSheetOpenFor = Pair(
+                        Res.string.line_spacing, state.currentParagraphStyle.lineHeight.value
+                    )
+                },
+                icon = Icons.Default.FormatLineSpacing,
+                contentDescription = Res.string.line_spacing
             ),
             null,
             BottomBarButton(
@@ -256,26 +295,21 @@ class NoteViewModel(val vm: MainViewModel): ViewModel() {
 
     private fun addImage() = viewModelScope.launch {
         platform.importImage { base64Str ->
-            val noteId = selectedNote?.id
-            if (noteId != null) {
-                db.board.addUpdateImage(noteId, base64Str)
-                updateImageData()
-            }
+            db.board.addUpdateImage(selectedNote.id, base64Str)
+            updateImageData()
         }
     }
 
     private fun delImage() {
-        selectedNote?.id?.let { db.board.delImage(it) }
+        db.board.delImage(selectedNote.id)
         updateImageData()
     }
 
     private fun updateImageData() {
-        noteImage = selectedNote?.id?.let {
-            val imgStr = db.board.getImage(it)
-            if (imgStr == null) null else {
-                val img = platform.toImageBitmap(db.board.getImage(it), false)
-                img ?: ImageBitmap(50, 50)
-            }
+        val imgStr = db.board.getImage(selectedNote.id)
+        noteImage = if (imgStr == null) null else {
+            val img = platform.toImageBitmap(db.board.getImage(selectedNote.id), false)
+            img ?: ImageBitmap(50, 50)
         }
         isAddImage = noteImage == null
     }
@@ -285,9 +319,8 @@ class NoteViewModel(val vm: MainViewModel): ViewModel() {
     fun saveNote() = vm.saveNote(text = state.toHtml())
 
     init {
-        val isHtml = vm.selectedNote?.format == 10
-        val text = vm.editText.text.toString()
-        if (isHtml) state.setHtml(text) else state.setText(text)
+        val isHtml = selectedNote.format == 10
+        if (isHtml) state.setHtml(selectedNote.text) else state.setText(selectedNote.text)
         updateImageData()
     }
 }
