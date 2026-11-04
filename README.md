@@ -8,7 +8,7 @@ src="https://github.com/lestec-al/a-notes/raw/main/screenshots_desktop.png"/>
 
 ## Features
 #### 4 types of notes
-- Normal notes (text + image)
+- Normal notes with a rich text editor (text + image)
 - Ordered (with statuses) notes (tasks)
 - Drawings
 - Swipe-to-Organize notes (a two-column view where you can swipe notes left or right to sort them into categories, like "In Process" and "Done." Each side has a distinct color that you can customize for easy visual recognition)

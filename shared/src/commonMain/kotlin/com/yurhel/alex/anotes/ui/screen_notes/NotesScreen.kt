@@ -77,16 +77,16 @@ fun NotesScreen(
     val onBackgroundColor = MaterialTheme.colorScheme.onBackground
 
     AskDialog(
-        onDismissRequest = vm::setSyncDialogVisibility,
-        isVisible = vm.isSyncDialogOpen,
+        onDismissRequest = vm::setSyncSourceDialogVisibility,
+        isVisible = vm.isSyncSourceDialogOpen,
         infoText = Res.string.sync_collision,
         leftButton = Pair(Res.string.drive_data) {
             vm.syncData(SyncActionTypes.ManualImport)
-            vm.setSyncDialogVisibility()
+            vm.setSyncSourceDialogVisibility()
         },
         rightButton = Pair(Res.string.local_data) {
             vm.syncData(SyncActionTypes.ManualExport)
-            vm.setSyncDialogVisibility()
+            vm.setSyncSourceDialogVisibility()
         }
     )
     LocalSyncSheet(vm)

@@ -27,7 +27,7 @@ class DriveUtils(
                         if (data.modifiedTime == lastReceived) {
                             sync(true)
                         } else {
-                            vm.setSyncDialogVisibility(true)
+                            vm.setSyncSourceDialogVisibility(true)
                         }
                     } else {
                         updateLocal(data)

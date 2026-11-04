@@ -65,10 +65,10 @@ class MainViewModel(
         this.isSyncOn = isSyncNow
     }
 
-    var isSyncDialogOpen by mutableStateOf(false)
+    var isSyncSourceDialogOpen by mutableStateOf(false)
         private set
-    fun setSyncDialogVisibility(isOpen: Boolean = false) {
-        isSyncDialogOpen = isOpen
+    fun setSyncSourceDialogVisibility(isOpen: Boolean = false) {
+        isSyncSourceDialogOpen = isOpen
     }
 
     var isLocalSyncSheetOpen by mutableStateOf(false)
@@ -92,20 +92,15 @@ class MainViewModel(
     fun createSocket() = viewModelScope.launch(Dispatchers.IO) {
         localAddressCode = platform.getLocalIpAddress().split('.').last()
         isSocketOn = true
-        val data = SocketConnection.getData(
+        val res = SocketConnection.shareData(
+            localData = getLocalDataWithTime(),
             port = settings.getLocalSyncPort(),
             onClientOn = {
                 updateSyncNow(true)
                 localSyncDialogVisibility(false)
             }
         )
-        if (data != null) {
-            db.importDB(data.data.toString())
-            settings.setDataReceivedDate(data.modifiedTime)
-            getDbNotes("")
-            getAllTasks()
-            getAllStatuses()
-        } else {
+        if (!res) {
             localSyncDialogVisibility(true)
         }
         isSocketOn = false
@@ -119,9 +114,8 @@ class MainViewModel(
     fun connectToSocket(hostNumber: String) = viewModelScope.launch(Dispatchers.IO) {
         localAddressCode = ""
         isSocketOn = true
-        val res = SocketConnection.shareData(
+        val data = SocketConnection.getData(
             hostNumber = hostNumber,
-            localData = getLocalDataWithTime(),
             localIpAddress = platform.getLocalIpAddress(),
             port = settings.getLocalSyncPort(),
             onClientOn = {
@@ -129,7 +123,13 @@ class MainViewModel(
                 localSyncDialogVisibility(false)
             }
         )
-        if (!res) {
+        if (data != null) {
+            db.importDB(data.data.toString())
+            settings.setDataReceivedDate(data.modifiedTime)
+            getDbNotes("")
+            getAllTasks()
+            getAllStatuses()
+        } else {
             localSyncDialogVisibility(true)
         }
         isSocketOn = false

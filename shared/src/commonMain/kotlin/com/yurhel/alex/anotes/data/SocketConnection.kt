@@ -14,46 +14,40 @@ import java.net.ServerSocket
 import java.net.Socket
 
 object SocketConnection {
-    suspend fun getData(port: Int, onClientOn: () -> Unit): DriveData? {
+    suspend fun shareData(
+        localData: String,
+        port: Int,
+        onClientOn: () -> Unit
+    ): Boolean {
         return try {
-            var result = ""
             withContext(Dispatchers.IO) {
                 ServerSocket(port).use { serverSocket ->
                     serverSocket.soTimeout = 12000
                     serverSocket.accept().use { clientSocket ->
                         onClientOn()
-                        PrintWriter(clientSocket.getOutputStream(), true).use {
-                            BufferedReader(InputStreamReader(clientSocket.getInputStream())).use { input ->
-                                result = input.readLine()
+                        PrintWriter(clientSocket.getOutputStream(), true).use { output ->
+                            BufferedReader(InputStreamReader(clientSocket.getInputStream())).use {
+                                output.println(localData)
                             }
                         }
                     }
                 }
-                val obj = Json.decodeFromString<JsonObject>(result)
-                DriveData(
-                    data = obj["data"]!!.jsonArray,
-                    modifiedTime = try {
-                        obj["modifiedTime"]?.jsonPrimitive?.long
-                    } catch (_: Exception) {
-                        null
-                    },
-                    isServiceOK = true
-                )
+                true
             }
         } catch (e: Exception) {
             e.printStackTrace()
-            null
+            false
         }
     }
 
-    suspend fun shareData(
+    suspend fun getData(
         hostNumber: String,
-        localData: String,
         localIpAddress: String,
         port: Int,
         onClientOn: () -> Unit
-    ): Boolean {
+    ): DriveData? {
         return try {
+            var result = ""
             withContext(Dispatchers.IO) {
                 val address = localIpAddress.run {
                     val firstPart = this.split('.').take(3).joinToString(".")
@@ -61,17 +55,26 @@ object SocketConnection {
                 }
                 Socket(address, port).use { kkSocket ->
                     onClientOn()
-                    PrintWriter(kkSocket.getOutputStream(), true).use { output ->
-                        BufferedReader(InputStreamReader(kkSocket.getInputStream())).use {
-                            output.println(localData)
+                    PrintWriter(kkSocket.getOutputStream(), true).use {
+                        BufferedReader(InputStreamReader(kkSocket.getInputStream())).use { input ->
+                            result = input.readLine()
                         }
                     }
                 }
             }
-            true
+            val obj = Json.decodeFromString<JsonObject>(result)
+            DriveData(
+                data = obj["data"]!!.jsonArray,
+                modifiedTime = try {
+                    obj["modifiedTime"]?.jsonPrimitive?.long
+                } catch (_: Exception) {
+                    null
+                },
+                isServiceOK = true
+            )
         } catch (e: Exception) {
             e.printStackTrace()
-            false
+            null
         }
     }
 }
