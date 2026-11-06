@@ -1,6 +1,7 @@
 package com.yurhel.alex.anotes.ui.screen_settings
 
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.Clipboard
@@ -10,7 +11,6 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
 import com.yurhel.alex.anotes.data.Status
 import com.yurhel.alex.anotes.ui.MainViewModel
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlin.reflect.KClass
 
@@ -36,11 +36,10 @@ class SettingsViewModel(private val vm: MainViewModel): ViewModel() {
     var editedFolder by mutableStateOf<Status?>(null)
         private set
 
-    private fun getDbFolders() = viewModelScope.launch(Dispatchers.Default) {
+    private suspend fun getDbFolders() {
         val mainFolder = listOf(Status(title = vm.settings.getMainName(), color = 0, note = 0))
         val foldersDb = vm.db.status.getAll().filter { it.note == 0 }
         folders = mainFolder + foldersDb
-        // Will not be needed when notesScreen (& noteScreen) will have a sep viewModel
         vm.getAllStatuses()
         vm.getMainFolderName()
     }
@@ -77,9 +76,10 @@ class SettingsViewModel(private val vm: MainViewModel): ViewModel() {
         if (f.id == vm.chosenFolder) {
             vm.chooseViewFolder(0)
         }
-        // For sync
-        viewModelScope.launch { vm.settings.setIsNotesEdited(true) }
-        getDbFolders()
+        viewModelScope.launch {
+            vm.settings.setIsNotesEdited(true)
+            getDbFolders()
+        }
     }
 
     fun updateEditedFolder(f: Status?) {
@@ -90,9 +90,7 @@ class SettingsViewModel(private val vm: MainViewModel): ViewModel() {
     var syncType by mutableStateOf<String?>(null)
         private set
 
-    private fun getDbSyncType() = viewModelScope.launch {
-        syncType = vm.settings.getSyncType()
-    }
+    private suspend fun getDbSyncType() { syncType = vm.settings.getSyncType() }
 
     fun chooseSyncType(t: String) = viewModelScope.launch {
         syncType = t
@@ -100,22 +98,35 @@ class SettingsViewModel(private val vm: MainViewModel): ViewModel() {
     }
 
 
-    var statusesInTopBar by mutableStateOf(false)
+    var statusesInTopBar by mutableStateOf(vm.statusesInTopBar)
         private set
 
     fun changeStatusesInTopBar(it: Boolean) {
         viewModelScope.launch {
-            vm.settings.setStatusesInTopBar(it)
+            vm.updateStatusesInTopBar(it)
         }
         statusesInTopBar = it
     }
 
 
+    var localSyncPort by mutableIntStateOf(0)
+        private set
+
+    private suspend fun getLocalSyncPortDb() {
+        localSyncPort = vm.settings.getLocalSyncPort()
+    }
+
+    fun setLocalSyncPortDb(it: Int) = viewModelScope.launch {
+        localSyncPort = it
+        vm.settings.setLocalSyncPort(it)
+    }
+
+
     init {
-        getDbFolders()
-        getDbSyncType()
         viewModelScope.launch {
-            statusesInTopBar = vm.settings.getStatusesInTopBar()
+            getDbFolders()
+            getDbSyncType()
+            getLocalSyncPortDb()
         }
     }
 }

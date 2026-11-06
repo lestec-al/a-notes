@@ -16,18 +16,14 @@ import androidx.lifecycle.viewmodel.CreationExtras
 import com.yurhel.alex.anotes.data.BoardLine
 import com.yurhel.alex.anotes.ui.MainViewModel
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.reflect.KClass
-import kotlin.time.Duration.Companion.milliseconds
 
 class BoardViewModel(val vm: MainViewModel) : ViewModel() {
-
     class Factory(val vm: MainViewModel) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
-        override fun <T : ViewModel> create(modelClass: KClass<T>, extras: CreationExtras): T = BoardViewModel(
-            vm = vm
-        ) as T
+        override fun <T : ViewModel> create(modelClass: KClass<T>, extras: CreationExtras): T =
+            BoardViewModel(vm = vm) as T
     }
 
     var localDraw = mutableStateListOf<BoardLine>()
@@ -55,17 +51,12 @@ class BoardViewModel(val vm: MainViewModel) : ViewModel() {
         }
     }
 
-    fun saveDrawToDB(graphicsLayer: GraphicsLayer) {
+    fun saveDrawToDB(g: GraphicsLayer) {
         launch {
-            // Check that note is not deleted
+            // Check if note is not deleted
             if (vm.selectedNote != null) {
-                if (isDraw) {
-                    enableDisableDraw(false)
-                    delay(500.milliseconds)
-                }
-                val base64img = vm.platform.toBase64(graphicsLayer.toImageBitmap(), "PNG")
-                if (base64img != null) {
-                    vm.db.board.addUpdateImage(noteId, base64img)
+                vm.platform.toBase64(g.toImageBitmap(), "PNG")?.let { base64Str ->
+                    vm.db.board.addUpdateImage(noteId, base64Str)
                 }
                 localDraw.clear()
                 vm.saveNote()

@@ -5,6 +5,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import kotlinx.coroutines.flow.first
@@ -103,4 +104,9 @@ class SettingsDataStore private constructor (private val dataStore: DataStore<Pr
     private val keyStatusesInTopBar = booleanPreferencesKey("statusesInTopBar")
     suspend fun getStatusesInTopBar() = dataStore.data.first()[keyStatusesInTopBar] ?: false
     suspend fun setStatusesInTopBar(it: Boolean) = updatePref(keyStatusesInTopBar, it)
+
+
+    private val keyLocalSyncPort = intPreferencesKey("localSyncPort")
+    suspend fun getLocalSyncPort() = dataStore.data.first()[keyLocalSyncPort] ?: 8834
+    suspend fun setLocalSyncPort(it: Int) = updatePref(keyLocalSyncPort, it)
 }

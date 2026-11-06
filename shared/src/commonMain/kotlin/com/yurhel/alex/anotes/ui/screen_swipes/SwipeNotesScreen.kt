@@ -64,8 +64,7 @@ fun SwipeNotesScreen(
             NoteBottomBar(
                 vm = vm.vm,
                 scope = rememberCoroutineScope(),
-                onBackAfterDelete = onBack,
-                onBackButtonClick = onBack,
+                onBack = onBack,
                 onGetTextButtonClick = null,
                 additionalButtons = listOf(
                     BottomBarButton(

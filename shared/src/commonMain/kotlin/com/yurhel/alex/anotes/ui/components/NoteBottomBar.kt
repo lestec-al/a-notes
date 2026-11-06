@@ -66,8 +66,7 @@ import org.jetbrains.compose.resources.stringResource
 fun NoteBottomBar(
     vm: MainViewModel,
     scope: CoroutineScope,
-    onBackAfterDelete: () -> Unit,
-    onBackButtonClick: () -> Unit,
+    onBack: () -> Unit,
     onGetTextButtonClick: (() -> String)?,
     editNoteStr: String? = null,
     additionalButtons: List<BottomBarButton> = listOf()
@@ -77,7 +76,7 @@ fun NoteBottomBar(
     var infoBottomSheetText by remember { mutableStateOf("") }
     var isEditSheetOpen by remember { mutableStateOf(false) }
     var isMenuOpen by remember { mutableStateOf(false) }
-    val movedTo = stringResource(Res.string.moved_to)
+    val movedToStr = stringResource(Res.string.moved_to)
     val mainStr = vm.mainFolderName.takeIf { it.isNotEmpty() } ?: stringResource(Res.string.main)
     val orientation = getOrientation()
     val dateUpdated = vm.getNoteDate()
@@ -91,7 +90,7 @@ fun NoteBottomBar(
         ) {
             if (showBackBtn) {
                 // Back button
-                IconButton(onClick = onBackButtonClick) {
+                IconButton(onClick = onBack) {
                     Icon(
                         Icons.AutoMirrored.Outlined.ArrowBack,
                         stringResource(Res.string.back),
@@ -132,10 +131,8 @@ fun NoteBottomBar(
                 )
                 RadioDropdownMenuItem(
                     onClick = {
-                        vm.setNoteFolder(0) {
-                            isMenuOpen = false
-                            vm.platform.showToast("$movedTo $mainStr")
-                        }
+                        vm.setNoteFolder(0, "$movedToStr $mainStr")
+                        isMenuOpen = false
                     },
                     text = mainStr,
                     isSelected = vm.selectedNote?.folder == 0
@@ -144,10 +141,8 @@ fun NoteBottomBar(
                     if (st.note == 0) {
                         RadioDropdownMenuItem(
                             onClick = {
-                                vm.setNoteFolder(st.id) {
-                                    isMenuOpen = false
-                                    vm.platform.showToast("$movedTo ${st.title}")
-                                }
+                                vm.setNoteFolder(st.id, "$movedToStr ${st.title}")
+                                isMenuOpen = false
                             },
                             text = st.title.takeIf { it.isNotEmpty() } ?: st.id.toString(),
                             isSelected = vm.selectedNote?.folder == st.id
@@ -244,6 +239,7 @@ fun NoteBottomBar(
             }
         }
     }
+
     // BottomSheet (info || delete note)
     if (isInfoBottomSheetOpen) {
         BaseBottomSheet(onDismissRequest = { isInfoBottomSheetOpen = false }) {
@@ -269,7 +265,7 @@ fun NoteBottomBar(
                         Icon(Icons.Default.Close, stringResource(Res.string.no), Modifier.size(30.dp))
                     }
                     OutlinedButton(
-                        onClick = { vm.deleteNote { onBackAfterDelete() } },
+                        onClick = { vm.deleteNote(after = onBack) },
                         shape = CardDefaults.shape
                     ) {
                         Icon(Icons.Default.Check, stringResource(Res.string.yes), Modifier.size(30.dp))
@@ -278,18 +274,18 @@ fun NoteBottomBar(
             }
         }
     }
+
     // BottomSheet (edit note)
     if (editNoteStr != null && isEditSheetOpen) {
         SimpleEditSheet(
             onDismissRequest = { isEditSheetOpen = false },
             onSave = {
-                vm.updateEditTextValue(it)
-                vm.saveNote()
+                vm.saveNote(text = it)
+                isEditSheetOpen = false
             },
             copyToClipboard = { vm.platform.copyToClipboard(it, clipboard) },
             infoText = editNoteStr,
-            initText = vm.editText.text.toString(),
-            allowEmptyText = true
+            initText = vm.selectedNote?.text ?: ""
         )
     }
 }

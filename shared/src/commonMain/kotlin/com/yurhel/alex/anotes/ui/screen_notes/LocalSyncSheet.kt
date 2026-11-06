@@ -1,7 +1,8 @@
 package com.yurhel.alex.anotes.ui.screen_notes
 
-import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
@@ -10,14 +11,13 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -56,6 +56,9 @@ fun LocalSyncSheet(vm: MainViewModel) {
         val modifier = Modifier
             .padding(start = 16.dp, end = 16.dp, bottom = 8.dp)
             .fillMaxWidth()
+        val topModifier = Modifier
+            .padding(start = 16.dp, end = 8.dp, bottom = 8.dp)
+            .fillMaxWidth()
         val focusRequester = remember { FocusRequester() }
         var text by remember { mutableStateOf(TextFieldState("")) }
         var isShowTextField by remember { mutableStateOf(false) }
@@ -71,42 +74,40 @@ fun LocalSyncSheet(vm: MainViewModel) {
         BaseBottomSheet(onDismissRequest = vm::localSyncDialogVisibility) {
             if (vm.isSocketOn) {
                 if (!vm.isSyncOn && vm.localAddressCode.isNotEmpty()) {
-                    Text(
-                        text = getStr,
-                        modifier = modifier,
-                        style = MaterialTheme.typography.titleMedium
-                    )
+                    Row(
+                        modifier = topModifier,
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = shareStr,
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                        IconButton(onClick = vm::cancelSocket) {
+                            Icon(Icons.Outlined.Close, backStr)
+                        }
+                    }
                     Text(
                         text = buildAnnotatedString {
                             append("$codeStr ")
                             withStyle(style = SpanStyle(
-                                fontSize = MaterialTheme.typography.titleMedium.fontSize,
+                                fontSize = MaterialTheme.typography.titleLarge.fontSize,
                                 fontWeight = FontWeight.Bold
                             )) {
                                 append(vm.localAddressCode)
                             }
                         },
                         modifier = modifier,
-                        style = MaterialTheme.typography.labelSmall
-                    )
-                    Text(
-                        text = codeInfoStr,
-                        modifier = modifier,
-                        style = MaterialTheme.typography.labelSmall
+                        style = MaterialTheme.typography.labelMedium
                     )
                     HorizontalDivider(
                         modifier = modifier,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
-                        text = replaceInfoStr,
+                        text = codeInfoStr,
                         modifier = modifier,
-                        style = MaterialTheme.typography.labelSmall
-                    )
-                    BackIconButton(
-                        onClick = vm::cancelSocket,
-                        modifier = modifier,
-                        label = backStr
+                        style = MaterialTheme.typography.labelMedium
                     )
                 }
             } else {
@@ -117,7 +118,7 @@ fun LocalSyncSheet(vm: MainViewModel) {
                         modifier = modifier,
                         shape = CardDefaults.shape
                     ) {
-                        Text(text = getStr)
+                        Text(text = shareStr)
                     }
                     Button(
                         onClick = { isShowTextField = true },
@@ -128,15 +129,29 @@ fun LocalSyncSheet(vm: MainViewModel) {
                             modifier = Modifier.fillMaxWidth(),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            Text(text = shareStr)
+                            Text(text = getStr)
                         }
                     }
                 } else {
                     // Stage, where I need to get code from the user
+                    Row(
+                        modifier = topModifier,
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = getStr,
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                        IconButton(onClick = { isShowTextField = false }) {
+                            Icon(Icons.Outlined.Close, backStr)
+                        }
+                    }
                     Text(
-                        text = shareStr,
+                        text = replaceInfoStr,
                         modifier = modifier,
-                        style = MaterialTheme.typography.titleMedium
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.error
                     )
                     OutlinedTextField(
                         state = text,
@@ -159,32 +174,8 @@ fun LocalSyncSheet(vm: MainViewModel) {
                         shape = CardDefaults.shape
                     )
                     LaunchedEffect(Unit) { focusRequester.requestFocus() }
-                    BackIconButton(
-                        onClick = { isShowTextField = false },
-                        modifier = modifier,
-                        label = backStr
-                    )
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun BackIconButton(
-    onClick: () -> Unit,
-    modifier: Modifier,
-    label: String
-) {
-    OutlinedButton(
-        onClick = onClick,
-        modifier = modifier,
-        border = BorderStroke(
-            width = 1.dp,
-            color = ButtonDefaults.outlinedButtonColors().contentColor
-        ),
-        shape = CardDefaults.shape
-    ) {
-        Icon(Icons.Outlined.Close, label)
     }
 }

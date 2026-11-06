@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import com.yurhel.alex.anotes.shared.Res
 import com.yurhel.alex.anotes.shared.text
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -31,10 +32,11 @@ import org.jetbrains.compose.resources.stringResource
 fun SimpleEditSheet(
     onDismissRequest: () -> Unit,
     onSave: (String) -> Unit,
-    copyToClipboard: suspend (str: String) -> Unit,
+    copyToClipboard: (suspend (str: String) -> Unit)?,
     infoText: String = "",
+    label: StringResource = Res.string.text,
     initText: String = "",
-    allowEmptyText: Boolean = false
+    deleteAction: (() -> Unit)? = null
 ) {
     val focusRequester = remember { FocusRequester() }
     var edit by remember { mutableStateOf(initText) }
@@ -44,25 +46,17 @@ fun SimpleEditSheet(
         // Top row
         BottomSheetTopRow(
             infoText = infoText,
-            saveAction = {
-                if (edit.isNotEmpty() || allowEmptyText) {
-                    onSave(edit)
-                    onDismissRequest()
-                }
+            saveAction = { onSave(edit) },
+            copyAction = if (copyToClipboard == null) null else {
+                { scope.launch { copyToClipboard(edit) } }
             },
-            copyAction = {
-                scope.launch { copyToClipboard(edit) }
-            }
+            deleteAction = deleteAction
         )
         // Edit text
         TextField(
             value = edit,
-            onValueChange = {
-                edit = it
-            },
-            label = {
-                Text(text = stringResource(Res.string.text))
-            },
+            onValueChange = { edit = it },
+            label = { Text(text = stringResource(label)) },
             colors = TextFieldDefaults.colors(
                 focusedContainerColor = Color.Transparent,
                 unfocusedContainerColor = Color.Transparent

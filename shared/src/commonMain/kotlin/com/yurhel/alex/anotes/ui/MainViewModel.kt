@@ -1,8 +1,6 @@
 package com.yurhel.alex.anotes.ui
 
 import androidx.compose.foundation.lazy.staggeredgrid.LazyStaggeredGridState
-import androidx.compose.foundation.text.input.TextFieldState
-import androidx.compose.foundation.text.input.clearText
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -45,11 +43,16 @@ class MainViewModel(
     }
 
 
+    var statusesInTopBar = false
+        private set
+    suspend fun updateStatusesInTopBar(it: Boolean) {
+        statusesInTopBar = it
+        settings.setStatusesInTopBar(it)
+    }
+
+
     var darkTheme by mutableStateOf<Boolean?>(null)
         private set
-    init {
-        viewModelScope.launch { darkTheme = settings.getDarkTheme() }
-    }
     fun updateDarkTheme(it: Boolean?) = viewModelScope.launch {
         darkTheme = it
         settings.setDarkTheme(it)
@@ -62,10 +65,10 @@ class MainViewModel(
         this.isSyncOn = isSyncNow
     }
 
-    var isSyncDialogOpen by mutableStateOf(false)
+    var isSyncSourceDialogOpen by mutableStateOf(false)
         private set
-    fun setSyncDialogVisibility(isOpen: Boolean = false) {
-        isSyncDialogOpen = isOpen
+    fun setSyncSourceDialogVisibility(isOpen: Boolean = false) {
+        isSyncSourceDialogOpen = isOpen
     }
 
     var isLocalSyncSheetOpen by mutableStateOf(false)
@@ -89,19 +92,15 @@ class MainViewModel(
     fun createSocket() = viewModelScope.launch(Dispatchers.IO) {
         localAddressCode = platform.getLocalIpAddress().split('.').last()
         isSocketOn = true
-        val data = SocketConnection.getData(
+        val res = SocketConnection.shareData(
+            localData = getLocalDataWithTime(),
+            port = settings.getLocalSyncPort(),
             onClientOn = {
                 updateSyncNow(true)
                 localSyncDialogVisibility(false)
             }
         )
-        if (data != null) {
-            db.importDB(data.data.toString())
-            settings.setDataReceivedDate(data.modifiedTime)
-            getDbNotes("")
-            getAllTasks()
-            getAllStatuses()
-        } else {
+        if (!res) {
             localSyncDialogVisibility(true)
         }
         isSocketOn = false
@@ -115,16 +114,22 @@ class MainViewModel(
     fun connectToSocket(hostNumber: String) = viewModelScope.launch(Dispatchers.IO) {
         localAddressCode = ""
         isSocketOn = true
-        val res = SocketConnection.shareData(
+        val data = SocketConnection.getData(
             hostNumber = hostNumber,
-            localData = getLocalDataWithTime(),
             localIpAddress = platform.getLocalIpAddress(),
+            port = settings.getLocalSyncPort(),
             onClientOn = {
                 updateSyncNow(true)
                 localSyncDialogVisibility(false)
             }
         )
-        if (!res) {
+        if (data != null) {
+            db.importDB(data.data.toString())
+            settings.setDataReceivedDate(data.modifiedTime)
+            getDbNotes("")
+            getAllTasks()
+            getAllStatuses()
+        } else {
             localSyncDialogVisibility(true)
         }
         isSocketOn = false
@@ -147,8 +152,6 @@ class MainViewModel(
     }
 
 
-    private var origNoteText = ""
-
     var selectedNote by mutableStateOf<Note?>(null)
         private set
 
@@ -162,9 +165,6 @@ class MainViewModel(
         private set
 
     var allTasks by mutableStateOf<List<Task>>(emptyList())
-        private set
-
-    var editText by mutableStateOf(TextFieldState(""))
         private set
 
     var searchText by mutableStateOf("")
@@ -183,15 +183,6 @@ class MainViewModel(
         private set
 
     val scrollState by mutableStateOf(LazyStaggeredGridState())
-
-    init {
-        viewModelScope.launch {
-            val dataShowing = settings.getDataShowing()
-            chosenFolder = try { dataShowing.toInt() } catch (_: Exception) { 0 }
-            sortType = settings.getSortType()
-            sortArrow = settings.getSortArrow()
-        }
-    }
 
     fun updateSortArrow(it: String) = viewModelScope.launch {
         sortArrow = it
@@ -213,16 +204,12 @@ class MainViewModel(
 
     var mainFolderName by mutableStateOf("")
         private set
-    fun getMainFolderName() = viewModelScope.launch {
+    suspend fun getMainFolderName() {
         mainFolderName = settings.getMainName()
     }
 
     fun updateIsSearchOn(it: Boolean) {
         isSearchOn = it
-    }
-
-    fun selectNote(note: Note?) {
-        selectedNote = note
     }
 
     fun changeNotesView() = viewModelScope.launch(Dispatchers.Default) {
@@ -231,7 +218,7 @@ class MainViewModel(
         appSettingsView = value
     }
 
-    fun getDbNotes(query: String) = viewModelScope.launch(Dispatchers.Default) {
+    suspend fun getDbNotes(query: String) {
         searchText = query.replace("\n", "")
         val sortType = settings.getSortType()
         val sortArrow = settings.getSortArrow()
@@ -243,33 +230,24 @@ class MainViewModel(
             .map { it.copy(type = checkNoteType(it).name) }
     }
 
-    fun getAllStatuses() = viewModelScope.launch(Dispatchers.Default) {
+    fun getDbNotesScope(query: String) = viewModelScope.launch { getDbNotes(query) }
+
+    fun getAllStatuses() {
         allStatuses = db.status.getAll()
     }
 
-    fun getAllTasks() = viewModelScope.launch(Dispatchers.Default) {
+    fun getAllTasks() {
         allTasks = db.task.getAll().sortedBy { it.position }
     }
 
-    fun updateEditTextValue(
-        text: String?,
-        cursorIdx: Int? = null
-    ) {
-        editText.clearText()
-        if (text == null) return
-        editText.edit {
-            append(text)
-            if (cursorIdx != null) {
-                try { placeCursorAfterCharAt(cursorIdx) } catch (_: Exception) {}
-            }
-        }
-    }
-
     /**
-     * Creates a new note or selects an existing one.
+     * Creates a new note or selects/unselects an existing one.
      **/
-    fun prepareNote(newNoteType: NoteType?) {
-        val noteText: String = if (newNoteType != null) {
+    fun selectNote(
+        note: Note? = null,
+        newNoteType: NoteType? = null
+    ) {
+        selectedNote = if (newNoteType != null) {
             // New note is opened. Create new note
             val date = Date().time
             db.note.insert(
@@ -285,87 +263,70 @@ class MainViewModel(
             viewModelScope.launch {
                 settings.setIsNotesEdited(true)
             }
-            selectNote(db.note.getLast())
-            ""
+            db.note.getLast()
         } else {
-            // Existed note open
-            selectedNote!!.text
+            note
         }
-        updateEditTextValue(noteText, 0)
-        origNoteText = noteText
     }
 
     fun deleteNote(after: () -> Unit) {
-        updateEditTextValue(null)
-        viewModelScope.launch(Dispatchers.Default) {
-            val note = selectedNote
-            if (note != null) {
-                db.note.delete(note.id)
-                selectNote(null)
-                // Delete tasks
-                db.status.deleteManyByNote(note.id)
-                db.task.deleteManyByNote(note.id)
-                // Delete draws
-                db.board.delDraws(note.id)
-                db.board.delImage(note.id)
-                // For sync
+        selectedNote?.let { note ->
+            db.note.delete(note.id)
+            selectNote()
+            // Delete tasks
+            db.status.deleteManyByNote(note.id)
+            db.task.deleteManyByNote(note.id)
+            // Delete draws
+            db.board.delDraws(note.id)
+            db.board.delImage(note.id)
+
+            viewModelScope.launch {
                 settings.setIsNotesEdited(true)
+                initNotesScreen()
+                after()
             }
-            viewModelScope.launch { after() }
         }
     }
 
     fun saveNote(
-        isEditDateForcedUpdate: Boolean = false,
+        updateDate: Boolean = false,
         text: String? = null
     ) {
-        val edit = selectedNote
-        val editTextStr = text.takeIf { it != null } ?: editText.text.toString()
-        updateEditTextValue(null)
-        viewModelScope.launch(Dispatchers.Default) {
-            // Check if the note exists
-            if (edit != null) {
-                var text = edit.text
-                var dateUpdate = if (isEditDateForcedUpdate) Date().time else edit.dateUpdate
-                if (!isEditDateForcedUpdate && editTextStr != origNoteText) {
-                    text = editTextStr
-                    dateUpdate = Date().time
-                }
-                val newEdit = edit.copy(text = text, dateUpdate = dateUpdate, format = 10)
-                // Update selected note
-                selectNote(newEdit)
-                // Update note db
-                db.note.update(newEdit)
-                // For sync
+        selectedNote?.let { note ->
+            val editedNote = note.copy(
+                text = text ?: note.text,
+                dateUpdate = if (updateDate || text != note.text) Date().time else note.dateUpdate,
+                format = 10
+            )
+            selectNote(editedNote)
+            db.note.update(editedNote)
+            db.widget.getByCreated(noteCreated = note.dateCreate.toString())?.widgetId?.let { wId ->
+                platform.callInitUpdateWidget(
+                    isInitAction = false,
+                    widgetId = wId,
+                    noteCreated = note.dateCreate.toString(),
+                    note = editedNote,
+                    db = db
+                )
+            }
+            viewModelScope.launch {
                 settings.setIsNotesEdited(true)
-                // Update widget if it exists
-                val widgetId = db.widget.getByCreated(noteCreated = edit.dateCreate.toString())?.widgetId
-                if (widgetId != null) {
-                    platform.callInitUpdateWidget(
-                        false,
-                        widgetId,
-                        edit.dateCreate.toString(),
-                        newEdit,
-                        db
-                    )
-                }
-                // Set new note text (required when saved not on the exit)
-                updateEditTextValue(text, 0)
+                initNotesScreen()
             }
         }
     }
 
-    fun setNoteFolder(f: Int, after: () -> Unit) {
-        val edit = selectedNote
-        viewModelScope.launch {
-            if (edit != null && edit.folder != f) {
-                val newEdit = edit.copy(folder = f)
-                selectNote(newEdit)
-                db.note.update(newEdit)
-                // For sync
-                settings.setIsNotesEdited(true)
-            }
-            after()
+    fun setNoteFolder(
+        folder: Int,
+        toastMsg: String
+    ) {
+        val note = selectedNote
+        if (note != null && note.folder != folder) {
+            val editedNote = note.copy(folder = folder)
+            selectNote(editedNote)
+            db.note.update(editedNote)
+            viewModelScope.launch { settings.setIsNotesEdited(true) }
+            platform.showToast(toastMsg)
         }
     }
 
@@ -399,13 +360,23 @@ class MainViewModel(
 
     fun tryGetImage(noteId: Int) = platform.toImageBitmap(db.board.getImage(noteId), true)
 
-    fun initNotesScreen() {
+    private suspend fun initNotesScreen() {
         getDbNotes("")
         getAllTasks()
         getAllStatuses()
         getMainFolderName()
+    }
+
+    init {
         viewModelScope.launch {
+            darkTheme = settings.getDarkTheme()
+            val dataShowing = settings.getDataShowing()
+            chosenFolder = try { dataShowing.toInt() } catch (_: Exception) { 0 }
+            sortType = settings.getSortType()
+            sortArrow = settings.getSortArrow()
             appSettingsView = settings.getViewMode()
+            statusesInTopBar = settings.getStatusesInTopBar()
+            initNotesScreen()
         }
     }
 }

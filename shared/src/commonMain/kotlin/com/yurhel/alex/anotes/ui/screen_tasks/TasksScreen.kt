@@ -64,8 +64,7 @@ fun TasksScreen(
             NoteBottomBar(
                 vm = vm.vm,
                 scope = rememberCoroutineScope(),
-                onBackAfterDelete = onBack,
-                onBackButtonClick = onBack,
+                onBack = onBack,
                 onGetTextButtonClick = vm::getTaskTextForNote,
                 editNoteStr = stringResource(Res.string.edit_note)
             )
@@ -99,7 +98,7 @@ fun TasksScreen(
                         },
                         actions = {
                             // Statuses
-                            if (vm.statusesInTopBar) {
+                            if (vm.vm.statusesInTopBar) {
                                 Statuses(
                                     vm = vm, modifier = Modifier.widthIn(max = halfScreenWidth)
                                 )
@@ -108,7 +107,7 @@ fun TasksScreen(
                     )
                 }
                 // Statuses
-                if (!vm.statusesInTopBar || !isShowTopBar) {
+                if (!vm.vm.statusesInTopBar || !isShowTopBar) {
                     Statuses(
                         vm = vm,
                         modifier = Modifier

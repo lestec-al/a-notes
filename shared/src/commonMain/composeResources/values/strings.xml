@@ -90,6 +90,9 @@
     <string name="list_bulleted">List Bulleted</string>
     <string name="add_link">Add Link</string>
     <string name="show_statuses_in_topbar">Show Statuses in Topbar</string>
+    <string name="line_spacing">Line spacing</string>
+    <string name="port">Port</string>
+    <string name="select_all">Select all</string>
 
     <string name="privacy_link" translatable="false">https://lestec-al.github.io/lestec-al/privacy-policy</string>
     <string name="email_link" translatable="false">mailto:alexyurgel@gmail.com</string>

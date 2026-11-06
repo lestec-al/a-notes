@@ -24,7 +24,6 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -67,9 +66,6 @@ fun NotesScreen(
     toSettings: () -> Unit,
     onBack: () -> Unit
 ) {
-    // To sep viewModel ???
-    LaunchedEffect(Unit) { vm.initNotesScreen() }
-
     BackHandlerCustom(onBack)
 
     val widgetId = remember { vm.platform.getWidgetIdWhenCreated() }
@@ -81,16 +77,16 @@ fun NotesScreen(
     val onBackgroundColor = MaterialTheme.colorScheme.onBackground
 
     AskDialog(
-        onDismissRequest = vm::setSyncDialogVisibility,
-        isVisible = vm.isSyncDialogOpen,
+        onDismissRequest = vm::setSyncSourceDialogVisibility,
+        isVisible = vm.isSyncSourceDialogOpen,
         infoText = Res.string.sync_collision,
         leftButton = Pair(Res.string.drive_data) {
             vm.syncData(SyncActionTypes.ManualImport)
-            vm.setSyncDialogVisibility()
+            vm.setSyncSourceDialogVisibility()
         },
         rightButton = Pair(Res.string.local_data) {
             vm.syncData(SyncActionTypes.ManualExport)
-            vm.setSyncDialogVisibility()
+            vm.setSyncSourceDialogVisibility()
         }
     )
     LocalSyncSheet(vm)
@@ -179,12 +175,11 @@ fun NotesScreen(
                             bitmap = img,
                             contentDescription = stringResource(Res.string.draw),
                             contentScale = Scale.Crop,
-                            modifier = Modifier
-                                .then(if (isDraw) {
+                            modifier = if (isDraw) {
                                     Modifier.weight(1f)
                                 } else {
                                     Modifier.height(150.dp)
-                                })
+                                }
                                 .fillMaxWidth()
                                 .background(containerColor)
                                 .clip(CardDefaults.shape)
