@@ -59,7 +59,7 @@ class BoardViewModel(val vm: MainViewModel) : ViewModel() {
                     vm.db.board.addUpdateImage(noteId, base64Str)
                 }
                 localDraw.clear()
-                vm.saveNote()
+                vm.saveNote(updateDate = true)
             }
         }
     }

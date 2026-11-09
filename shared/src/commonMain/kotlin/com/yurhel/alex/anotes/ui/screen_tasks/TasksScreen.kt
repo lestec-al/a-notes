@@ -31,6 +31,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import com.yurhel.alex.anotes.shared.Res
 import com.yurhel.alex.anotes.shared.edit_note
 import com.yurhel.alex.anotes.BackHandlerCustom
@@ -53,6 +55,10 @@ fun TasksScreen(
     onBack: () -> Unit
 ) {
     BackHandlerCustom(onBack)
+    LifecycleEventEffect(Lifecycle.Event.ON_STOP) {
+        vm.initNotesScreen()
+    }
+
     val lazyListState = rememberLazyListState()
     val halfScreenWidth = LocalWindowInfo.current.containerDpSize.width / 2
     val isShowTopBar = vm.vm.selectedNote != null && vm.vm.selectedNote!!.text.isNotEmpty()

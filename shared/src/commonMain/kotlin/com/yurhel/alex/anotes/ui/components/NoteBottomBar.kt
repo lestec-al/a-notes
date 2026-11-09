@@ -280,7 +280,7 @@ fun NoteBottomBar(
         SimpleEditSheet(
             onDismissRequest = { isEditSheetOpen = false },
             onSave = {
-                vm.saveNote(text = it)
+                vm.saveNote(text = it, withInitNotes = false)
                 isEditSheetOpen = false
             },
             copyToClipboard = { vm.platform.copyToClipboard(it, clipboard) },

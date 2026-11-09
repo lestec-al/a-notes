@@ -290,7 +290,8 @@ class MainViewModel(
 
     fun saveNote(
         updateDate: Boolean = false,
-        text: String? = null
+        text: String? = null,
+        withInitNotes: Boolean = true
     ) {
         selectedNote?.let { note ->
             val editedNote = note.copy(
@@ -298,20 +299,24 @@ class MainViewModel(
                 dateUpdate = if (updateDate || text != note.text) Date().time else note.dateUpdate,
                 format = 10
             )
-            selectNote(editedNote)
-            db.note.update(editedNote)
-            db.widget.getByCreated(noteCreated = note.dateCreate.toString())?.widgetId?.let { wId ->
-                platform.callInitUpdateWidget(
-                    isInitAction = false,
-                    widgetId = wId,
-                    noteCreated = note.dateCreate.toString(),
-                    note = editedNote,
-                    db = db
-                )
-            }
-            viewModelScope.launch {
-                settings.setIsNotesEdited(true)
-                initNotesScreen()
+            if (editedNote != note) {
+                selectNote(editedNote) // It is required because the note is saved not only on exit
+                db.note.update(editedNote)
+                db.widget.getByCreated(noteCreated = note.dateCreate.toString())?.widgetId?.let { wId ->
+                    platform.callInitUpdateWidget(
+                        isInitAction = false,
+                        widgetId = wId,
+                        noteCreated = note.dateCreate.toString(),
+                        note = editedNote,
+                        db = db
+                    )
+                }
+                viewModelScope.launch {
+                    settings.setIsNotesEdited(true)
+                    if (withInitNotes) {
+                        initNotesScreen()
+                    }
+                }
             }
         }
     }
@@ -360,7 +365,7 @@ class MainViewModel(
 
     fun tryGetImage(noteId: Int) = platform.toImageBitmap(db.board.getImage(noteId), true)
 
-    private suspend fun initNotesScreen() {
+    suspend fun initNotesScreen() {
         getDbNotes("")
         getAllTasks()
         getAllStatuses()
