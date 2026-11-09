@@ -197,6 +197,8 @@ class TasksViewModel(val vm: MainViewModel): ViewModel() {
 
     fun formatDate(date: Long) = vm.platform.formatDate(date)
 
+    fun initNotesScreen() = viewModelScope.launch { vm.initNotesScreen() }
+
     fun editTaskSheetOnSave(
         edit: String,
         status: Int,
