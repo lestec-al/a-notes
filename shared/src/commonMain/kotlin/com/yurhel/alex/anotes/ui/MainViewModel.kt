@@ -311,13 +311,11 @@ class MainViewModel(
                         db = db
                     )
                 }
-                viewModelScope.launch {
-                    settings.setIsNotesEdited(true)
-                    if (withInitNotes) {
-                        initNotesScreen()
-                    }
-                }
+                viewModelScope.launch { settings.setIsNotesEdited(true) }
             }
+        }
+        if (withInitNotes) {
+            viewModelScope.launch { initNotesScreen() }
         }
     }
 
