@@ -128,7 +128,9 @@ class TasksViewModel(val vm: MainViewModel): ViewModel() {
                 db.task.getManyByNoteAndStatus(noteId, statusId)
             }.sortedBy { it.position }
         }
-        if (isSaveNote) vm.saveNote(updateDate = true)
+        if (isSaveNote) {
+            vm.saveNote(updateDate = true, withInitNotes = false)
+        }
     }
 
     fun onEvent(event: Event) {
